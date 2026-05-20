@@ -38,9 +38,8 @@ jobs:
           distribution: "temurin"
 
       - name: Setup Rust
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          rust-version: stable
           targets: aarch64-linux-android
 
       - name: Setup Android SDK
@@ -57,10 +56,9 @@ jobs:
       - name: Create cargo config for NDK linker
         run: |
           mkdir -p ~/.cargo
-          cat > ~/.cargo/config.toml << 'EOF'
-          [target.aarch64-linux-android]
-          linker = "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang"
-          EOF
+          printf '[target.aarch64-linux-android]\nlinker = "%s/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang"\n' "$ANDROID_NDK_HOME" > ~/.cargo/config.toml
+          echo "--- ~/.cargo/config.toml ---"
+          cat ~/.cargo/config.toml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -80,8 +78,15 @@ jobs:
       - name: Build frontend
         run: pnpm build
 
+      - name: Initialize Android project
+        run: |
+          export CI=false
+          pnpm tauri android init
+
       - name: Build APK
-        run: pnpm tauri android build --apk --target aarch64
+        run: |
+          export CI=false
+          pnpm tauri android build --apk --target aarch64
 
       - name: Find APK
         id: find_apk
