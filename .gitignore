@@ -30,10 +30,7 @@ dist-ssr
 
 # Rust/Tauri 构建产物
 src-tauri/target/
-src-tauri/gen/android/app/build/
-src-tauri/gen/android/.gradle/
-src-tauri/gen/android/build/
-src-tauri/gen/android/local.properties
+src-tauri/gen/android/
 
 # 本地 SDK 工具
 tools/
