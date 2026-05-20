@@ -84,6 +84,8 @@ jobs:
       - name: Build APK
         run: |
           export CI=false
+          # 确保 Gradle 使用正确的 NDK 版本
+          export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/27.0.12077973"
           pnpm tauri android build --apk --target aarch64
 
       - name: Find APK
