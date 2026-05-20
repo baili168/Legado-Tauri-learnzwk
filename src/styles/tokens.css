@@ -1,0 +1,245 @@
+:root {
+  /* breakpoint 文档值 */
+  --bp-compact-max: 599px;
+  --bp-medium-min: 600px;
+  --bp-expanded-min: 840px;
+  --bp-wide-min: 1200px;
+
+  /* safe area */
+  /* 首选 CSS env()（iOS/Android/Tauri），fallback 使用 JS 注入的自定义属性。
+     鸿蒙 ArkWeb 上 env() 返回 0，顶部偏移由 App.vue 移动布局 grid row 统一处理，
+     AppTopBar 无需再加 padding-top，避免和 grid title-row 形成双重偏移。
+     桌面/Web 端 env() 同样为 0，不影响。 */
+  --safe-top: env(safe-area-inset-top, var(--safe-area-inset-top, 0px));
+  --safe-right: env(safe-area-inset-right, var(--safe-area-inset-right, 0px));
+  /* --safe-bottom: 额外桥接 JS 注入的 --safe-area-inset-bottom，供 BottomNav 避开手势区。
+     iOS/Android env() 先生效；鸿蒙 ArkWeb 上 env() 为 0，退回 ArkTS 注入的自定义属性。
+     Index.ets pushSafeAreaToWeb() 已将物理像素除以 devicePixelRatio 转成 CSS 逻辑像素。 */
+  --safe-bottom: env(safe-area-inset-bottom, var(--safe-area-inset-bottom, 0px));
+  --safe-left: env(safe-area-inset-left, var(--safe-area-inset-left, 0px));
+
+  /* bottom nav */
+  --bottomnav-h: 3.5rem;
+  --bottomnav-safe: calc(var(--bottomnav-h) + var(--safe-bottom));
+
+  /* neutral colors */
+  --gray-0: #ffffff;
+  --gray-25: #fcfcfd;
+  --gray-50: #f8f9fb;
+  --gray-100: #f1f3f7;
+  --gray-200: #e6e9f0;
+  --gray-300: #d4d9e4;
+  --gray-400: #b2bbca;
+  --gray-500: #848fa3;
+  --gray-600: #5f6980;
+  --gray-700: #41495d;
+  --gray-800: #2a3140;
+  --gray-900: #161b26;
+  --gray-950: #0c1018;
+
+  /* brand colors */
+  --brand-50: #eef3ff;
+  --brand-100: #d9e4ff;
+  --brand-200: #b7cbff;
+  --brand-300: #8fafff;
+  --brand-400: #678cff;
+  --brand-500: #4467ff;
+  --brand-600: #3452e6;
+  --brand-700: #2942ba;
+  --brand-800: #223694;
+  --brand-900: #1c2d77;
+
+  /* state colors */
+  --green-500: #1f9d61;
+  --amber-500: #c78318;
+  --red-500: #d14343;
+
+  /* font family */
+  --font-ui:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+    'Noto Sans CJK SC', 'Microsoft YaHei', sans-serif;
+
+  --font-reader-sans:
+    'PingFang SC', 'Noto Sans CJK SC', 'Source Han Sans SC', 'Microsoft YaHei', sans-serif;
+
+  --font-reader-serif:
+    'Songti SC', 'Source Han Serif SC', 'Noto Serif CJK SC', 'STSong', 'SimSun', serif;
+
+  --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, 'Liberation Mono', monospace;
+
+  /* font size */
+  --fs-10: 0.625rem;
+  --fs-11: 0.6875rem;
+  --fs-12: 0.75rem;
+  --fs-13: 0.8125rem;
+  --fs-14: 0.875rem;
+  --fs-15: 0.9375rem;
+  --fs-16: 1rem;
+  --fs-18: 1.125rem;
+  --fs-20: 1.25rem;
+  --fs-24: 1.5rem;
+  --fs-28: 1.75rem;
+  --fs-32: 2rem;
+
+  /* line height */
+  --lh-tight: 1.25;
+  --lh-base: 1.5;
+  --lh-body: 1.5;
+  --lh-relaxed: 1.75;
+  --lh-reader: 1.85;
+
+  /* font weight */
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+
+  /* spacing */
+  --density-scale: 1;
+  --space-0: 0;
+  --space-1: calc(0.25rem * var(--density-scale, 1));
+  --space-2: calc(0.5rem * var(--density-scale, 1));
+  --space-3: calc(0.75rem * var(--density-scale, 1));
+  --space-4: calc(1rem * var(--density-scale, 1));
+  --space-5: calc(1.25rem * var(--density-scale, 1));
+  --space-6: calc(1.5rem * var(--density-scale, 1));
+  --space-7: calc(2rem * var(--density-scale, 1));
+  --space-8: calc(2.5rem * var(--density-scale, 1));
+  --space-9: calc(3rem * var(--density-scale, 1));
+  --space-10: calc(4rem * var(--density-scale, 1));
+
+  /* radius */
+  --radius-0: 0;
+  --radius-1: 0.5rem;
+  --radius-2: 0.75rem;
+  --radius-3: 1rem;
+  --radius-4: 1.5rem;
+  --radius-pill: 999px;
+
+  /* shadow */
+  --shadow-0: none;
+  --shadow-1: 0 1px 2px rgba(12, 16, 24, 0.06), 0 1px 3px rgba(12, 16, 24, 0.1);
+  --shadow-2: 0 8px 24px rgba(12, 16, 24, 0.08);
+  --shadow-3: 0 16px 40px rgba(12, 16, 24, 0.14);
+
+  /* border */
+  --border-thin: 1px;
+  --border-strong: 2px;
+
+  /* z-index */
+  --z-base: 1;
+  --z-sticky: 10;
+  --z-overlay: 100;
+  --z-sheet: 200;
+  --z-modal: 300;
+  --z-toast: 400;
+
+  /* control size */
+  --tap-target: 3rem;
+  --control-sm: 2.5rem;
+  --control-md: 3rem;
+  --control-lg: 3.5rem;
+
+  --topbar-height: 2.75rem;
+  --bottom-bar-height: 2.5rem;
+  --nav-height: 3.5rem;
+  --rail-width: 5.5rem;
+  --sheet-max-width: 32rem;
+
+  /* cover */
+  --cover-ratio: 2 / 3;
+  --cover-radius: 0.75rem;
+  --cover-shadow: var(--shadow-1);
+
+  /* reader */
+  --reader-measure: 42rem;
+  --reader-inline-padding: 1.125rem;
+  --reader-block-padding: 1.5rem;
+  --reader-font-size-min: 0.9375rem;
+  --reader-font-size-default: 1.125rem;
+  --reader-font-size-max: 1.5rem;
+  --reader-paragraph-gap: 0.85em;
+  --reader-letter-spacing: 0.01em;
+
+  /* motion */
+  --dur-fast: 120ms;
+  --dur-base: 180ms;
+  --dur-slow: 280ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  /* blur */
+  --blur-sheet: 12px;
+
+  /* page */
+  --page-max: 90rem;
+
+  /* simulation flip animation */
+  --sim-flip-duration: 0.38s;
+  --sim-flip-easing: cubic-bezier(0.4, 0, 0.2, 1);
+  --sim-crease-width: 2px;
+  --sim-shadow-intensity: 0.4;
+  --sim-paper-texture-opacity: 0.015;
+}
+
+/* 高对比度主题（WCAG AAA, 对比度 >= 7:1） */
+[data-reader-high-contrast='hc-black'] {
+  --reader-bg-color: #000000;
+  --reader-text-color: #ffffff;
+  --reader-accent-color: #00ff00;
+}
+[data-reader-high-contrast='hc-white'] {
+  --reader-bg-color: #ffffff;
+  --reader-text-color: #000000;
+  --reader-accent-color: #0000ff;
+}
+[data-reader-high-contrast='hc-yellow'] {
+  --reader-bg-color: #ffff00;
+  --reader-text-color: #000000;
+  --reader-accent-color: #0000ff;
+}
+
+/* 阅读障碍字体 */
+[data-reader-dyslexia-font='OpenDyslexic'] {
+  --reader-font-family: 'OpenDyslexic', sans-serif;
+  font-weight: 500;
+}
+
+/* 减少动画偏好 */
+[data-reader-reduce-motion='true'] {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .page-flip-transition,
+  .slide-transition {
+    transition: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+:root[data-font-scale='small'] {
+  font-size: 14px;
+  --ui-font-scale: 0.875;
+}
+
+:root[data-font-scale='medium'] {
+  font-size: 16px;
+  --ui-font-scale: 1;
+}
+
+:root[data-font-scale='large'] {
+  font-size: 18px;
+  --ui-font-scale: 1.125;
+}

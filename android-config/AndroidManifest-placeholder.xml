@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Legado AndroidManifest 配置占位文件
+
+  将本文件中的配置合并到 Tauri Android 项目的
+  src-tauri/gen/android/app/src/main/AndroidManifest.xml 中。
+
+  此文件仅作为参考配置模板，不直接参与构建。
+-->
+
+<!-- ============================================================
+     需要合并到 <manifest> 根元素内的配置
+     ============================================================ -->
+
+<!-- 1. 权限声明 -->
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+<uses-permission android:name="android.permission.INTERNET" />
+
+<!-- ============================================================
+     需要合并到 <application> 元素内的配置
+     ============================================================ -->
+
+<!-- 2. Deep Link 配置：处理 legado:// 协议 -->
+<activity
+    android:name=".MainActivity"
+    android:launchMode="singleTask">
+
+    <!-- legado://book 用于打开指定书籍 -->
+    <!-- legado://import-source 用于导入书源 -->
+    <intent-filter>
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+        <data android:scheme="legado" android:host="book" />
+    </intent-filter>
+
+    <intent-filter>
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+        <data android:scheme="legado" android:host="import-source" />
+    </intent-filter>
+</activity>
+
+<!-- 3. App Shortcuts 静态配置（长按图标显示的快捷方式） -->
+<meta-data
+    android:name="android.app.shortcuts"
+    android:resource="@xml/shortcuts" />
+
+<!-- ============================================================
+     需要创建 res/xml/shortcuts.xml
+     ============================================================ -->
+<!--
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <shortcut
+        android:shortcutId="continue_reading"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_read"
+        android:shortcutShortLabel="@string/shortcut_continue_reading"
+        android:shortcutLongLabel="@string/shortcut_continue_reading_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="${appId}"
+            android:data="legado://book/continue" />
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="search_books"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_search"
+        android:shortcutShortLabel="@string/shortcut_search_books"
+        android:shortcutLongLabel="@string/shortcut_search_books_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="${appId}"
+            android:data="legado://search" />
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="book_source_management"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_source"
+        android:shortcutShortLabel="@string/shortcut_book_source"
+        android:shortcutLongLabel="@string/shortcut_book_source_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="${appId}"
+            android:data="legado://book-source" />
+    </shortcut>
+
+</shortcuts>
+-->
+
+<!-- ============================================================
+     需要添加到 res/values/strings.xml 的字符串资源
+     ============================================================ -->
+<!--
+<resources>
+    <string name="shortcut_continue_reading">继续阅读</string>
+    <string name="shortcut_continue_reading_long">从上次位置继续阅读</string>
+    <string name="shortcut_search_books">搜索书籍</string>
+    <string name="shortcut_search_books_long">搜索在线书源</string>
+    <string name="shortcut_book_source">书源管理</string>
+    <string name="shortcut_book_source_long">管理和导入书源</string>
+</resources>
+-->
+
+<!-- ============================================================
+     通知渠道配置（Kotlin 侧参考）
+     ============================================================ -->
+<!--
+// 在 Application.onCreate() 或 MainActivity.onCreate() 中创建通知渠道
+
+if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+    val channel = NotificationChannel(
+        "legado_reading_reminder",
+        "阅读提醒",
+        NotificationManager.IMPORTANCE_DEFAULT
+    ).apply {
+        description = "每日阅读提醒通知"
+        enableVibration(true)
+    }
+
+    val notificationManager = getSystemService(NotificationManager::class.java)
+    notificationManager.createNotificationChannel(channel)
+}
+-->

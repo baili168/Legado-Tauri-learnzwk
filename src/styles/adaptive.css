@@ -1,0 +1,61 @@
+:root {
+  --density-scale: 1;
+  --ui-font-scale: 1;
+  --responsive-gap: calc(var(--space-3) * var(--density-scale));
+  --responsive-padding: calc(var(--space-4) * var(--density-scale));
+  --dialog-width: 100vw;
+  --dialog-height: 92vh;
+}
+
+[data-breakpoint="compact"] {
+  --dialog-width: 100vw;
+  --dialog-height: 92vh;
+}
+
+[data-breakpoint="medium"] {
+  --dialog-width: 480px;
+  --dialog-height: 85vh;
+}
+
+[data-breakpoint="expanded"] {
+  --dialog-width: 600px;
+  --dialog-height: 80vh;
+}
+
+[data-breakpoint="wide"] {
+  --dialog-width: 720px;
+  --dialog-height: 75vh;
+}
+
+[data-density="compact"] {
+  --density-scale: 0.875;
+}
+
+[data-density="standard"] {
+  --density-scale: 1;
+}
+
+[data-density="comfortable"] {
+  --density-scale: 1.125;
+}
+
+[data-font-scale="small"] {
+  --ui-font-scale: 0.875;
+}
+
+[data-font-scale="medium"] {
+  --ui-font-scale: 1;
+}
+
+[data-font-scale="large"] {
+  --ui-font-scale: 1.125;
+}
+
+.app-layout {
+  gap: var(--responsive-gap);
+}
+
+.n-modal {
+  --n-modal-width: var(--dialog-width);
+  --n-modal-max-height: var(--dialog-height);
+}
