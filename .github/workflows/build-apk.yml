@@ -43,18 +43,18 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
         with:
-          packages: "platform-tools platforms;android-35 build-tools;35.0.0 ndk;27.0.12077973"
+          packages: "platform-tools platforms;android-35 build-tools;35.0.0 ndk;29.0.14206865"
 
       - name: Setup Android environment variables
         run: |
           echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
-          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/27.0.12077973" >> $GITHUB_ENV
-          echo "NDK_HOME=$ANDROID_SDK_ROOT/ndk/27.0.12077973" >> $GITHUB_ENV
+          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/29.0.14206865" >> $GITHUB_ENV
+          echo "NDK_HOME=$ANDROID_SDK_ROOT/ndk/29.0.14206865" >> $GITHUB_ENV
 
       - name: Create cargo config for NDK linker
         run: |
           mkdir -p ~/.cargo
-          printf '[target.aarch64-linux-android]\nlinker = "%s/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang"\n' "$ANDROID_NDK_HOME" > ~/.cargo/config.toml
+          printf '[target.aarch64-linux-android]\nlinker = "%s/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang"\n' "$ANDROID_NDK_HOME" > ~/.cargo/config.toml
           echo "--- ~/.cargo/config.toml ---"
           cat ~/.cargo/config.toml
 
@@ -71,7 +71,7 @@ jobs:
           echo "ANDROID_NDK_HOME: $ANDROID_NDK_HOME"
           ls "$ANDROID_HOME/platforms/android-35/android.jar" && echo "✓ android.jar"
           ls "$ANDROID_HOME/build-tools/35.0.0/aapt2" && echo "✓ aapt2"
-          ls "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang" && echo "✓ NDK clang"
+          ls "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang" && echo "✓ NDK clang"
 
       - name: Build frontend
         run: pnpm build
@@ -84,8 +84,8 @@ jobs:
       - name: Build APK
         run: |
           export CI=false
-          # 确保 Gradle 使用正确的 NDK 版本
-          export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/27.0.12077973"
+          # 使用和 Tauri 兼容的 NDK 29
+          export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/29.0.14206865"
           pnpm tauri android build --apk --target aarch64
 
       - name: Find APK
