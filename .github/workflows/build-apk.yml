@@ -123,7 +123,7 @@ jobs:
           export CI=false
           export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/29.0.14206865"
           export PATH="${{ github.workspace }}/node_modules/.bin:$PATH"
-          pnpm tauri android build --apk --target aarch64 -v 2>&1 | tee build-output.log
+          pnpm tauri -v android build --apk --target aarch64 2>&1 | tee build-output.log
 
       - name: Verify build output
         run: |
@@ -170,9 +170,20 @@ jobs:
           fi
           echo "apk_path=$APK_PATH" >> $GITHUB_OUTPUT
           echo ""
-          echo "Selected APK: $APK_PATH"
-          apk_size=$(stat -c%s "$APK_PATH" 2>/dev/null || stat -f%z "$APK_PATH" 2>/dev/null)
-          echo "APK size: $(echo "scale=1; $apk_size/1024/1024" | bc)MB"
+          if [ -n "$APK_PATH" ] && [ -f "$APK_PATH" ]; then
+            echo "Selected APK: $APK_PATH"
+            apk_size=$(stat -c%s "$APK_PATH" 2>/dev/null)
+            echo "APK size: $(echo "scale=1; $apk_size/1024/1024" | bc)MB"
+          else
+            echo "❌ No APK found in src-tauri/gen/android/"
+            echo "Listing build directory tree..."
+            find src-tauri/gen/android -type f \( -name "*.apk" -o -name "*.so" \) 2>/dev/null | head -30
+            echo ""
+            echo "Top-level structure:"
+            ls -la src-tauri/gen/android/ 2>/dev/null || echo "(directory not found)"
+            ls -la src-tauri/gen/android/app/build/outputs/ 2>/dev/null || echo "(outputs not found)"
+            exit 1
+          fi
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
@@ -180,13 +191,14 @@ jobs:
           name: legado-android-apk
           path: ${{ steps.find_apk.outputs.apk_path }}
           retention-days: 30
+        if: steps.find_apk.outputs.apk_path != ''
 
       - name: Summary
         run: |
           APK_PATH="${{ steps.find_apk.outputs.apk_path }}"
           echo "## APK Build Summary" >> $GITHUB_STEP_SUMMARY
           if [ -n "$APK_PATH" ] && [ -f "$APK_PATH" ]; then
-            apk_size=$(stat -c%s "$APK_PATH" 2>/dev/null || stat -f%z "$APK_PATH" 2>/dev/null)
+            apk_size=$(stat -c%s "$APK_PATH" 2>/dev/null)
             apk_mb=$(echo "scale=1; $apk_size/1024/1024" | bc)
             echo "✅ APK: \`$APK_PATH\`" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
