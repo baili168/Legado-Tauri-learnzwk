@@ -15,7 +15,7 @@
         <div class="toolbar-divider"></div>
 
         <button class="toolbar-btn" title="添加笔记" @click="handleAddNote">
-          <BookMark :size="16" />
+          <Bookmark :size="16" />
         </button>
 
         <button class="toolbar-btn" title="复制" @click="handleCopy">
@@ -43,7 +43,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
-import { BookMark, Copy, Search, Share2 } from "lucide-vue-next";
+import { Bookmark, Copy, Search, Share2 } from "lucide-vue-next";
 import { NPopover } from "naive-ui";
 import type { HighlightColor, HighlightAnnotation } from "@/features/reader/stores/readerBookmarks";
 import AnnotationNoteEditor from "./AnnotationNoteEditor.vue";
