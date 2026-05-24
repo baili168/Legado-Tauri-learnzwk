@@ -84,11 +84,32 @@ jobs:
           export CI=false
           pnpm tauri android init
 
+      - name: Patch Gradle BuildTask for pnpm compatibility
+        run: |
+          # 默认生成的 BuildTask.kt 使用 pnpm tauri 命令，在 Gradle 子进程中会找不到 tauri CLI
+          # 替换为直接调用 node tauri.js 的版本
+          BUILD_TASK_DIR="src-tauri/gen/android/buildSrc/src/main/java/com/legado/reader/kotlin"
+          if [ -d "$BUILD_TASK_DIR" ]; then
+            cp android-config/BuildTask.kt "$BUILD_TASK_DIR/BuildTask.kt"
+            echo "✅ Patched BuildTask.kt"
+          else
+            # fallback: try alternative package path
+            BUILD_TASK_DIR=$(find src-tauri/gen/android -name "BuildTask.kt" -path "*/kotlin/*" | head -1 | xargs dirname)
+            if [ -n "$BUILD_TASK_DIR" ]; then
+              cp android-config/BuildTask.kt "$BUILD_TASK_DIR/BuildTask.kt"
+              echo "✅ Patched BuildTask.kt at $BUILD_TASK_DIR"
+            else
+              echo "⚠️ BuildTask.kt not found, continuing anyway"
+            fi
+          fi
+
       - name: Build APK
         run: |
           export CI=false
           # 使用和 Tauri 兼容的 NDK 29
           export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/29.0.14206865"
+          # Gradle 构建在 src-tauri/gen/android 子目录运行，需要绝对路径才能找到 node_modules/.bin 中的 tauri CLI
+          export PATH="${{ github.workspace }}/node_modules/.bin:$PATH"
           pnpm tauri android build --apk --target aarch64
 
       - name: Find APK
