@@ -16,11 +16,11 @@
  *   // 组件卸载时（若仍在堆栈中）清理，不触发历史导航
  *   backStack.detach(handler);
  */
-import { defineStore } from 'pinia';
+import { defineStore } from "pinia";
 
 export type BackHandler = () => void;
 
-export const useBackStackStore = defineStore('backStack', () => {
+export const useBackStackStore = defineStore("backStack", () => {
   const _stack: BackHandler[] = [];
   /** UI 主动关闭时触发的 history.go(-1) 产生的 popstate 需要跳过的次数 */
   let _skip = 0;
@@ -30,7 +30,7 @@ export const useBackStackStore = defineStore('backStack', () => {
    */
   function push(handler: BackHandler): void {
     _stack.push(handler);
-    history.pushState({ _legadoBack: true }, '');
+    history.pushState({ _legadoBack: true }, "");
   }
 
   /**

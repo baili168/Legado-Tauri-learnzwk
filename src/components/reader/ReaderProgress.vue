@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed } from "vue";
 
 const props = defineProps<{
   /** 当前章节索引（0-based） */

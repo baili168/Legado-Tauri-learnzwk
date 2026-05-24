@@ -1,9 +1,26 @@
 <script setup lang="ts">
-import { computed, nextTick, ref } from 'vue';
-import { useMessage } from 'naive-ui';
-import { Search, Link, Wand2, Trash2, Plus, Copy, Play, Save, FileCode, BookOpen, Film, Music, ChevronDown, ChevronRight, CheckCircle, AlertCircle } from 'lucide-vue-next';
-import { invokeWithTimeout } from '@/composables/useInvoke';
-import { saveBookSource, toSafeFileName, type BookSourceMeta } from '@/composables/useBookSource';
+import { computed, nextTick, ref } from "vue";
+import { useMessage } from "naive-ui";
+import {
+  Search,
+  Link,
+  Wand2,
+  Trash2,
+  Plus,
+  Copy,
+  Play,
+  Save,
+  FileCode,
+  BookOpen,
+  Film,
+  Music,
+  ChevronDown,
+  ChevronRight,
+  CheckCircle,
+  AlertCircle,
+} from "lucide-vue-next";
+import { invokeWithTimeout } from "@/composables/useInvoke";
+import { saveBookSource, toSafeFileName, type BookSourceMeta } from "@/composables/useBookSource";
 
 const props = defineProps<{
   sources: BookSourceMeta[];
@@ -16,24 +33,24 @@ const emit = defineEmits<{
 const message = useMessage();
 
 // ── 步骤枚举 ────────────────────────────────────────────────────────────
-type WizardStep = 'input' | 'progress' | 'result' | 'preview';
+type WizardStep = "input" | "progress" | "result" | "preview";
 
 const STEPS = [
-  { key: 'connecting', label: '连接中', description: '正在连接到目标网站...' },
-  { key: 'loading', label: '加载中', description: '正在加载页面内容...' },
-  { key: 'domAnalysis', label: 'DOM分析', description: '分析页面结构与内容区域...' },
-  { key: 'typeRecognition', label: '类型识别', description: '识别网站内容类型...' },
-  { key: 'adFiltering', label: '广告过滤', description: '检测并过滤广告元素...' },
-  { key: 'codeGeneration', label: '代码生成', description: '生成书源 JS 代码...' },
+  { key: "connecting", label: "连接中", description: "正在连接到目标网站..." },
+  { key: "loading", label: "加载中", description: "正在加载页面内容..." },
+  { key: "domAnalysis", label: "DOM分析", description: "分析页面结构与内容区域..." },
+  { key: "typeRecognition", label: "类型识别", description: "识别网站内容类型..." },
+  { key: "adFiltering", label: "广告过滤", description: "检测并过滤广告元素..." },
+  { key: "codeGeneration", label: "代码生成", description: "生成书源 JS 代码..." },
 ] as const;
 
-type AnalysisStepKey = (typeof STEPS)[number]['key'];
+type AnalysisStepKey = (typeof STEPS)[number]["key"];
 
 const CONTENT_TYPE_LABELS: Record<string, string> = {
-  novel: '小说',
-  comic: '漫画',
-  video: '视频',
-  audio: '音频/有声书',
+  novel: "小说",
+  comic: "漫画",
+  video: "视频",
+  audio: "音频/有声书",
 };
 
 const CONTENT_TYPE_ICONS: Record<string, any> = {
@@ -44,10 +61,10 @@ const CONTENT_TYPE_ICONS: Record<string, any> = {
 };
 
 // ── 当前步骤 ─────────────────────────────────────────────────────────────
-const currentStep = ref<WizardStep>('input');
+const currentStep = ref<WizardStep>("input");
 
 // ── URL 输入 ─────────────────────────────────────────────────────────────
-const targetUrl = ref('');
+const targetUrl = ref("");
 const sampleUrls = ref<string[]>([]);
 const samplesExpanded = ref(false);
 const MAX_SAMPLE_URLS = 3;
@@ -56,7 +73,7 @@ function addSampleUrl() {
   if (sampleUrls.value.length >= MAX_SAMPLE_URLS) {
     return;
   }
-  sampleUrls.value.push('');
+  sampleUrls.value.push("");
 }
 
 function removeSampleUrl(index: number) {
@@ -66,7 +83,7 @@ function removeSampleUrl(index: number) {
 // ── 分析状态 ─────────────────────────────────────────────────────────────
 const analyzing = ref(false);
 const currentAnalysisStep = ref(-1);
-const analysisStepKey = ref<AnalysisStepKey>('connecting');
+const analysisStepKey = ref<AnalysisStepKey>("connecting");
 const showSlowHint = ref(false);
 let slowHintTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -99,11 +116,11 @@ const analysisResult = ref<AnalysisResult | null>(null);
 
 // ── 选择器编辑 ───────────────────────────────────────────────────────────
 const editingSelectorIndex = ref<number | null>(null);
-const editSelectorValue = ref('');
+const editSelectorValue = ref("");
 
 function startEditSelector(index: number) {
   editingSelectorIndex.value = index;
-  editSelectorValue.value = analysisResult.value?.selectors[index]?.selector ?? '';
+  editSelectorValue.value = analysisResult.value?.selectors[index]?.selector ?? "";
   nextTick(() => {
     const el = document.getElementById(`selector-edit-${index}`);
     if (el) {
@@ -131,12 +148,13 @@ function cancelEditSelector() {
 }
 
 // ── 代码预览 ─────────────────────────────────────────────────────────────
-const sourceName = ref('');
+const sourceName = ref("");
 
 // ── 生成代码（模拟分析流程）─────────────────────────────────────────────
 function generateBookSourceCode(result: AnalysisResult): string {
   const selectors = result.selectors;
-  const getSelector = (purpose: string) => selectors.find((s) => s.purpose === purpose)?.selector ?? '';
+  const getSelector = (purpose: string) =>
+    selectors.find((s) => s.purpose === purpose)?.selector ?? "";
 
   return `// @name        ${result.siteName}
 // @version     1.0.0
@@ -148,20 +166,20 @@ function generateBookSourceCode(result: AnalysisResult): string {
 // @description 由智能源识别系统从 ${new URL(targetUrl.value).hostname} 自动生成
 // @sourceType  ${result.contentType}
 
-const BASE_URL = '${targetUrl.value.replace(/\/+$/, '')}'
+const BASE_URL = '${targetUrl.value.replace(/\/+$/, "")}'
 
 async function search(key, page) {
   const resp = await legado.http.get(
-    \`\${BASE_URL}${getSelector('search') || '/search?keyword={keyword}'}\`
+    \`\${BASE_URL}${getSelector("search") || "/search?keyword={keyword}"}\`
   )
   const doc = new DOMParser().parseFromString(resp, 'text/html')
-  const items = doc.querySelectorAll('${getSelector('searchList') || '.search-list li'}')
+  const items = doc.querySelectorAll('${getSelector("searchList") || ".search-list li"}')
   return Array.from(items).map(item => ({
-    name:    item.querySelector('${getSelector('searchName') || 'h3'}')?.textContent?.trim() ?? '',
-    author:  item.querySelector('${getSelector('searchAuthor') || '.author'}')?.textContent?.trim() ?? '',
-    coverUrl: item.querySelector('${getSelector('searchCover') || 'img'}')?.getAttribute('src') ?? '',
-    intro:   item.querySelector('${getSelector('searchIntro') || '.intro'}')?.textContent?.trim() ?? '',
-    bookUrl: item.querySelector('${getSelector('searchLink') || 'a'}')?.getAttribute('href') ?? '',
+    name:    item.querySelector('${getSelector("searchName") || "h3"}')?.textContent?.trim() ?? '',
+    author:  item.querySelector('${getSelector("searchAuthor") || ".author"}')?.textContent?.trim() ?? '',
+    coverUrl: item.querySelector('${getSelector("searchCover") || "img"}')?.getAttribute('src') ?? '',
+    intro:   item.querySelector('${getSelector("searchIntro") || ".intro"}')?.textContent?.trim() ?? '',
+    bookUrl: item.querySelector('${getSelector("searchLink") || "a"}')?.getAttribute('href') ?? '',
   }))
 }
 
@@ -169,10 +187,10 @@ async function bookInfo(bookUrl) {
   const resp = await legado.http.get(bookUrl)
   const doc = new DOMParser().parseFromString(resp, 'text/html')
   return {
-    name:     doc.querySelector('${getSelector('bookName') || 'h1'}')?.textContent?.trim() ?? '',
-    author:   doc.querySelector('${getSelector('bookAuthor') || '.author'}')?.textContent?.trim() ?? '',
-    coverUrl: doc.querySelector('${getSelector('bookCover') || '.cover img'}')?.getAttribute('src') ?? '',
-    intro:    doc.querySelector('${getSelector('bookIntro') || '.intro'}')?.textContent?.trim() ?? '',
+    name:     doc.querySelector('${getSelector("bookName") || "h1"}')?.textContent?.trim() ?? '',
+    author:   doc.querySelector('${getSelector("bookAuthor") || ".author"}')?.textContent?.trim() ?? '',
+    coverUrl: doc.querySelector('${getSelector("bookCover") || ".cover img"}')?.getAttribute('src') ?? '',
+    intro:    doc.querySelector('${getSelector("bookIntro") || ".intro"}')?.textContent?.trim() ?? '',
     bookUrl,
     tocUrl:   bookUrl,
   }
@@ -181,17 +199,17 @@ async function bookInfo(bookUrl) {
 async function toc(tocUrl) {
   const resp = await legado.http.get(tocUrl)
   const doc = new DOMParser().parseFromString(resp, 'text/html')
-  const chapters = doc.querySelectorAll('${getSelector('tocList') || '.chapter-list li'}')
+  const chapters = doc.querySelectorAll('${getSelector("tocList") || ".chapter-list li"}')
   return Array.from(chapters).map(ch => ({
-    name: ch.querySelector('${getSelector('tocName') || 'a'}')?.textContent?.trim() ?? '',
-    url:  ch.querySelector('${getSelector('tocLink') || 'a'}')?.getAttribute('href') ?? '',
+    name: ch.querySelector('${getSelector("tocName") || "a"}')?.textContent?.trim() ?? '',
+    url:  ch.querySelector('${getSelector("tocLink") || "a"}')?.getAttribute('href') ?? '',
   }))
 }
 
 async function content(chapterUrl) {
   const resp = await legado.http.get(chapterUrl)
   const doc = new DOMParser().parseFromString(resp, 'text/html')
-  return doc.querySelector('${getSelector('content') || '.content'}')?.textContent?.trim() ?? ''
+  return doc.querySelector('${getSelector("content") || ".content"}')?.textContent?.trim() ?? ''
 }
 `;
 }
@@ -200,21 +218,21 @@ async function content(chapterUrl) {
 async function startAnalysis() {
   const url = targetUrl.value.trim();
   if (!url) {
-    message.warning('请输入目标网址');
+    message.warning("请输入目标网址");
     return;
   }
 
   try {
     new URL(url);
   } catch {
-    message.warning('请输入有效的 URL 地址');
+    message.warning("请输入有效的 URL 地址");
     return;
   }
 
-  currentStep.value = 'progress';
+  currentStep.value = "progress";
   analyzing.value = true;
   currentAnalysisStep.value = 0;
-  analysisStepKey.value = 'connecting';
+  analysisStepKey.value = "connecting";
   showSlowHint.value = false;
 
   slowHintTimer = setTimeout(() => {
@@ -232,9 +250,9 @@ async function startAnalysis() {
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
 
-    const hostname = new URL(url).hostname.replace(/^www\./, '');
-    const contentType = Math.random() > 0.5 ? 'novel' : 'comic';
-    const baseName = hostname.split('.')[0] || hostname;
+    const hostname = new URL(url).hostname.replace(/^www\./, "");
+    const contentType = Math.random() > 0.5 ? "novel" : "comic";
+    const baseName = hostname.split(".")[0] || hostname;
 
     const mockResult: AnalysisResult = {
       siteName: baseName.charAt(0).toUpperCase() + baseName.slice(1),
@@ -242,41 +260,41 @@ async function startAnalysis() {
       contentType,
       confidence: 0.78 + Math.random() * 0.15,
       adElements: [
-        { selector: '.ad-banner', reason: '匹配常见广告类名 ad-banner' },
-        { selector: '[class*="popup"]', reason: '包含 popup 关键字，疑似弹窗广告' },
-        { selector: '.float-ad', reason: '匹配浮动广告选择器 .float-ad' },
-        { selector: 'iframe[src*="ad"]', reason: '检测到广告 iframe 嵌入' },
+        { selector: ".ad-banner", reason: "匹配常见广告类名 ad-banner" },
+        { selector: '[class*="popup"]', reason: "包含 popup 关键字，疑似弹窗广告" },
+        { selector: ".float-ad", reason: "匹配浮动广告选择器 .float-ad" },
+        { selector: 'iframe[src*="ad"]', reason: "检测到广告 iframe 嵌入" },
       ],
       selectors: [
-        { purpose: 'search', selector: '/search?keyword={keyword}', confidence: 0.92 },
-        { purpose: 'searchList', selector: '.result-list li', confidence: 0.88 },
-        { purpose: 'searchName', selector: 'h3.title', confidence: 0.85 },
-        { purpose: 'searchAuthor', selector: '.author', confidence: 0.80 },
-        { purpose: 'searchCover', selector: 'img.cover', confidence: 0.78 },
-        { purpose: 'searchIntro', selector: '.desc', confidence: 0.75 },
-        { purpose: 'searchLink', selector: 'a', confidence: 0.95 },
-        { purpose: 'tocList', selector: '.chapter-list li', confidence: 0.86 },
-        { purpose: 'tocName', selector: 'a', confidence: 0.90 },
-        { purpose: 'tocLink', selector: 'a', confidence: 0.90 },
-        { purpose: 'content', selector: '#content', confidence: 0.82 },
-        { purpose: 'bookName', selector: 'h1', confidence: 0.85 },
-        { purpose: 'bookAuthor', selector: '.author', confidence: 0.80 },
-        { purpose: 'bookCover', selector: '.cover img', confidence: 0.76 },
-        { purpose: 'bookIntro', selector: '.intro', confidence: 0.72 },
+        { purpose: "search", selector: "/search?keyword={keyword}", confidence: 0.92 },
+        { purpose: "searchList", selector: ".result-list li", confidence: 0.88 },
+        { purpose: "searchName", selector: "h3.title", confidence: 0.85 },
+        { purpose: "searchAuthor", selector: ".author", confidence: 0.8 },
+        { purpose: "searchCover", selector: "img.cover", confidence: 0.78 },
+        { purpose: "searchIntro", selector: ".desc", confidence: 0.75 },
+        { purpose: "searchLink", selector: "a", confidence: 0.95 },
+        { purpose: "tocList", selector: ".chapter-list li", confidence: 0.86 },
+        { purpose: "tocName", selector: "a", confidence: 0.9 },
+        { purpose: "tocLink", selector: "a", confidence: 0.9 },
+        { purpose: "content", selector: "#content", confidence: 0.82 },
+        { purpose: "bookName", selector: "h1", confidence: 0.85 },
+        { purpose: "bookAuthor", selector: ".author", confidence: 0.8 },
+        { purpose: "bookCover", selector: ".cover img", confidence: 0.76 },
+        { purpose: "bookIntro", selector: ".intro", confidence: 0.72 },
       ],
-      generatedCode: '',
+      generatedCode: "",
     };
 
     mockResult.generatedCode = generateBookSourceCode(mockResult);
     analysisResult.value = mockResult;
-    sourceName.value = `${hostname.replace(/\./g, '_')}_${contentType}.js`;
+    sourceName.value = `${hostname.replace(/\./g, "_")}_${contentType}.js`;
 
     currentAnalysisStep.value = STEPS.length;
     await new Promise((resolve) => setTimeout(resolve, 400));
-    currentStep.value = 'result';
+    currentStep.value = "result";
   } catch (e: unknown) {
     message.error(`分析失败：${e instanceof Error ? e.message : String(e)}`);
-    currentStep.value = 'input';
+    currentStep.value = "input";
   } finally {
     analyzing.value = false;
     if (slowHintTimer) {
@@ -289,7 +307,7 @@ async function startAnalysis() {
 // ── 重新分析 ─────────────────────────────────────────────────────────────
 function reanalyze() {
   analysisResult.value = null;
-  currentStep.value = 'input';
+  currentStep.value = "input";
 }
 
 // ── 确认并生成代码 ───────────────────────────────────────────────────────
@@ -298,7 +316,7 @@ function confirmAndGenerate() {
     return;
   }
   analysisResult.value.generatedCode = generateBookSourceCode(analysisResult.value);
-  currentStep.value = 'preview';
+  currentStep.value = "preview";
 }
 
 // ── 复制代码 ─────────────────────────────────────────────────────────────
@@ -309,9 +327,9 @@ async function copyCode() {
   }
   try {
     await navigator.clipboard.writeText(code);
-    message.success('已复制到剪贴板');
+    message.success("已复制到剪贴板");
   } catch {
-    message.error('复制失败');
+    message.error("复制失败");
   }
 }
 
@@ -326,8 +344,8 @@ async function testSource() {
   const fileName = sourceName.value || toSafeFileName(analysisResult.value.siteName);
   try {
     await saveBookSource(fileName, analysisResult.value.generatedCode);
-    await invokeWithTimeout('booksource_test', { fileName }, 60000);
-    message.success('测试完成');
+    await invokeWithTimeout("booksource_test", { fileName }, 60000);
+    message.success("测试完成");
   } catch (e: unknown) {
     message.error(`测试失败：${e instanceof Error ? e.message : String(e)}`);
   } finally {
@@ -346,11 +364,11 @@ async function saveSource() {
   const fileName = sourceName.value || toSafeFileName(analysisResult.value.siteName);
   try {
     await saveBookSource(fileName, analysisResult.value.generatedCode);
-    await invokeWithTimeout('booksource_compile_to_installed', { fileName }, 20000).catch(() => {});
-    emit('reload');
+    await invokeWithTimeout("booksource_compile_to_installed", { fileName }, 20000).catch(() => {});
+    emit("reload");
     message.success(`书源「${fileName}」保存成功`);
-    currentStep.value = 'input';
-    targetUrl.value = '';
+    currentStep.value = "input";
+    targetUrl.value = "";
     sampleUrls.value = [];
     analysisResult.value = null;
   } catch (e: unknown) {
@@ -385,7 +403,11 @@ function toggleAdElement(index: number) {
 const stepDisplay = computed(() =>
   STEPS.map((step, index) => ({
     ...step,
-    status: isStepCompleted(index) ? ('finish' as const) : isStepActive(index) ? ('process' as const) : ('wait' as const),
+    status: isStepCompleted(index)
+      ? ("finish" as const)
+      : isStepActive(index)
+        ? ("process" as const)
+        : ("wait" as const),
   })),
 );
 
@@ -394,7 +416,7 @@ const currentStepDescription = computed(() => {
   if (idx >= 0 && idx < STEPS.length) {
     return STEPS[idx].description;
   }
-  return '';
+  return "";
 });
 </script>
 
@@ -430,11 +452,7 @@ const currentStepDescription = computed(() => {
           </div>
 
           <div class="samples-toggle">
-            <n-button
-              text
-              size="small"
-              @click="samplesExpanded = !samplesExpanded"
-            >
+            <n-button text size="small" @click="samplesExpanded = !samplesExpanded">
               <template #icon>
                 <ChevronRight v-if="!samplesExpanded" :size="14" />
                 <ChevronDown v-else :size="14" />
@@ -445,11 +463,7 @@ const currentStepDescription = computed(() => {
 
           <n-collapse-transition :show="samplesExpanded">
             <div class="sample-urls">
-              <div
-                v-for="(url, index) in sampleUrls"
-                :key="index"
-                class="sample-url-row"
-              >
+              <div v-for="(url, index) in sampleUrls" :key="index" class="sample-url-row">
                 <n-input
                   v-model:value="sampleUrls[index]"
                   size="small"
@@ -457,23 +471,13 @@ const currentStepDescription = computed(() => {
                   class="sample-url-input"
                   clearable
                 />
-                <n-button
-                  size="tiny"
-                  quaternary
-                  type="error"
-                  @click="removeSampleUrl(index)"
-                >
+                <n-button size="tiny" quaternary type="error" @click="removeSampleUrl(index)">
                   <template #icon>
                     <Trash2 :size="14" />
                   </template>
                 </n-button>
               </div>
-              <n-button
-                v-if="canAddSampleUrl"
-                size="small"
-                dashed
-                @click="addSampleUrl"
-              >
+              <n-button v-if="canAddSampleUrl" size="small" dashed @click="addSampleUrl">
                 <template #icon>
                   <Plus :size="14" />
                 </template>
@@ -569,7 +573,13 @@ const currentStepDescription = computed(() => {
               :height="8"
               :border-radius="4"
               :fill-border-radius="4"
-              :color="analysisResult.confidence >= 0.85 ? '#18a058' : analysisResult.confidence >= 0.7 ? '#f0a020' : '#d03050'"
+              :color="
+                analysisResult.confidence >= 0.85
+                  ? '#18a058'
+                  : analysisResult.confidence >= 0.7
+                    ? '#f0a020'
+                    : '#d03050'
+              "
               :indicator-placement="'inside'"
               :show-indicator="true"
               indicator-text-color="#fff"
@@ -660,35 +670,26 @@ const currentStepDescription = computed(() => {
                   :border-radius="3"
                   :fill-border-radius="3"
                   :show-indicator="false"
-                  :color="sel.confidence >= 0.85 ? '#18a058' : sel.confidence >= 0.7 ? '#f0a020' : '#d03050'"
+                  :color="
+                    sel.confidence >= 0.85
+                      ? '#18a058'
+                      : sel.confidence >= 0.7
+                        ? '#f0a020'
+                        : '#d03050'
+                  "
                 />
                 <span class="sel-confidence-text">{{ Math.round(sel.confidence * 100) }}%</span>
               </div>
               <div class="sel-col-action">
-                <n-button
-                  size="tiny"
-                  quaternary
-                  @click="startEditSelector(index)"
-                >
-                  编辑
-                </n-button>
+                <n-button size="tiny" quaternary @click="startEditSelector(index)"> 编辑 </n-button>
               </div>
             </div>
           </div>
         </div>
 
         <div class="step-footer step-footer--actions">
-          <n-button
-            size="large"
-            @click="reanalyze"
-          >
-            重新分析
-          </n-button>
-          <n-button
-            type="primary"
-            size="large"
-            @click="confirmAndGenerate"
-          >
+          <n-button size="large" @click="reanalyze"> 重新分析 </n-button>
+          <n-button type="primary" size="large" @click="confirmAndGenerate">
             <template #icon>
               <FileCode :size="18" />
             </template>
@@ -723,14 +724,10 @@ const currentStepDescription = computed(() => {
           <div class="code-preview-toolbar">
             <span class="code-preview-label">
               <FileCode :size="14" />
-              {{ sourceName || 'untitled.js' }}
+              {{ sourceName || "untitled.js" }}
             </span>
             <div class="code-preview-actions">
-              <n-button
-                size="tiny"
-                quaternary
-                @click="copyCode"
-              >
+              <n-button size="tiny" quaternary @click="copyCode">
                 <template #icon>
                   <Copy :size="14" />
                 </template>
@@ -742,28 +739,14 @@ const currentStepDescription = computed(() => {
         </div>
 
         <div class="step-footer step-footer--actions">
-          <n-button
-            size="large"
-            @click="currentStep = 'result'"
-          >
-            返回修改
-          </n-button>
-          <n-button
-            size="large"
-            :loading="testing"
-            @click="testSource"
-          >
+          <n-button size="large" @click="currentStep = 'result'"> 返回修改 </n-button>
+          <n-button size="large" :loading="testing" @click="testSource">
             <template #icon>
               <Play :size="18" />
             </template>
             测试书源
           </n-button>
-          <n-button
-            type="primary"
-            size="large"
-            :loading="saving"
-            @click="saveSource"
-          >
+          <n-button type="primary" size="large" :loading="saving" @click="saveSource">
             <template #icon>
               <Save :size="18" />
             </template>
@@ -1015,7 +998,7 @@ const currentStepDescription = computed(() => {
 
 .ad-element-selector code {
   font-size: var(--fs-12);
-  font-family: 'Consolas', 'Menlo', monospace;
+  font-family: "Consolas", "Menlo", monospace;
   color: var(--color-text-primary);
 }
 
@@ -1124,7 +1107,7 @@ const currentStepDescription = computed(() => {
 
 .selector-value {
   font-size: var(--fs-12);
-  font-family: 'Consolas', 'Menlo', monospace;
+  font-family: "Consolas", "Menlo", monospace;
   color: var(--color-text-primary);
   cursor: pointer;
   padding: 3px 6px;
@@ -1143,7 +1126,7 @@ const currentStepDescription = computed(() => {
 
 .selector-edit-input {
   font-size: var(--fs-12);
-  font-family: 'Consolas', 'Menlo', monospace;
+  font-family: "Consolas", "Menlo", monospace;
   color: var(--color-text-primary);
   background: var(--color-surface);
   border: 1px solid var(--color-accent);
@@ -1216,7 +1199,7 @@ const currentStepDescription = computed(() => {
   overflow-y: auto;
   max-height: 420px;
   font-size: var(--fs-12);
-  font-family: 'Consolas', 'Menlo', monospace;
+  font-family: "Consolas", "Menlo", monospace;
   line-height: 1.65;
   white-space: pre;
   color: var(--color-text-primary);

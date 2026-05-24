@@ -6,9 +6,9 @@
  * - B/S 环境：通过 HTTP `/asset/` 端点访问本地文件
  */
 
-import { isHarmonyNative, isTauri } from './useEnv';
+import { isHarmonyNative, isTauri } from "./useEnv";
 
-export const LOCAL_FILE_REF_PREFIX = 'local://';
+export const LOCAL_FILE_REF_PREFIX = "local://";
 
 /** Web 服务器资源 URL 前缀（懒初始化） */
 let assetBaseUrl: string | null = null;
@@ -17,7 +17,7 @@ function getAssetBaseUrl(): string {
   if (assetBaseUrl) {
     return assetBaseUrl;
   }
-  const hostname = window.location.hostname || 'localhost';
+  const hostname = window.location.hostname || "localhost";
   const protocol = window.location.protocol;
   assetBaseUrl = `${protocol}//${hostname}:7688/asset/`;
   return assetBaseUrl;
@@ -31,7 +31,7 @@ function getAssetBaseUrl(): string {
  */
 export async function toFileSrc(filePath: string): Promise<string> {
   if (isTauri) {
-    const { convertFileSrc } = await import('@tauri-apps/api/core');
+    const { convertFileSrc } = await import("@tauri-apps/api/core");
     return convertFileSrc(filePath);
   }
   if (isHarmonyNative) {
@@ -55,7 +55,7 @@ export function toFileSrcSync(filePath: string): string {
     // 直接调用 Tauri runtime 注入的原生转换函数
     return (
       window as unknown as Record<string, Record<string, (p: string, proto: string) => string>>
-    ).__TAURI_INTERNALS__.convertFileSrc(filePath, 'asset');
+    ).__TAURI_INTERNALS__.convertFileSrc(filePath, "asset");
   }
   if (isHarmonyNative) {
     return `file://${filePath}`;

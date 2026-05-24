@@ -1,4 +1,4 @@
-import type { ShelfBook } from '@/stores';
+import type { ShelfBook } from "@/stores";
 
 export interface BuiltinCoverGeneratorDefinition {
   id: string;

@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import type { WholeBookSwitchedPayload } from '@/components/reader/types';
-import type { CachedChapter, ChapterItem, ShelfBook } from '@/stores';
-import BookCoverGeneratorDialog from '@/components/bookshelf/BookCoverGeneratorDialog.vue';
-import BookDetailEditorDialog from '@/components/bookshelf/BookDetailEditorDialog.vue';
-import BookExportDialog from '@/components/bookshelf/BookExportDialog.vue';
-import BookSourceSwitchDialog from '@/components/explore/BookSourceSwitchDialog.vue';
-import TxtImportDialog from '@/features/local-txt/TxtImportDialog.vue';
+import type { WholeBookSwitchedPayload } from "@/components/reader/types";
+import type { CachedChapter, ChapterItem, ShelfBook } from "@/stores";
+import BookCoverGeneratorDialog from "@/components/bookshelf/BookCoverGeneratorDialog.vue";
+import BookDetailEditorDialog from "@/components/bookshelf/BookDetailEditorDialog.vue";
+import BookExportDialog from "@/components/bookshelf/BookExportDialog.vue";
+import BookSourceSwitchDialog from "@/components/explore/BookSourceSwitchDialog.vue";
+import TxtImportDialog from "@/features/local-txt/TxtImportDialog.vue";
+import CbzImportDialog from "@/components/bookshelf/CbzImportDialog.vue";
 
 defineProps<{
   showSourceSwitchDialog: boolean;
@@ -18,26 +19,36 @@ defineProps<{
   exportCachedChapters: CachedChapter[];
   showBookDetailDialog: boolean;
   bookDetailBook: ShelfBook | null;
-  bookDetailMode: 'view' | 'edit';
+  bookDetailMode: "view" | "edit";
   showTxtImportDialog: boolean;
+  showCbzImportDialog: boolean;
 }>();
 
 const emit = defineEmits<{
-  (e: 'update:showSourceSwitchDialog', value: boolean): void;
-  (e: 'update:showCoverGeneratorDialog', value: boolean): void;
-  (e: 'update:showExportDialog', value: boolean): void;
-  (e: 'update:showBookDetailDialog', value: boolean): void;
-  (e: 'update:showTxtImportDialog', value: boolean): void;
-  (e: 'whole-book-switched', payload: WholeBookSwitchedPayload): void;
-  (e: 'cover-applied', bookId: string): void;
-  (e: 'book-detail-saved', bookId: string): void;
+  (e: "update:showSourceSwitchDialog", value: boolean): void;
+  (e: "update:showCoverGeneratorDialog", value: boolean): void;
+  (e: "update:showExportDialog", value: boolean): void;
+  (e: "update:showBookDetailDialog", value: boolean): void;
+  (e: "update:showTxtImportDialog", value: boolean): void;
+  (e: "update:showCbzImportDialog", value: boolean): void;
+  (e: "whole-book-switched", payload: WholeBookSwitchedPayload): void;
+  (e: "cover-applied", bookId: string): void;
+  (e: "book-detail-saved", bookId: string): void;
   (
-    e: 'txt-imported',
+    e: "txt-imported",
     payload: {
       title: string;
       author: string;
       chapters: Array<{ title: string; content: string }>;
       preface: string;
+    },
+  ): void;
+  (
+    e: "cbz-imported",
+    payload: {
+      title: string;
+      pages: string[];
+      coverUrl: string;
     },
   ): void;
 }>();
@@ -94,5 +105,11 @@ const emit = defineEmits<{
     :show="showTxtImportDialog"
     @update:show="emit('update:showTxtImportDialog', $event)"
     @imported="emit('txt-imported', $event)"
+  />
+
+  <CbzImportDialog
+    :show="showCbzImportDialog"
+    @update:show="emit('update:showCbzImportDialog', $event)"
+    @imported="emit('cbz-imported', $event)"
   />
 </template>

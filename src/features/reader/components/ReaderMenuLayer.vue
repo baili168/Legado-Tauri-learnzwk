@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import LegacyReaderMenuLayer from '@/components/explore/ReaderMenuLayer.vue';
+import LegacyReaderMenuLayer from "@/components/explore/ReaderMenuLayer.vue";
 
 defineOptions({
   inheritAttrs: false,

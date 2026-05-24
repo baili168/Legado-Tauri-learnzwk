@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { Bug } from 'lucide-vue-next';
-import { computed, onMounted, ref } from 'vue';
+import { Bug } from "lucide-vue-next";
+import { computed, onMounted, ref } from "vue";
 import {
   ensureFrontendNamespaceLoaded,
   getFrontendStorageItem,
   setFrontendStorageItem,
-} from '@/composables/useFrontendStorage';
+} from "@/composables/useFrontendStorage";
 
 defineProps<{
   unreadCount: number;
@@ -17,8 +17,8 @@ const emit = defineEmits<{
 }>();
 
 const FAB_SIZE = 44;
-const STORAGE_NS = 'ui.log-fab';
-const STORAGE_KEY = 'pos';
+const STORAGE_NS = "ui.log-fab";
+const STORAGE_KEY = "pos";
 
 const fabLeft = ref(0);
 const fabTop = ref(0);
@@ -45,7 +45,7 @@ function initPos() {
     const raw = getFrontendStorageItem(STORAGE_NS, STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as { left?: unknown; top?: unknown };
-      if (typeof parsed.left === 'number' && typeof parsed.top === 'number') {
+      if (typeof parsed.left === "number" && typeof parsed.top === "number") {
         left = parsed.left;
         top = parsed.top;
       }
@@ -66,7 +66,7 @@ onMounted(() => {
 const fabStyle = computed(() => ({
   left: `${fabLeft.value}px`,
   top: `${fabTop.value}px`,
-  visibility: (fabInitialized.value ? 'visible' : 'hidden') as 'visible' | 'hidden',
+  visibility: (fabInitialized.value ? "visible" : "hidden") as "visible" | "hidden",
 }));
 
 let _dragging = false;
@@ -108,7 +108,7 @@ function onPointerUp() {
   if (_moved) {
     savePos();
   } else {
-    emit('open');
+    emit("open");
   }
 }
 </script>
@@ -126,7 +126,7 @@ function onPointerUp() {
   >
     <Bug :size="20" />
     <span v-if="unreadCount > 0" class="log-fab__badge">{{
-      unreadCount > 99 ? '99+' : unreadCount
+      unreadCount > 99 ? "99+" : unreadCount
     }}</span>
   </button>
 </template>

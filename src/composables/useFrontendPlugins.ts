@@ -1,5 +1,5 @@
-import { computed, reactive, readonly } from 'vue';
-import type { RuntimePluginRecord } from '@/features/frontendPlugins/pluginRuntimeTypes';
+import { computed, reactive, readonly } from "vue";
+import type { RuntimePluginRecord } from "@/features/frontendPlugins/pluginRuntimeTypes";
 import type {
   ReaderPluginSlot,
   ReaderContentHookStage,
@@ -24,70 +24,70 @@ import type {
   PluginSettingsContext,
   FrontendPluginRecord,
   FrontendPluginApi,
-} from '@/features/frontendPlugins/pluginTypes';
-import { BUILTIN_FRONTEND_PLUGINS } from '@/data/builtinPlugins';
+} from "@/features/frontendPlugins/pluginTypes";
+import { BUILTIN_FRONTEND_PLUGINS } from "@/data/builtinPlugins";
 import {
   computePublicThemeState,
   computePublicBackgroundState,
   computePublicSkinState,
   computeReaderAppearanceVars,
-} from '@/features/frontendPlugins/pluginAppearanceSync';
+} from "@/features/frontendPlugins/pluginAppearanceSync";
 import {
   buildPluginDialogState,
   isEntryVisible,
-} from '@/features/frontendPlugins/pluginDialogUtils';
-import { evaluatePlugin } from '@/features/frontendPlugins/pluginEvaluator';
+} from "@/features/frontendPlugins/pluginDialogUtils";
+import { evaluatePlugin } from "@/features/frontendPlugins/pluginEvaluator";
 import {
   notifySessionListeners,
   invokePluginHook,
   emitPluginLifecycle,
-} from '@/features/frontendPlugins/pluginHookRunner';
+} from "@/features/frontendPlugins/pluginHookRunner";
 import {
   requestPluginHttp,
   getShelfBookById,
   patchShelfBook,
-} from '@/features/frontendPlugins/pluginHttpUtils';
+} from "@/features/frontendPlugins/pluginHttpUtils";
 import {
   ensurePluginOrderLoaded,
   readPluginOrder,
   sortExtensionsByPluginOrder,
   writePluginOrder,
-} from '@/features/frontendPlugins/pluginOrder';
-import { resolvePluginSettingFields } from '@/features/frontendPlugins/pluginSettings';
-import { createSlotManager } from '@/features/frontendPlugins/pluginSlotManager';
+} from "@/features/frontendPlugins/pluginOrder";
+import { resolvePluginSettingFields } from "@/features/frontendPlugins/pluginSettings";
+import { createSlotManager } from "@/features/frontendPlugins/pluginSlotManager";
 import {
   buildPluginStorageApi,
   PLUGIN_STORAGE_KEYS,
   type PluginStorageApi,
-} from '@/features/frontendPlugins/pluginStorage';
+} from "@/features/frontendPlugins/pluginStorage";
 import {
   resolveExtensionAssetUrl,
   cloneValue,
   getChineseConverter,
-} from '@/features/frontendPlugins/pluginTextUtils';
-import { createEmptyHookMap } from '@/features/frontendPlugins/readerHooks';
-import { createEmptySlotMap } from '@/features/frontendPlugins/readerSlots';
-import { useAppConfigStore } from '@/stores/appConfig';
+} from "@/features/frontendPlugins/pluginTextUtils";
+import { createEmptyHookMap } from "@/features/frontendPlugins/readerHooks";
+import { createEmptySlotMap } from "@/features/frontendPlugins/readerSlots";
+import { useAppConfigStore } from "@/stores/appConfig";
 import {
   activatePluginThemes,
   deactivatePluginThemes,
   injectCSS as injectPluginCSS,
   removeCSS as removePluginCSS,
   removeAllPluginCSS,
-} from '@/features/frontendPlugins/pluginRegistry';
-import type { ShelfBook } from './useBookshelf';
-import { eventEmit, eventListenSync } from './useEventBus';
+} from "@/features/frontendPlugins/pluginRegistry";
+import type { ShelfBook } from "./useBookshelf";
+import { eventEmit, eventListenSync } from "./useEventBus";
 import {
   getExtensionDir,
   listExtensions,
   readExtension,
   toggleExtension,
   type ExtensionMeta,
-} from './useExtension';
+} from "./useExtension";
 
 const SETTINGS_STORAGE_KEY = PLUGIN_STORAGE_KEYS.settings;
 
-export const FRONTEND_PLUGIN_TOAST_EVENT = 'frontend-plugin:toast';
+export const FRONTEND_PLUGIN_TOAST_EVENT = "frontend-plugin:toast";
 
 export type {
   ReaderPluginSlot,
@@ -141,7 +141,7 @@ export type {
   ReaderSkinContext,
   FrontendPluginApi,
   PluginSettingsApi,
-} from '@/features/frontendPlugins/pluginTypes';
+} from "@/features/frontendPlugins/pluginTypes";
 
 const state = reactive({
   initialized: false,
@@ -163,7 +163,7 @@ let runtimePlugins: RuntimePluginRecord[] = [];
 let loadPromise: Promise<void> | null = null;
 let currentReaderSession: ReaderSessionSnapshot | null = null;
 let externalListenersReady = false;
-let extensionRootDir = '';
+let extensionRootDir = "";
 let activePluginDialogResolve: ((value: Record<string, PluginSettingValue> | null) => void) | null =
   null;
 
@@ -220,7 +220,7 @@ function syncPublicPluginState(): void {
 
 function syncPublicBookshelfActionState(): void {
   const nextActions: FrontendBookshelfActionRecord[] = [];
-  for (const record of runtimePlugins.filter((item) => item.enabled && item.status !== 'error')) {
+  for (const record of runtimePlugins.filter((item) => item.enabled && item.status !== "error")) {
     for (const action of record.bookshelfActions) {
       nextActions.push({
         id: action.id,
@@ -238,7 +238,7 @@ function syncPublicBookshelfActionState(): void {
 
 function syncPublicCoverGeneratorState(): void {
   const nextGenerators: FrontendCoverGeneratorRecord[] = [];
-  for (const record of runtimePlugins.filter((item) => item.enabled && item.status !== 'error')) {
+  for (const record of runtimePlugins.filter((item) => item.enabled && item.status !== "error")) {
     for (const generator of record.coverGenerators) {
       nextGenerators.push({
         id: generator.id,
@@ -256,7 +256,7 @@ function syncPublicCoverGeneratorState(): void {
 
 function syncPublicReaderContextActionState(): void {
   const nextActions: FrontendReaderContextActionRecord[] = [];
-  for (const record of runtimePlugins.filter((item) => item.enabled && item.status !== 'error')) {
+  for (const record of runtimePlugins.filter((item) => item.enabled && item.status !== "error")) {
     for (const action of record.readerContextActions) {
       nextActions.push({
         id: action.id,
@@ -307,7 +307,7 @@ async function recomputeReaderAppearance(): Promise<void> {
 async function emitPluginToast(
   pluginId: string,
   message: string,
-  type: 'info' | 'success' | 'warning' | 'error' = 'info',
+  type: "info" | "success" | "warning" | "error" = "info",
 ): Promise<void> {
   await eventEmit(FRONTEND_PLUGIN_TOAST_EVENT, { pluginId, message, type });
 }
@@ -326,11 +326,11 @@ async function openPluginDialog(
   options: PluginDialogOptions,
 ): Promise<Record<string, PluginSettingValue> | null> {
   if (activePluginDialogResolve) {
-    throw new Error('当前已有一个插件交互对话框正在显示');
+    throw new Error("当前已有一个插件交互对话框正在显示");
   }
   const title = options.title?.trim();
   if (!title) {
-    throw new Error('插件对话框缺少标题');
+    throw new Error("插件对话框缺少标题");
   }
   state.pluginDialog = buildPluginDialogState(options);
   return new Promise((resolve) => {
@@ -390,7 +390,7 @@ function createPluginApi(record: RuntimePluginRecord): FrontendPluginApi {
         (
           await requestPluginHttp({
             url,
-            method: 'GET',
+            method: "GET",
             headers,
             timeoutSecs: options?.timeoutSecs,
           })
@@ -399,8 +399,8 @@ function createPluginApi(record: RuntimePluginRecord): FrontendPluginApi {
         (
           await requestPluginHttp({
             url,
-            method: 'POST',
-            body: body ?? '',
+            method: "POST",
+            body: body ?? "",
             headers,
             timeoutSecs: options?.timeoutSecs,
           })
@@ -416,19 +416,19 @@ function createPluginApi(record: RuntimePluginRecord): FrontendPluginApi {
     ui: {
       toast: async (message, type) => emitPluginToast(record.pluginId, message, type),
       prompt: openPluginDialog,
-      getAppTheme: () => appConfigStore.config.ui_theme ?? 'auto',
+      getAppTheme: () => appConfigStore.config.ui_theme ?? "auto",
       setAppTheme: async (mode) => {
-        const current = appConfigStore.config.ui_theme ?? 'auto';
+        const current = appConfigStore.config.ui_theme ?? "auto";
         if (current === mode) {
           return;
         }
-        await appConfigStore.setConfig('ui_theme', mode);
+        await appConfigStore.setConfig("ui_theme", mode);
       },
       registerTheme: (theme) => {
         activatePluginThemes([theme], record.pluginId);
       },
       unregisterTheme: (themeId) => {
-        deactivatePluginThemes([{ id: themeId, name: '', colors: {} }], record.pluginId);
+        deactivatePluginThemes([{ id: themeId, name: "", colors: {} }], record.pluginId);
       },
       injectCSS: (css, options) => {
         return injectPluginCSS(record.pluginId, css, options);
@@ -441,7 +441,7 @@ function createPluginApi(record: RuntimePluginRecord): FrontendPluginApi {
 }
 
 function markPluginRuntimeError(record: RuntimePluginRecord, error: unknown): void {
-  record.status = 'error';
+  record.status = "error";
   record.runtimeError = error instanceof Error ? error.message : String(error);
   syncPublicPluginState();
   void syncPublicThemeState();
@@ -492,15 +492,15 @@ function syncOrderToRecords(records: RuntimePluginRecord[]): void {
 function makeErrorRecord(meta: ExtensionMeta, source: string, error: unknown): RuntimePluginRecord {
   return {
     fileName: meta.fileName,
-    pluginId: meta.namespace || meta.fileName.replace(/\.js$/i, ''),
+    pluginId: meta.namespace || meta.fileName.replace(/\.js$/i, ""),
     name: meta.name || meta.fileName,
-    version: meta.version || '0.0.0',
-    description: meta.description || '',
-    author: meta.author || '',
-    category: meta.category || '其他',
+    version: meta.version || "0.0.0",
+    description: meta.description || "",
+    author: meta.author || "",
+    category: meta.category || "其他",
     enabled: true,
     order: 0,
-    status: 'error',
+    status: "error",
     runtimeError: error instanceof Error ? error.message : String(error),
     runtimeHooks: [],
     runtimeSlots: [],
@@ -534,7 +534,7 @@ async function ensureInitialized(): Promise<void> {
 
   if (!externalListenersReady) {
     externalListenersReady = true;
-    eventListenSync<{ fileName?: string }>('extension:changed', () => {
+    eventListenSync<{ fileName?: string }>("extension:changed", () => {
       void loadPlugins({ force: true });
     });
   }
@@ -569,7 +569,7 @@ async function loadPlugins(options: { force?: boolean } = {}): Promise<void> {
           const record = await evaluatePlugin(meta, source, createPluginApi);
           if (!meta.enabled) {
             record.enabled = false;
-            record.status = 'disabled';
+            record.status = "disabled";
           }
           if (record.globalThemes.length > 0) {
             activatePluginThemes(record.globalThemes, record.pluginId);
@@ -585,7 +585,7 @@ async function loadPlugins(options: { force?: boolean } = {}): Promise<void> {
           const record = await evaluatePlugin(builtin.meta, builtin.source, createPluginApi);
           if (!builtin.meta.enabled) {
             record.enabled = false;
-            record.status = 'disabled';
+            record.status = "disabled";
           }
           if (record.globalThemes.length > 0) {
             activatePluginThemes(record.globalThemes, record.pluginId);
@@ -614,7 +614,7 @@ async function loadPlugins(options: { force?: boolean } = {}): Promise<void> {
       await recomputeReaderAppearance();
       await slotManager.remountAllReaderSlots();
       if (currentReaderSession) {
-        await emitLifecycle('reader.session.enter');
+        await emitLifecycle("reader.session.enter");
       }
     } finally {
       state.loading = false;
@@ -659,7 +659,7 @@ async function triggerSettingsRefresh(record: RuntimePluginRecord): Promise<void
   }
   syncPublicPluginState();
   if (record.enabled && currentReaderSession) {
-    await emitLifecycle('reader.chapter.change');
+    await emitLifecycle("reader.chapter.change");
   }
 }
 
@@ -820,7 +820,7 @@ function getCoverGeneratorsForBook(book: ShelfBook): FrontendCoverGeneratorRecor
 function getReaderContextActions(
   context: ReaderTextSelectionContext,
 ): FrontendReaderContextActionRecord[] {
-  if (context.sourceType !== 'novel' || !context.text.trim()) {
+  if (context.sourceType !== "novel" || !context.text.trim()) {
     return [];
   }
   return state.readerContextActions.filter((action) => {
@@ -842,7 +842,7 @@ async function runBookshelfAction(actionId: string, book: ShelfBook): Promise<vo
     throw new Error(`未找到书架动作 ${actionId}`);
   }
   if (!isEntryVisible(action, { book })) {
-    throw new Error('当前书籍不可用这个插件动作');
+    throw new Error("当前书籍不可用这个插件动作");
   }
   try {
     await action.run({ book }, createPluginApi(record));
@@ -857,8 +857,8 @@ async function runReaderContextAction(
   context: ReaderTextSelectionContext,
 ): Promise<void> {
   await ensureInitialized();
-  if (context.sourceType !== 'novel') {
-    throw new Error('阅读器文本菜单动作仅支持小说');
+  if (context.sourceType !== "novel") {
+    throw new Error("阅读器文本菜单动作仅支持小说");
   }
   const record = runtimePlugins.find((item) =>
     item.readerContextActions.some((action) => action.id === actionId),
@@ -868,7 +868,7 @@ async function runReaderContextAction(
     throw new Error(`未找到阅读器文本菜单动作 ${actionId}`);
   }
   if (!isEntryVisible(action, context)) {
-    throw new Error('当前选中文本不可用这个插件动作');
+    throw new Error("当前选中文本不可用这个插件动作");
   }
   try {
     await action.run(context, createPluginApi(record));
@@ -891,11 +891,11 @@ async function runCoverGenerator(
     throw new Error(`未找到封面生成器 ${actionId}`);
   }
   if (!isEntryVisible(generator, { book })) {
-    throw new Error('当前书籍不可用这个封面生成器');
+    throw new Error("当前书籍不可用这个封面生成器");
   }
   try {
     const result = await generator.generate({ book }, createPluginApi(record));
-    if (typeof result === 'string') {
+    if (typeof result === "string") {
       return { coverUrl: result };
     }
     return result ?? null;
@@ -919,15 +919,15 @@ async function runReaderContentPipeline(
       createPluginApi,
       markPluginRuntimeError,
     );
-    if (typeof result === 'string') {
+    if (typeof result === "string") {
       nextContent = result;
       continue;
     }
     if (
       result &&
-      typeof result === 'object' &&
-      'content' in (result as Record<string, unknown>) &&
-      typeof (result as Record<string, unknown>).content === 'string'
+      typeof result === "object" &&
+      "content" in (result as Record<string, unknown>) &&
+      typeof (result as Record<string, unknown>).content === "string"
     ) {
       nextContent = (result as { content: string }).content;
     }
@@ -942,7 +942,7 @@ async function openReaderSession(session: ReaderSessionSnapshot): Promise<void> 
   await syncPublicBackgroundState();
   await syncPublicSkinState();
   await recomputeReaderAppearance();
-  await emitLifecycle('reader.session.enter');
+  await emitLifecycle("reader.session.enter");
   await slotManager.remountAllReaderSlots();
 }
 
@@ -960,11 +960,11 @@ async function updateReaderSession(patch: Partial<ReaderSessionSnapshot>): Promi
   const visibilityChanged = patch.visible !== undefined && patch.visible !== previous.visible;
 
   if (chapterChanged) {
-    await emitLifecycle('reader.chapter.change');
+    await emitLifecycle("reader.chapter.change");
   }
   if (visibilityChanged) {
     await emitLifecycle(
-      currentReaderSession.visible ? 'reader.session.resume' : 'reader.session.pause',
+      currentReaderSession.visible ? "reader.session.resume" : "reader.session.pause",
     );
   }
 
@@ -981,7 +981,7 @@ async function closeReaderSession(): Promise<void> {
   if (!currentReaderSession) {
     return;
   }
-  await emitLifecycle('reader.session.exit');
+  await emitLifecycle("reader.session.exit");
   currentReaderSession = null;
   for (const record of runtimePlugins) {
     notifySessionListeners(record, currentReaderSession);

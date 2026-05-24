@@ -10,16 +10,16 @@
  *   import { getCacheFirst, getNetworkFirst, precacheUrls } from '@/composables/useCacheStrategy'
  */
 
-const CACHE_NAME = 'legado-v1'
+const CACHE_NAME = "legado-v1";
 
-const STATIC_EXTENSIONS = /\.(js|css|woff2?|ttf|svg|png|jpg|jpeg|webp|gif|ico)$/i
+const STATIC_EXTENSIONS = /\.(js|css|woff2?|ttf|svg|png|jpg|jpeg|webp|gif|ico)$/i;
 
 function isCacheSupported(): boolean {
-  return typeof window !== 'undefined' && 'caches' in window
+  return typeof window !== "undefined" && "caches" in window;
 }
 
 function openCache(): Promise<Cache> {
-  return caches.open(CACHE_NAME)
+  return caches.open(CACHE_NAME);
 }
 
 /**
@@ -28,18 +28,18 @@ function openCache(): Promise<Cache> {
  */
 export async function getCacheFirst(url: string): Promise<Response> {
   if (!isCacheSupported()) {
-    return fetch(url)
+    return fetch(url);
   }
 
-  const cache = await openCache()
-  const cached = await cache.match(url)
-  if (cached) return cached
+  const cache = await openCache();
+  const cached = await cache.match(url);
+  if (cached) return cached;
 
-  const response = await fetch(url)
+  const response = await fetch(url);
   if (response.ok) {
-    cache.put(url, response.clone())
+    cache.put(url, response.clone());
   }
-  return response
+  return response;
 }
 
 /**
@@ -52,30 +52,30 @@ export async function getCacheFirst(url: string): Promise<Response> {
 export async function getNetworkFirst(url: string, fallback?: string): Promise<Response> {
   if (!isCacheSupported()) {
     try {
-      return await fetch(url)
+      return await fetch(url);
     } catch {
-      if (fallback) return fetch(fallback)
-      throw new Error(`Network request failed: ${url}`)
+      if (fallback) return fetch(fallback);
+      throw new Error(`Network request failed: ${url}`);
     }
   }
 
-  const cache = await openCache()
+  const cache = await openCache();
 
   try {
-    const response = await fetch(url)
+    const response = await fetch(url);
     if (response.ok) {
-      cache.put(url, response.clone())
+      cache.put(url, response.clone());
     }
-    return response
+    return response;
   } catch {
-    const cached = await cache.match(url)
-    if (cached) return cached
+    const cached = await cache.match(url);
+    if (cached) return cached;
     if (fallback) {
-      const fbCached = await cache.match(fallback)
-      if (fbCached) return fbCached
-      return fetch(fallback)
+      const fbCached = await cache.match(fallback);
+      if (fbCached) return fbCached;
+      return fetch(fallback);
     }
-    throw new Error(`Network request failed and no cache available: ${url}`)
+    throw new Error(`Network request failed and no cache available: ${url}`);
   }
 }
 
@@ -87,23 +87,23 @@ export async function getNetworkFirst(url: string, fallback?: string): Promise<R
  * @param urls - 要预缓存的资源 URL 列表
  */
 export async function precacheUrls(urls: string[]): Promise<void> {
-  if (!isCacheSupported() || urls.length === 0) return
+  if (!isCacheSupported() || urls.length === 0) return;
 
-  const cache = await openCache()
+  const cache = await openCache();
   const results = await Promise.allSettled(
     urls.map(async (url) => {
-      const cached = await cache.match(url)
-      if (cached) return
-      const response = await fetch(url, { cache: 'no-cache' })
+      const cached = await cache.match(url);
+      if (cached) return;
+      const response = await fetch(url, { cache: "no-cache" });
       if (response.ok) {
-        await cache.put(url, response)
+        await cache.put(url, response);
       }
     }),
-  )
+  );
 
   if (import.meta.env.DEV) {
-    const succeeded = results.filter((r) => r.status === 'fulfilled').length
-    console.log(`[CacheStrategy] precache ${succeeded}/${urls.length} 完成`)
+    const succeeded = results.filter((r) => r.status === "fulfilled").length;
+    console.log(`[CacheStrategy] precache ${succeeded}/${urls.length} 完成`);
   }
 }
 
@@ -111,7 +111,7 @@ export async function precacheUrls(urls: string[]): Promise<void> {
  * 判断 URL 是否为静态资源（根据文件扩展名匹配）。
  */
 export function isStaticAsset(url: string): boolean {
-  return STATIC_EXTENSIONS.test(url)
+  return STATIC_EXTENSIONS.test(url);
 }
 
 /**
@@ -121,14 +121,14 @@ export function isStaticAsset(url: string): boolean {
  * @param response - fetch 返回的 Response 对象
  */
 export async function autoCacheIfStatic(response: Response): Promise<void> {
-  if (!isCacheSupported() || !response.ok) return
+  if (!isCacheSupported() || !response.ok) return;
 
-  const url = response.url
+  const url = response.url;
   if (isStaticAsset(url)) {
-    const cache = await openCache()
-    const cached = await cache.match(url)
+    const cache = await openCache();
+    const cached = await cache.match(url);
     if (!cached) {
-      cache.put(url, response.clone())
+      cache.put(url, response.clone());
     }
   }
 }

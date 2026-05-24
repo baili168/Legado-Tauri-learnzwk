@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { Trash2, Edit3, Plus, Folder } from 'lucide-vue-next';
-import { NButton, NInput, NPopconfirm, NSwitch } from 'naive-ui';
-import { computed, nextTick, ref } from 'vue';
-import type { ShelfGroup } from '@/types/shelfGroup';
-import { useOverlayBackstack } from '@/composables/useOverlayBackstack';
+import { Trash2, Edit3, Plus, Folder } from "lucide-vue-next";
+import { NButton, NInput, NPopconfirm, NSwitch } from "naive-ui";
+import { computed, nextTick, ref } from "vue";
+import type { ShelfGroup } from "@/types/shelfGroup";
+import { useOverlayBackstack } from "@/composables/useOverlayBackstack";
 
 const props = defineProps<{
   show: boolean;
@@ -13,34 +13,34 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'update:show', value: boolean): void;
-  (e: 'select', groupId: string): void;
-  (e: 'add', name: string): void;
-  (e: 'remove', groupId: string): void;
-  (e: 'rename', groupId: string, name: string): void;
-  (e: 'toggle', groupId: string, enabled: boolean): void;
-  (e: 'toggle-all'): void;
+  (e: "update:show", value: boolean): void;
+  (e: "select", groupId: string): void;
+  (e: "add", name: string): void;
+  (e: "remove", groupId: string): void;
+  (e: "rename", groupId: string, name: string): void;
+  (e: "toggle", groupId: string, enabled: boolean): void;
+  (e: "toggle-all"): void;
 }>();
 
-const newGroupName = ref('');
+const newGroupName = ref("");
 const addingNew = ref(false);
 const editingGroupId = ref<string | null>(null);
-const editingName = ref('');
+const editingName = ref("");
 
 useOverlayBackstack(
   () => props.show,
   () => {
-    emit('update:show', false);
+    emit("update:show", false);
   },
 );
 
 const sortedGroups = computed(() => {
   return [...props.groups].toSorted((a, b) => {
     // 全部书籍在最前面
-    if (a.id === 'all') {
+    if (a.id === "all") {
       return -1;
     }
-    if (b.id === 'all') {
+    if (b.id === "all") {
       return 1;
     }
     return a.order - b.order;
@@ -49,9 +49,9 @@ const sortedGroups = computed(() => {
 
 function startAddNew() {
   addingNew.value = true;
-  newGroupName.value = '';
+  newGroupName.value = "";
   nextTick(() => {
-    const input = document.getElementById('new-group-name-input');
+    const input = document.getElementById("new-group-name-input");
     if (input instanceof HTMLInputElement) {
       input.focus();
     }
@@ -61,15 +61,15 @@ function startAddNew() {
 function confirmAdd() {
   const name = newGroupName.value.trim();
   if (name) {
-    emit('add', name);
+    emit("add", name);
   }
   addingNew.value = false;
-  newGroupName.value = '';
+  newGroupName.value = "";
 }
 
 function cancelAdd() {
   addingNew.value = false;
-  newGroupName.value = '';
+  newGroupName.value = "";
 }
 
 function startRename(group: ShelfGroup) {
@@ -87,39 +87,39 @@ function startRename(group: ShelfGroup) {
 function confirmRename(groupId: string) {
   const name = editingName.value.trim();
   if (name) {
-    emit('rename', groupId, name);
+    emit("rename", groupId, name);
   }
   editingGroupId.value = null;
-  editingName.value = '';
+  editingName.value = "";
 }
 
 function cancelRename() {
   editingGroupId.value = null;
-  editingName.value = '';
+  editingName.value = "";
 }
 
 function handleRemove(groupId: string) {
-  emit('remove', groupId);
+  emit("remove", groupId);
 }
 
 function handleToggle(group: ShelfGroup, enabled: boolean) {
-  emit('toggle', group.id, enabled);
+  emit("toggle", group.id, enabled);
 }
 
 function selectGroup(groupId: string) {
-  emit('select', groupId);
-  emit('update:show', false);
+  emit("select", groupId);
+  emit("update:show", false);
 }
 
-function handleKeydown(e: KeyboardEvent, action: 'add' | 'rename', groupId?: string) {
-  if (e.key === 'Enter') {
-    if (action === 'add') {
+function handleKeydown(e: KeyboardEvent, action: "add" | "rename", groupId?: string) {
+  if (e.key === "Enter") {
+    if (action === "add") {
       confirmAdd();
-    } else if (action === 'rename' && groupId) {
+    } else if (action === "rename" && groupId) {
       confirmRename(groupId);
     }
-  } else if (e.key === 'Escape') {
-    if (action === 'add') {
+  } else if (e.key === "Escape") {
+    if (action === "add") {
       cancelAdd();
     } else {
       cancelRename();

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Check, ChevronLeft, Copy, Search } from 'lucide-vue-next';
-import type { ReaderSettings, ReaderTypography } from '@/components/reader/types';
+import { Check, ChevronLeft, Copy, Search } from "lucide-vue-next";
+import type { ReaderSettings, ReaderTypography } from "@/components/reader/types";
 
 interface SystemFontItem {
   name: string;
@@ -17,13 +17,13 @@ defineProps<{
   };
 }>();
 
-const showAllFonts = defineModel<boolean>('showAllFonts', { required: true });
-const fontSearchQuery = defineModel<string>('fontSearchQuery', { required: true });
+const showAllFonts = defineModel<boolean>("showAllFonts", { required: true });
+const fontSearchQuery = defineModel<string>("fontSearchQuery", { required: true });
 
 const emit = defineEmits<{
-  (e: 'back'): void;
-  (e: 'copy-font-list'): void;
-  (e: 'update-typography', patch: Partial<ReaderTypography>): void;
+  (e: "back"): void;
+  (e: "copy-font-list"): void;
+  (e: "update-typography", patch: Partial<ReaderTypography>): void;
 }>();
 </script>
 

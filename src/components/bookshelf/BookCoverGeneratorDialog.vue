@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { Check, RefreshCw } from 'lucide-vue-next';
-import { useMessage } from 'naive-ui';
-import { computed, onUnmounted, ref, watch } from 'vue';
-import { useOverlayBackstack } from '@/composables/useOverlayBackstack';
-import { useBookshelfStore, type ShelfBook } from '@/stores';
-import { BUILTIN_COVER_GENERATORS } from '@/utils/defaultCoverGenerators';
-import BookCoverImg from '../BookCoverImg.vue';
+import { Check, RefreshCw } from "lucide-vue-next";
+import { useMessage } from "naive-ui";
+import { computed, onUnmounted, ref, watch } from "vue";
+import { useOverlayBackstack } from "@/composables/useOverlayBackstack";
+import { useBookshelfStore, type ShelfBook } from "@/stores";
+import { BUILTIN_COVER_GENERATORS } from "@/utils/defaultCoverGenerators";
+import BookCoverImg from "../BookCoverImg.vue";
 
-type PreviewStatus = 'pending' | 'generating' | 'ready' | 'error';
+type PreviewStatus = "pending" | "generating" | "ready" | "error";
 
 interface CoverPreviewItem {
   id: string;
@@ -24,7 +24,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  'update:show': [value: boolean];
+  "update:show": [value: boolean];
   applied: [bookId: string];
 }>();
 
@@ -32,16 +32,16 @@ const message = useMessage();
 const { patchBook, loadBooks } = useBookshelfStore();
 
 const previews = ref<CoverPreviewItem[]>([]);
-const applyingId = ref('');
-const generatedKey = ref('');
+const applyingId = ref("");
+const generatedKey = ref("");
 let generationRunId = 0;
 
-const readyCount = computed(() => previews.value.filter((item) => item.status === 'ready').length);
-const generating = computed(() => previews.value.some((item) => item.status === 'generating'));
+const readyCount = computed(() => previews.value.filter((item) => item.status === "ready").length);
+const generating = computed(() => previews.value.some((item) => item.status === "generating"));
 const totalCount = computed(() => previews.value.length);
 
 function makeBookKey(book: ShelfBook): string {
-  return `${book.id}|${book.name}|${book.author}|${book.kind ?? ''}`;
+  return `${book.id}|${book.name}|${book.author}|${book.kind ?? ""}`;
 }
 
 function nextFrame(): Promise<void> {
@@ -55,9 +55,9 @@ function resetPreviewState() {
     id: generator.id,
     name: generator.name,
     description: generator.description,
-    status: 'pending',
-    coverUrl: '',
-    error: '',
+    status: "pending",
+    coverUrl: "",
+    error: "",
   }));
 }
 
@@ -79,8 +79,8 @@ async function generatePreviews(book: ShelfBook, force = false) {
     if (!item) {
       continue;
     }
-    item.status = 'generating';
-    item.error = '';
+    item.status = "generating";
+    item.error = "";
     await nextFrame();
     try {
       const coverUrl = generator.generate(book);
@@ -88,9 +88,9 @@ async function generatePreviews(book: ShelfBook, force = false) {
         return;
       }
       item.coverUrl = coverUrl;
-      item.status = 'ready';
+      item.status = "ready";
     } catch (error) {
-      item.status = 'error';
+      item.status = "error";
       item.error = error instanceof Error ? error.message : String(error);
     }
     await nextFrame();
@@ -105,24 +105,24 @@ function regenerate() {
 
 async function applyCover(item: CoverPreviewItem) {
   const book = props.book;
-  if (!book || item.status !== 'ready' || !item.coverUrl || applyingId.value) {
+  if (!book || item.status !== "ready" || !item.coverUrl || applyingId.value) {
     return;
   }
   applyingId.value = item.id;
   try {
     await patchBook(book.id, { coverUrl: item.coverUrl });
     await loadBooks();
-    emit('applied', book.id);
+    emit("applied", book.id);
     message.success(`已应用 ${item.name}`);
   } catch (error) {
     message.error(`应用封面失败: ${error instanceof Error ? error.message : String(error)}`);
   } finally {
-    applyingId.value = '';
+    applyingId.value = "";
   }
 }
 
 function closeDialog() {
-  emit('update:show', false);
+  emit("update:show", false);
 }
 
 useOverlayBackstack(() => props.show, closeDialog);
@@ -190,7 +190,7 @@ onUnmounted(() => {
         </div>
         <div class="cg-summary__meta">
           <h3>{{ book.name }}</h3>
-          <p>{{ book.author || '佚名' }}</p>
+          <p>{{ book.author || "佚名" }}</p>
           <p>预览 {{ totalCount }} 种内置封面，已生成 {{ readyCount }} 张</p>
         </div>
       </div>
@@ -229,7 +229,7 @@ onUnmounted(() => {
               <Check v-if="item.status === 'ready'" :size="14" />
               <span>
                 {{
-                  applyingId === item.id ? '应用中' : item.status === 'ready' ? '应用' : item.name
+                  applyingId === item.id ? "应用中" : item.status === "ready" ? "应用" : item.name
                 }}
               </span>
             </button>

@@ -31,15 +31,15 @@ defineProps<{
   padding: var(--space-4);
 }
 
-.app-card[data-elevation='0'] {
+.app-card[data-elevation="0"] {
   box-shadow: var(--shadow-0);
 }
 
-.app-card[data-elevation='1'] {
+.app-card[data-elevation="1"] {
   box-shadow: var(--shadow-1);
 }
 
-.app-card[data-elevation='2'] {
+.app-card[data-elevation="2"] {
   box-shadow: var(--shadow-2);
 }
 
@@ -48,12 +48,12 @@ defineProps<{
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .app-card[tabindex='0']:hover {
+  .app-card[tabindex="0"]:hover {
     background: var(--color-hover);
   }
 }
 
-.app-card[tabindex='0']:active {
+.app-card[tabindex="0"]:active {
   background: var(--color-active);
 }
 </style>

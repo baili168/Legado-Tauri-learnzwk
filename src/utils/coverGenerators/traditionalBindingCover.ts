@@ -1,6 +1,6 @@
-import type { ShelfBook } from '@/stores';
-import type { BuiltinCoverGeneratorDefinition } from './types';
-import { bookAuthor, bookKind, buildDataUrl, verticalTextSpans, wrapText } from './shared';
+import type { ShelfBook } from "@/stores";
+import type { BuiltinCoverGeneratorDefinition } from "./types";
+import { bookAuthor, bookKind, buildDataUrl, verticalTextSpans, wrapText } from "./shared";
 
 function generateTraditionalBindingCover(book: ShelfBook): string {
   const title = verticalTextSpans(wrapText(book.name, 4, 3), {
@@ -25,13 +25,13 @@ function generateTraditionalBindingCover(book: ShelfBook): string {
   <path d="M88 0V840" stroke="#1d372f" stroke-width="12" />
   <text fill="#25190e" font-size="96" font-weight="900" font-family="'Noto Serif SC','Source Han Serif SC',serif">${title}</text>
   <text x="300" y="642" text-anchor="middle" fill="#7f2b1d" font-size="56" font-weight="800">${bookAuthor(book)}</text>
-  <text x="300" y="692" text-anchor="middle" fill="#765f42" font-size="44">${bookKind(book, '线装古籍')}</text>
+  <text x="300" y="692" text-anchor="middle" fill="#765f42" font-size="44">${bookKind(book, "线装古籍")}</text>
 </svg>`);
 }
 
 export const traditionalBindingCoverGenerator: BuiltinCoverGeneratorDefinition = {
-  id: 'builtin:traditional-binding',
-  name: '线装古籍',
-  description: '仿线装书视觉，适合传统文化、历史典籍和古籍风格。',
+  id: "builtin:traditional-binding",
+  name: "线装古籍",
+  description: "仿线装书视觉，适合传统文化、历史典籍和古籍风格。",
   generate: generateTraditionalBindingCover,
 };

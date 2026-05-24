@@ -1,16 +1,18 @@
-﻿<!-- InstalledSourcesTab — 已安装书源列表、导入导出、编辑与目录管理入口。 -->
+<!-- InstalledSourcesTab — 已安装书源列表、导入导出、编辑与目录管理入口。 -->
 <script setup lang="ts">
-import { openUrl } from '@tauri-apps/plugin-opener';
-import { Search } from 'lucide-vue-next';
-import { useMessage, useDialog } from 'naive-ui';
-import { storeToRefs } from 'pinia';
-import { ref, computed } from 'vue';
-import { eventEmit } from '@/composables/useEventBus';
-import { invokeWithTimeout } from '@/composables/useInvoke';
-import { useOverlayBackstack } from '@/composables/useOverlayBackstack';
-import { useBookSourceStore } from '@/stores';
-import { saveExportFile } from '@/utils/exportFile';
-import defaultLogoUrl from '../../assets/booksource-default.svg';
+import { openUrl } from "@tauri-apps/plugin-opener";
+import { Search } from "lucide-vue-next";
+import { useMessage, useDialog } from "naive-ui";
+import { storeToRefs } from "pinia";
+import { ref, computed } from "vue";
+import { eventEmit } from "@/composables/useEventBus";
+import { invokeWithTimeout } from "@/composables/useInvoke";
+import { useOverlayBackstack } from "@/composables/useOverlayBackstack";
+import { useBookSourceStore } from "@/stores";
+import { useScriptBridgeStore } from "@/stores";
+import { useSourceHealth } from "@/composables/useSourceHealth";
+import { saveExportFile } from "@/utils/exportFile";
+import defaultLogoUrl from "../../assets/booksource-default.svg";
 import {
   type BookSourceMeta,
   readBookSource,
@@ -28,10 +30,10 @@ import {
   configReadJson,
   configWrite,
   configDeleteKey,
-} from '../../composables/useBookSource';
-import BookSourceEditorModal from '../BookSourceEditorModal.vue';
-import BookSourceInstallDialog from '../BookSourceInstallDialog.vue';
-import SourceCard from './SourceCard.vue';
+} from "../../composables/useBookSource";
+import BookSourceEditorModal from "../BookSourceEditorModal.vue";
+import BookSourceInstallDialog from "../BookSourceInstallDialog.vue";
+import SourceCard from "./SourceCard.vue";
 
 const props = defineProps<{
   sources: BookSourceMeta[];
@@ -49,20 +51,34 @@ const emits = defineEmits<{
 const message = useMessage();
 const bookSourceStore = useBookSourceStore();
 const dialog = useDialog();
+const { runSearch } = useScriptBridgeStore();
+const { getHealthStatus, testSource: testSourceHealth, testAllSources: testAllHealth } = useSourceHealth();
 
 const { exploreDisabled, searchDisabled } = storeToRefs(bookSourceStore);
 const { setExploreUserEnabled, setSearchUserEnabled, getPendingUpdate } = bookSourceStore;
 
+// ---- 健康检测状态 ----
+const healthTestingAll = ref(false);
+const healthBusySet = ref(new Set<string>());
+const healthTestingProgress = ref({ current: 0, total: 0 });
+
 // ---- 搜索过滤 ----
-const searchQuery = ref('');
+const searchQuery = ref("");
 const filtered = computed(() => {
   const q = searchQuery.value.trim();
-  if (!q) {
-    return props.sources;
+  let list = props.sources;
+  if (q) {
+    list = list.filter(
+      (s) => s.name.includes(q) || s.url.includes(q) || s.tags.some((t) => t.includes(q)),
+    );
   }
-  return props.sources.filter(
-    (s) => s.name.includes(q) || s.url.includes(q) || s.tags.some((t) => t.includes(q)),
-  );
+  return list.toSorted((a, b) => {
+    const ha = getHealthStatus(a.sourceKey);
+    const hb = getHealthStatus(b.sourceKey);
+    const aDead = ha?.status === "dead" ? 1 : 0;
+    const bDead = hb?.status === "dead" ? 1 : 0;
+    return aDead - bDead;
+  });
 });
 
 // ---- 目录相关 ----
@@ -71,7 +87,7 @@ async function openSourceDirInExplorer() {
     return;
   }
   try {
-    await invokeWithTimeout('open_dir_in_explorer', { path: props.sourceDir });
+    await invokeWithTimeout("open_dir_in_explorer", { path: props.sourceDir });
   } catch (e: unknown) {
     message.error(`无法打开目录: ${e instanceof Error ? e.message : String(e)}`);
   }
@@ -79,9 +95,9 @@ async function openSourceDirInExplorer() {
 
 const shortSourceDir = computed(() => {
   if (!props.sourceDir) {
-    return '';
+    return "";
   }
-  const sep = props.sourceDir.includes('\\') ? '\\' : '/';
+  const sep = props.sourceDir.includes("\\") ? "\\" : "/";
   const parts = props.sourceDir.split(sep).filter(Boolean);
   if (parts.length <= 3) {
     return props.sourceDir;
@@ -90,7 +106,7 @@ const shortSourceDir = computed(() => {
 });
 
 function shortDir(dir: string) {
-  const sep = dir.includes('\\') ? '\\' : '/';
+  const sep = dir.includes("\\") ? "\\" : "/";
   const parts = dir.split(sep).filter(Boolean);
   if (parts.length <= 3) {
     return dir;
@@ -116,9 +132,9 @@ useOverlayBackstack(
 
 // ---- 导入在线书源 ----
 const showUrlInputModal = ref(false);
-const urlInputValue = ref('');
+const urlInputValue = ref("");
 const showInstallDialog = ref(false);
-const installDialogUrl = ref('');
+const installDialogUrl = ref("");
 
 useOverlayBackstack(
   () => showUrlInputModal.value,
@@ -135,18 +151,18 @@ useOverlayBackstack(
 );
 
 function importFromUrl() {
-  urlInputValue.value = '';
+  urlInputValue.value = "";
   showUrlInputModal.value = true;
 }
 
 function confirmUrlInput() {
   const url = urlInputValue.value.trim();
   if (!url) {
-    message.warning('请输入书源地址');
+    message.warning("请输入书源地址");
     return;
   }
   if (!/^https?:\/\//i.test(url)) {
-    message.warning('请输入有效的 http(s) 地址');
+    message.warning("请输入有效的 http(s) 地址");
     return;
   }
   showUrlInputModal.value = false;
@@ -161,7 +177,7 @@ async function addExternalDir() {
       return;
     }
     await addBookSourceDir(picked);
-    emits('reload');
+    emits("reload");
     message.success(`已添加目录: ${shortDir(picked)}`);
   } catch (e: unknown) {
     message.error(`添加失败: ${e instanceof Error ? e.message : String(e)}`);
@@ -171,7 +187,7 @@ async function addExternalDir() {
 async function removeExternalDir(dir: string) {
   try {
     await removeBookSourceDir(dir);
-    emits('reload');
+    emits("reload");
     message.success(`已移除目录: ${shortDir(dir)}`);
   } catch (e: unknown) {
     message.error(`移除失败: ${e instanceof Error ? e.message : String(e)}`);
@@ -180,19 +196,19 @@ async function removeExternalDir(dir: string) {
 
 // ---- 编辑器弹窗 ----
 const showEditor = ref(false);
-const editorTitle = ref('');
-const editorContent = ref('');
-const editorFile = ref('');
-const editorSourceDir = ref('');
+const editorTitle = ref("");
+const editorContent = ref("");
+const editorFile = ref("");
+const editorSourceDir = ref("");
 const editorSaving = ref(false);
 const editorLoading = ref(false);
-const editorLoadError = ref('');
+const editorLoadError = ref("");
 const editorReloaded = ref(false);
 const editorOpenKey = ref(0);
 const updatingSourceSet = ref(new Set<string>());
 
 // ---- 每书源最小请求延迟覆盖 ----
-const MIN_DELAY_KEY = '__min_delay_ms';
+const MIN_DELAY_KEY = "__min_delay_ms";
 /** fileName → 已加载的覆盖值（null = 未加载，0 = 跟随全局） */
 const sourceDelayOverrides = ref<Map<string, number>>(new Map());
 
@@ -217,14 +233,14 @@ async function saveDelayOverride(src: BookSourceMeta, val: number | null): Promi
   await reloadSingleSource(src);
 }
 
-async function openEditor(src?: BookSourceMeta, newType?: 'novel' | 'comic' | 'video') {
+async function openEditor(src?: BookSourceMeta, newType?: "novel" | "comic" | "video") {
   editorReloaded.value = false;
-  editorLoadError.value = '';
+  editorLoadError.value = "";
   if (src) {
     editorTitle.value = `编辑：${src.name}`;
     editorFile.value = src.fileName;
     editorSourceDir.value = src.sourceDir;
-    editorContent.value = '';
+    editorContent.value = "";
     editorLoading.value = true;
     editorOpenKey.value += 1;
     showEditor.value = true;
@@ -238,11 +254,11 @@ async function openEditor(src?: BookSourceMeta, newType?: 'novel' | 'comic' | 'v
       editorLoading.value = false;
     }
   } else {
-    editorTitle.value = '新建书源';
-    editorFile.value = '';
-    editorSourceDir.value = '';
+    editorTitle.value = "新建书源";
+    editorFile.value = "";
+    editorSourceDir.value = "";
     editorLoading.value = false;
-    editorContent.value = newType === 'video' ? newVideoSourceTemplate() : newBookSourceTemplate();
+    editorContent.value = newType === "video" ? newVideoSourceTemplate() : newBookSourceTemplate();
     editorOpenKey.value += 1;
     showEditor.value = true;
   }
@@ -250,24 +266,24 @@ async function openEditor(src?: BookSourceMeta, newType?: 'novel' | 'comic' | 'v
 
 async function saveEditor() {
   if (editorLoading.value) {
-    message.warning('书源仍在读取中，请稍后再保存');
+    message.warning("书源仍在读取中，请稍后再保存");
     return;
   }
   if (editorLoadError.value) {
-    message.warning('书源读取失败，无法保存');
+    message.warning("书源读取失败，无法保存");
     return;
   }
   if (!editorFile.value) {
     const match = editorContent.value.match(/@name\s+(.+)/);
-    const name = match?.[1]?.trim() || '未命名书源';
+    const name = match?.[1]?.trim() || "未命名书源";
     editorFile.value = toSafeFileName(name);
   }
   editorSaving.value = true;
   try {
     await saveBookSource(editorFile.value, editorContent.value, editorSourceDir.value || undefined);
-    message.success('已保存');
+    message.success("已保存");
     showEditor.value = false;
-    emits('reload');
+    emits("reload");
   } catch (e: unknown) {
     message.error(`保存失败: ${e instanceof Error ? e.message : String(e)}`);
   } finally {
@@ -277,7 +293,7 @@ async function saveEditor() {
 
 async function openEditorInVscode() {
   if (!editorFile.value) {
-    message.warning('请先保存书源，再用 VS Code 打开');
+    message.warning("请先保存书源，再用 VS Code 打开");
     return;
   }
   try {
@@ -289,7 +305,7 @@ async function openEditorInVscode() {
 
 async function openEditorExternal() {
   if (!editorFile.value) {
-    message.warning('请先保存书源，再用外部编辑器打开');
+    message.warning("请先保存书源，再用外部编辑器打开");
     return;
   }
   try {
@@ -300,13 +316,13 @@ async function openEditorExternal() {
 }
 
 function importFromFile() {
-  const input = document.createElement('input');
-  input.type = 'file';
+  const input = document.createElement("input");
+  input.type = "file";
   // Android 不识别 .js 扩展名过滤（会灰化文件），改用 MIME 类型；
   // text/* 兼容 text/javascript / text/plain 等，确保 Android 文件管理器可选 .js 文件
-  input.accept = 'text/javascript,application/javascript,text/plain,.js,application/json,.json';
+  input.accept = "text/javascript,application/javascript,text/plain,.js,application/json,.json";
   input.multiple = true;
-  input.addEventListener('change', async () => {
+  input.addEventListener("change", async () => {
     if (!input.files?.length) {
       return;
     }
@@ -316,14 +332,14 @@ function importFromFile() {
     for (const file of files) {
       try {
         const text = await file.text();
-        if (file.name.toLowerCase().endsWith('.json')) {
+        if (file.name.toLowerCase().endsWith(".json")) {
           // JSON 批量导入：[{ fileName, content }] 格式
           const arr: Array<{ fileName: string; content: string }> = JSON.parse(text);
           if (!Array.isArray(arr)) {
-            throw new Error('JSON 格式错误，应为数组');
+            throw new Error("JSON 格式错误，应为数组");
           }
           for (const item of arr) {
-            if (typeof item.fileName === 'string' && typeof item.content === 'string') {
+            if (typeof item.fileName === "string" && typeof item.content === "string") {
               await saveBookSource(item.fileName, item.content);
               ok++;
             }
@@ -341,7 +357,7 @@ function importFromFile() {
     }
     if (ok) {
       message.success(`已导入 ${ok} 个书源`);
-      emits('reload');
+      emits("reload");
     }
   });
   input.click();
@@ -350,7 +366,7 @@ function importFromFile() {
 async function exportSources() {
   const sources = props.sources;
   if (!sources.length) {
-    message.warning('没有可导出的书源');
+    message.warning("没有可导出的书源");
     return;
   }
   let ok = 0;
@@ -365,15 +381,15 @@ async function exportSources() {
     }
   }
   if (!items.length) {
-    message.error('书源读取失败，无法导出');
+    message.error("书源读取失败，无法导出");
     return;
   }
   const saved = await saveExportFile({
     defaultName: `booksources-${new Date().toISOString().slice(0, 10)}.json`,
-    mime: 'application/json;charset=utf-8',
+    mime: "application/json;charset=utf-8",
     text: JSON.stringify(items, null, 2),
-    filterName: 'JSON',
-    extensions: ['json'],
+    filterName: "JSON",
+    extensions: ["json"],
   });
   if (saved) {
     message.success(`已导出 ${ok} 个书源`);
@@ -396,15 +412,15 @@ async function onToggle(src: BookSourceMeta) {
 
 function confirmDelete(src: BookSourceMeta) {
   dialog.warning({
-    title: '删除书源',
+    title: "删除书源",
     content: `确认删除「${src.name}」？此操作将删除磁盘文件，不可恢复。`,
-    positiveText: '删除',
-    negativeText: '取消',
+    positiveText: "删除",
+    negativeText: "取消",
     onPositiveClick: async () => {
       try {
         await deleteBookSource(src.fileName, src.sourceDir);
-        emits('reload');
-        message.success('已删除');
+        emits("reload");
+        message.success("已删除");
       } catch (e: unknown) {
         message.error(`删除失败: ${e instanceof Error ? e.message : String(e)}`);
       }
@@ -414,9 +430,9 @@ function confirmDelete(src: BookSourceMeta) {
 
 async function reloadAllSources() {
   try {
-    emits('reload');
-    await eventEmit('app:booksource-reload', { scope: 'all' });
-    message.success('已重载所有书源');
+    emits("reload");
+    await eventEmit("app:booksource-reload", { scope: "all" });
+    message.success("已重载所有书源");
   } catch {
     /* ignore */
   }
@@ -425,9 +441,9 @@ async function reloadAllSources() {
 async function reloadSingleSource(src: BookSourceMeta) {
   try {
     bookSourceStore.invalidateCapability(src.fileName);
-    emits('reload');
-    await eventEmit('app:booksource-reload', {
-      scope: 'single',
+    emits("reload");
+    await eventEmit("app:booksource-reload", {
+      scope: "single",
       fileName: src.fileName,
     });
     message.success(`已重载「${src.name}」`);
@@ -443,9 +459,9 @@ async function applySourceUpdate(src: BookSourceMeta) {
   updatingSourceSet.value.add(src.uuid);
   try {
     await bookSourceStore.applyUpdate(src.fileName);
-    emits('reload');
-    await eventEmit('app:booksource-reload', {
-      scope: 'single',
+    emits("reload");
+    await eventEmit("app:booksource-reload", {
+      scope: "single",
       fileName: src.fileName,
     });
     message.success(`已升级「${src.name}」`);
@@ -453,6 +469,35 @@ async function applySourceUpdate(src: BookSourceMeta) {
     message.error(`升级失败: ${e instanceof Error ? e.message : String(e)}`);
   } finally {
     updatingSourceSet.value.delete(src.uuid);
+  }
+}
+
+// ---- 健康检测 ----
+async function testSingleSourceHealth(src: BookSourceMeta) {
+  if (healthBusySet.value.has(src.sourceKey)) return;
+  healthBusySet.value.add(src.sourceKey);
+  try {
+    await testSourceHealth(src, runSearch);
+  } catch {
+    // ignore
+  } finally {
+    healthBusySet.value.delete(src.sourceKey);
+  }
+}
+
+async function testAllSourcesHealth() {
+  if (healthTestingAll.value) return;
+  healthTestingAll.value = true;
+  healthTestingProgress.value = { current: 0, total: props.sources.length };
+  try {
+    await testAllHealth(props.sources, runSearch, (current, total) => {
+      healthTestingProgress.value = { current, total };
+    });
+    message.success(`检测完成`);
+  } catch (e: unknown) {
+    message.error(`检测失败: ${e instanceof Error ? e.message : String(e)}`);
+  } finally {
+    healthTestingAll.value = false;
   }
 }
 
@@ -511,6 +556,19 @@ defineExpose({
           <Search :size="13" />
         </template>
       </n-input>
+      <n-button
+        size="small"
+        quaternary
+        :loading="healthTestingAll"
+        :disabled="healthTestingAll"
+        @click="testAllSourcesHealth"
+      >
+        检测全部<template
+          v-if="healthTestingAll && healthTestingProgress.total > 0"
+        >
+          {{ healthTestingProgress.current }}/{{ healthTestingProgress.total }}</template
+        >
+      </n-button>
       <!-- 统计 -->
       <span class="bv-stat">
         共 {{ filtered.length }} 个书源， 已启用
@@ -534,10 +592,13 @@ defineExpose({
           :delay-override="sourceDelayOverrides.get(src.fileName) ?? 0"
           :update-info="getPendingUpdate(src.uuid)"
           :update-busy="updatingSourceSet.has(src.uuid)"
+          :health-result="getHealthStatus(src.sourceKey)"
+          :health-busy="healthBusySet.has(src.sourceKey)"
           @toggle="onToggle(src)"
           @edit="openEditor(src)"
           @reload="reloadSingleSource(src)"
           @delete="confirmDelete(src)"
+          @test-health="testSingleSourceHealth(src)"
           @navigate-debug="
             emits('navigateTab', 'debug');
             emits('selectDebugSource', src);

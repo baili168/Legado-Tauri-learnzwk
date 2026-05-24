@@ -1,6 +1,6 @@
-import { computed, ref, type ComputedRef, type Ref } from 'vue';
-import type { BookItem } from '@/stores';
-import type { BookSourceMeta } from './useBookSource';
+import { computed, ref, type ComputedRef, type Ref } from "vue";
+import type { BookItem } from "@/stores";
+import type { BookSourceMeta } from "./useBookSource";
 
 interface UseBookDetailDrawerStateOptions {
   sources: Ref<BookSourceMeta[]>;
@@ -9,8 +9,8 @@ interface UseBookDetailDrawerStateOptions {
 
 export function useBookDetailDrawerState(options: UseBookDetailDrawerStateOptions) {
   const showDrawer = ref(false);
-  const drawerBookUrl = ref('');
-  const drawerFileName = ref('');
+  const drawerBookUrl = ref("");
+  const drawerFileName = ref("");
 
   function openDetail(book: BookItem, fileName: string) {
     options.onOpenDetail?.({
@@ -40,7 +40,7 @@ export function useBookDetailDrawerState(options: UseBookDetailDrawerStateOption
 
   const drawerSourceType: ComputedRef<string> = computed(() => {
     const source = options.sources.value.find((item) => item.fileName === drawerFileName.value);
-    return source?.sourceType ?? 'novel';
+    return source?.sourceType ?? "novel";
   });
 
   return {

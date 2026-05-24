@@ -12,8 +12,8 @@
  * - 多引擎支持：支持 web-speech 和本地 Piper 引擎切换。
  */
 
-import { ref, readonly } from 'vue';
-import { invokeWithTimeout } from './useInvoke';
+import { ref, readonly } from "vue";
+import { invokeWithTimeout } from "./useInvoke";
 
 // ── 常量 ─────────────────────────────────────────────────────────────────
 
@@ -34,7 +34,7 @@ const MAX_HISTORY = 8;
 
 // ── 类型 ─────────────────────────────────────────────────────────────────
 
-export type TTSEngine = 'web-speech' | 'piper';
+export type TTSEngine = "web-speech" | "piper";
 
 // ── 类型 ─────────────────────────────────────────────────────────────────
 
@@ -119,7 +119,7 @@ function base64ToBlobUrl(b64: string): string {
   for (let i = 0; i < binary.length; i++) {
     bytes[i] = binary.charCodeAt(i);
   }
-  return URL.createObjectURL(new Blob([bytes], { type: 'audio/mpeg' }));
+  return URL.createObjectURL(new Blob([bytes], { type: "audio/mpeg" }));
 }
 
 // ── 全局单例状态 ─────────────────────────────────────────────────────────
@@ -136,9 +136,9 @@ const error = ref<string | null>(null);
 const currentGlobalIdx = ref(-1);
 
 /** 当前 TTS 引擎 */
-const activeEngine = ref<TTSEngine>('web-speech');
+const activeEngine = ref<TTSEngine>("web-speech");
 /** Piper 音色名称 */
-const piperVoice = ref<string>('');
+const piperVoice = ref<string>("");
 /** Piper 引擎是否可用 */
 const piperAvailable = ref(true);
 
@@ -166,7 +166,7 @@ let loadMoreResolve: (() => void) | null = null;
 // ── speechSynthesis 降级 ─────────────────────────────────────────────────
 
 function cancelSpeechSynthesis(): void {
-  if ('speechSynthesis' in window) {
+  if ("speechSynthesis" in window) {
     window.speechSynthesis.cancel();
   }
 }
@@ -189,9 +189,9 @@ async function synthesizeItem(item: QueueItem): Promise<string | null> {
   const p = (async (): Promise<string | null> => {
     try {
       let b64: string;
-      if (activeEngine.value === 'piper' && piperAvailable.value) {
+      if (activeEngine.value === "piper" && piperAvailable.value) {
         b64 = await invokeWithTimeout<string>(
-          'tts_piper_synthesize',
+          "tts_piper_synthesize",
           {
             text,
             voice: piperVoice.value || opts?.voice,
@@ -201,7 +201,7 @@ async function synthesizeItem(item: QueueItem): Promise<string | null> {
         );
       } else {
         b64 = await invokeWithTimeout<string>(
-          'tts_synthesize',
+          "tts_synthesize",
           {
             text,
             voice: opts?.voice,
@@ -216,12 +216,12 @@ async function synthesizeItem(item: QueueItem): Promise<string | null> {
       blobUrlCache.set(globalIdx, url);
       return url;
     } catch (e) {
-      if (activeEngine.value === 'piper') {
-        console.warn('[TTS] Piper 合成失败，切换降级模式', e);
+      if (activeEngine.value === "piper") {
+        console.warn("[TTS] Piper 合成失败，切换降级模式", e);
         piperAvailable.value = false;
         speechSynthesisFallback = true;
       } else {
-        console.warn('[TTS] 后端合成失败，切换降级模式', e);
+        console.warn("[TTS] 后端合成失败，切换降级模式", e);
         speechSynthesisFallback = true;
       }
       return null;
@@ -365,7 +365,7 @@ async function playNext(): Promise<void> {
   audio.onerror = () => {
     currentItem = null;
     audioEl = null;
-    error.value = '音频播放出错';
+    error.value = "音频播放出错";
     if (!stopped && isPlaying.value) {
       void playNext();
     }
@@ -516,7 +516,7 @@ function setEngine(engine: TTSEngine): void {
     stop();
   }
   activeEngine.value = engine;
-  if (engine !== 'piper') {
+  if (engine !== "piper") {
     piperAvailable.value = true;
   }
   if (wasPlaying) {

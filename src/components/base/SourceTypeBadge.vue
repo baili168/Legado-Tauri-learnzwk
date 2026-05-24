@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Film, Image, Music, BookOpen } from 'lucide-vue-next';
-import { computed } from 'vue';
+import { Film, Image, Music, BookOpen } from "lucide-vue-next";
+import { computed } from "vue";
 
 const props = withDefaults(
   defineProps<{
@@ -9,7 +9,7 @@ const props = withDefaults(
     opaque?: boolean;
     size?: number;
   }>(),
-  { sourceType: '', opaque: false, size: 13 },
+  { sourceType: "", opaque: false, size: 13 },
 );
 
 const ICON_MAP: Record<string, typeof Film> = {
@@ -20,22 +20,22 @@ const ICON_MAP: Record<string, typeof Film> = {
 };
 
 const TITLE_MAP: Record<string, string> = {
-  comic: '漫画',
-  video: '视频',
-  music: '音乐',
-  novel: '小说',
+  comic: "漫画",
+  video: "视频",
+  music: "音乐",
+  novel: "小说",
 };
 
 // novel 是默认类型，不显示
 const icon = computed(() => {
   const t = props.sourceType;
-  if (!t || t === 'novel') {
+  if (!t || t === "novel") {
     return null;
   }
   return ICON_MAP[t] ?? null;
 });
 
-const title = computed(() => TITLE_MAP[props.sourceType ?? ''] ?? props.sourceType);
+const title = computed(() => TITLE_MAP[props.sourceType ?? ""] ?? props.sourceType);
 </script>
 
 <template>

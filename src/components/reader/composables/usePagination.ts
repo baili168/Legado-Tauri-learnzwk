@@ -18,9 +18,9 @@
  *   每次调用 paginate 递增 cancelToken；
  *   后台任务在每个 await 点检查令牌，不一致则安全退出。
  */
-import { layoutNextLine, prepareWithSegments, type LayoutCursor } from '@chenglou/pretext';
-import { ref, nextTick } from 'vue';
-import type { PaginationEngine, ReaderPagePadding, ReaderTypography } from '../types';
+import { layoutNextLine, prepareWithSegments, type LayoutCursor } from "@chenglou/pretext";
+import { ref, nextTick } from "vue";
+import type { PaginationEngine, ReaderPagePadding, ReaderTypography } from "../types";
 
 export interface PaginationResult {
   pages: string[];
@@ -52,7 +52,7 @@ export interface PageMeta {
   paragraphCharOffset: number;
 }
 
-type PaginationBlockKind = 'title' | 'paragraph';
+type PaginationBlockKind = "title" | "paragraph";
 
 interface PaginationBlockInput {
   kind: PaginationBlockKind;
@@ -62,7 +62,7 @@ interface PaginationBlockInput {
   leadingGapPx: number;
   trailingGapPx: number;
   firstLineIndentPx: number;
-  textAlign: ReaderTypography['textAlign'];
+  textAlign: ReaderTypography["textAlign"];
   /** 字间距 px，传给 Pretext 引擎的 letterSpacing 选项 */
   letterSpacingPx: number;
   /** 该 block 在原始全文中的字符偏移起始 */
@@ -75,7 +75,7 @@ interface PaginationResolvedLine {
   text: string;
   indentPx: number;
   lineHeightPx: number;
-  textAlign: 'left' | 'center' | 'right' | 'justify';
+  textAlign: "left" | "center" | "right" | "justify";
   justify: boolean;
   isTerminal: boolean;
   /** 该行首字在 block 原始文本中的字符偏移 */
@@ -90,12 +90,12 @@ interface PaginationResolvedBlock {
 }
 
 interface PaginationPageGapItem {
-  kind: 'gap';
+  kind: "gap";
   sizePx: number;
 }
 
 interface PaginationPageBlockItem {
-  kind: 'block';
+  kind: "block";
   blockKind: PaginationBlockKind;
   lines: PaginationResolvedLine[];
 }
@@ -111,7 +111,7 @@ interface PaginationPageState {
 // ─── 工具函数 ──────────────────────────────────────────────────────────────
 
 function normalizePadding(padding: number | ReaderPagePadding): ReaderPagePadding {
-  if (typeof padding === 'number') {
+  if (typeof padding === "number") {
     return {
       top: padding,
       right: padding,
@@ -130,7 +130,7 @@ function formatPx(value: number): string {
 function buildCanvasFont(
   typography: ReaderTypography,
   overrides: Partial<
-    Pick<ReaderTypography, 'fontSize' | 'fontWeight' | 'fontStyle' | 'fontVariant'>
+    Pick<ReaderTypography, "fontSize" | "fontWeight" | "fontStyle" | "fontVariant">
   > = {},
 ): string {
   const fontStyle = overrides.fontStyle ?? typography.fontStyle;
@@ -162,17 +162,17 @@ function applyTypographyToEl(
   el.style.textDecoration = typography.textDecoration;
   el.style.textShadow = typography.textShadow;
   el.style.cssText += `;-webkit-text-stroke-width:${typography.textStrokeWidth}px;-webkit-text-stroke-color:${typography.textStrokeColor}`;
-  el.style.textRendering = 'optimizeLegibility';
+  el.style.textRendering = "optimizeLegibility";
   el.style.cssText += `;-webkit-font-smoothing:antialiased`;
 }
 function extractPrefixText(prefixHtml: string): string {
   if (!prefixHtml.trim()) {
-    return '';
+    return "";
   }
 
-  const probe = document.createElement('div');
+  const probe = document.createElement("div");
   probe.innerHTML = prefixHtml;
-  return probe.textContent?.trim() ?? '';
+  return probe.textContent?.trim() ?? "";
 }
 
 /**
@@ -181,7 +181,7 @@ function extractPrefixText(prefixHtml: string): string {
  * 仅用于 Pretext 引擎路径。
  */
 function protectStickyPunct(text: string): string {
-  return text.replace(/(…{2,}|—{2,})/g, (match) => [...match].join('\u2060'));
+  return text.replace(/(…{2,}|—{2,})/g, (match) => [...match].join("\u2060"));
 }
 
 function splitParagraphs(content: string): string[] {
@@ -198,23 +198,23 @@ function wrapRawPageHtml(contentHtml: string): string {
 function renderManualPage(items: PaginationPageItem[]): string {
   const body = items
     .map((item) => {
-      if (item.kind === 'gap') {
+      if (item.kind === "gap") {
         return `<div class="reader-gap" style="height:${formatPx(item.sizePx)}"></div>`;
       }
 
       const blockClass =
-        item.blockKind === 'title'
-          ? 'reader-block reader-block--title reader-chapter-title'
-          : 'reader-block reader-block--paragraph';
+        item.blockKind === "title"
+          ? "reader-block reader-block--title reader-chapter-title"
+          : "reader-block reader-block--paragraph";
 
       const lines = item.lines
         .map((line) => {
-          const classes = ['reader-line'];
+          const classes = ["reader-line"];
           if (line.justify) {
-            classes.push('reader-line--justify');
+            classes.push("reader-line--justify");
           }
           if (line.isTerminal) {
-            classes.push('reader-line--terminal');
+            classes.push("reader-line--terminal");
           }
 
           const styles = [
@@ -226,13 +226,13 @@ function renderManualPage(items: PaginationPageItem[]): string {
             styles.push(`padding-inline-start:${formatPx(line.indentPx)}`);
           }
 
-          return `<div class="${classes.join(' ')}" style="${styles.join(';')}">${escapeHtml(line.text.replace(/\u2060/g, ''))}</div>`;
+          return `<div class="${classes.join(" ")}" style="${styles.join(";")}">${escapeHtml(line.text.replace(/\u2060/g, ""))}</div>`;
         })
-        .join('');
+        .join("");
 
       return `<div class="${blockClass}">${lines}</div>`;
     })
-    .join('');
+    .join("");
 
   return `<div class="reader-page-fragments reader-page-fragments--manual-lines">${body}</div>`;
 }
@@ -251,12 +251,12 @@ function pushGapItem(page: PaginationPageState, sizePx: number) {
   }
 
   const last = page.items[page.items.length - 1];
-  if (last?.kind === 'gap') {
+  if (last?.kind === "gap") {
     last.sizePx += sizePx;
     return;
   }
 
-  page.items.push({ kind: 'gap', sizePx });
+  page.items.push({ kind: "gap", sizePx });
 }
 
 function pushBlockItem(
@@ -269,7 +269,7 @@ function pushBlockItem(
   }
 
   page.items.push({
-    kind: 'block',
+    kind: "block",
     blockKind,
     lines: [...lines],
   });
@@ -287,14 +287,14 @@ function resolveHorizontalBlocks(
 
   if (titleText) {
     blocks.push({
-      kind: 'title',
+      kind: "title",
       text: titleText,
       font: buildCanvasFont(typography, { fontSize: titleBaseFontSize, fontWeight: 700 }),
       lineHeightPx: titleBaseFontSize * 1.5,
       leadingGapPx: titleBaseFontSize * 0.5,
       trailingGapPx: titleBaseFontSize * 1.5,
       firstLineIndentPx: 0,
-      textAlign: 'left',
+      textAlign: "left",
       letterSpacingPx: typography.letterSpacing,
       charOffsetInContent: -1,
       paragraphIndex: -1,
@@ -308,7 +308,7 @@ function resolveHorizontalBlocks(
     const pos = content.indexOf(paragraph, searchFrom);
     const charOffset = pos >= 0 ? pos : searchFrom;
     blocks.push({
-      kind: 'paragraph',
+      kind: "paragraph",
       text: paragraph,
       font: buildCanvasFont(typography),
       lineHeightPx: typography.fontSize * typography.lineHeight,
@@ -332,49 +332,49 @@ function resolveHorizontalBlocks(
  * 当第二个 `…`/`—` 落在行首时，会被吸回上一行，保持双符号同行。
  */
 const LINE_START_PROHIBITED = new Set<string>([
-  '，',
-  '。',
-  '！',
-  '？',
-  '；',
-  '：',
-  '、',
-  '）',
-  '〕',
-  '】',
-  '〉',
-  '》',
-  '」',
-  '』',
-  '〗',
-  '〙',
-  '\u201D' /* " */,
-  '\u2019' /* ' */,
-  '…',
-  '—',
-  '·',
-  ')',
-  ']',
-  '}',
+  "，",
+  "。",
+  "！",
+  "？",
+  "；",
+  "：",
+  "、",
+  "）",
+  "〕",
+  "】",
+  "〉",
+  "》",
+  "」",
+  "』",
+  "〗",
+  "〙",
+  "\u201D" /* " */,
+  "\u2019" /* ' */,
+  "…",
+  "—",
+  "·",
+  ")",
+  "]",
+  "}",
 ]);
 
 /**
  * 行尾禁则：这些字符不应出现在行的结尾。
  */
 const LINE_END_PROHIBITED = new Set<string>([
-  '（',
-  '〔',
-  '【',
-  '〈',
-  '《',
-  '「',
-  '『',
-  '〘',
-  '\u201C' /* " */,
-  '\u2018' /* ' */,
-  '(',
-  '[',
-  '{',
+  "（",
+  "〔",
+  "【",
+  "〈",
+  "《",
+  "「",
+  "『",
+  "〘",
+  "\u201C" /* " */,
+  "\u2018" /* ' */,
+  "(",
+  "[",
+  "{",
 ]);
 
 /**
@@ -387,7 +387,7 @@ const LINE_END_PROHIBITED = new Set<string>([
  */
 function applyKinsoku(
   lines: PaginationResolvedLine[],
-  textAlign: ReaderTypography['textAlign'],
+  textAlign: ReaderTypography["textAlign"],
 ): PaginationResolvedLine[] {
   if (lines.length <= 1) {
     return lines;
@@ -431,13 +431,13 @@ function applyKinsoku(
   }
 
   // 修复 isTerminal / justify / textAlign 标志
-  const isJustify = textAlign === 'justify';
+  const isJustify = textAlign === "justify";
   for (let i = 0; i < filtered.length; i++) {
     const isLast = i === filtered.length - 1;
     filtered[i].isTerminal = isLast;
     filtered[i].justify = isJustify && !isLast;
     if (isJustify) {
-      filtered[i].textAlign = isLast ? 'left' : 'justify';
+      filtered[i].textAlign = isLast ? "left" : "justify";
     }
   }
 
@@ -451,14 +451,14 @@ function applyKinsoku(
  * 返回该层 DOM 元素，调用方负责在使用完毕后 remove()。
  */
 function createMeasureLayer(container: HTMLElement): HTMLDivElement {
-  const layer = document.createElement('div');
-  layer.style.position = 'absolute';
-  layer.style.top = '0';
-  layer.style.left = '0';
-  layer.style.visibility = 'hidden';
-  layer.style.pointerEvents = 'none';
-  layer.style.overflow = 'hidden';
-  layer.style.zIndex = '-9999';
+  const layer = document.createElement("div");
+  layer.style.position = "absolute";
+  layer.style.top = "0";
+  layer.style.left = "0";
+  layer.style.visibility = "hidden";
+  layer.style.pointerEvents = "none";
+  layer.style.overflow = "hidden";
+  layer.style.zIndex = "-9999";
   container.appendChild(layer);
   return layer;
 }
@@ -515,28 +515,28 @@ function resolveBlockDOM(
     };
   }
 
-  const isTitle = block.kind === 'title';
+  const isTitle = block.kind === "title";
   const titleBaseFontSize = typography.fontSize + 4;
 
-  const div = document.createElement('div');
-  div.style.width = availW + 'px';
-  div.style.boxSizing = 'border-box';
-  div.style.whiteSpace = 'normal';
-  div.style.wordBreak = 'break-all';
-  div.style.overflowWrap = 'break-word';
-  div.style.margin = '0';
-  div.style.padding = '0';
-  div.style.border = 'none';
+  const div = document.createElement("div");
+  div.style.width = availW + "px";
+  div.style.boxSizing = "border-box";
+  div.style.whiteSpace = "normal";
+  div.style.wordBreak = "break-all";
+  div.style.overflowWrap = "break-word";
+  div.style.margin = "0";
+  div.style.padding = "0";
+  div.style.border = "none";
 
   if (isTitle) {
     applyTypographyToEl(div, typography, { fontSize: titleBaseFontSize, fontWeight: 700 });
-    div.style.textAlign = 'left';
-    div.style.textIndent = '0';
+    div.style.textAlign = "left";
+    div.style.textIndent = "0";
   } else {
     applyTypographyToEl(div, typography);
     div.style.textAlign = block.textAlign;
     if (block.firstLineIndentPx > 0) {
-      div.style.textIndent = block.firstLineIndentPx + 'px';
+      div.style.textIndent = block.firstLineIndentPx + "px";
     }
   }
 
@@ -570,13 +570,13 @@ function resolveBlockDOM(
       text: block.text,
       indentPx: block.firstLineIndentPx,
       lineHeightPx,
-      textAlign: block.textAlign === 'justify' ? 'left' : block.textAlign,
+      textAlign: block.textAlign === "justify" ? "left" : block.textAlign,
       justify: false,
       isTerminal: true,
       charOffsetInBlock: 0,
     });
   } else {
-    const isJustify = block.textAlign === 'justify';
+    const isJustify = block.textAlign === "justify";
     for (let i = 0; i < lineOffsets.length; i++) {
       const start = lineOffsets[i].charOffset;
       const end = i + 1 < lineOffsets.length ? lineOffsets[i + 1].charOffset : block.text.length;
@@ -588,7 +588,7 @@ function resolveBlockDOM(
         text: lineText,
         indentPx,
         lineHeightPx,
-        textAlign: isJustify ? (isTerminal ? 'left' : 'justify') : block.textAlign,
+        textAlign: isJustify ? (isTerminal ? "left" : "justify") : block.textAlign,
         justify: isJustify && !isTerminal,
         isTerminal,
         charOffsetInBlock: start,
@@ -618,7 +618,7 @@ function resolveBlockPretext(block: PaginationBlockInput, availW: number): Pagin
   }
 
   const prepared = prepareWithSegments(protectStickyPunct(block.text), block.font, {
-    wordBreak: 'keep-all',
+    wordBreak: "keep-all",
     letterSpacing: block.letterSpacingPx > 0 ? block.letterSpacingPx : undefined,
   });
   const firstLineIndentPx = Math.min(block.firstLineIndentPx, Math.max(0, availW - 1));
@@ -638,12 +638,12 @@ function resolveBlockPretext(block: PaginationBlockInput, availW: number): Pagin
       text: line.text,
       indentPx,
       lineHeightPx: block.lineHeightPx,
-      textAlign: block.textAlign === 'justify' ? 'left' : block.textAlign,
+      textAlign: block.textAlign === "justify" ? "left" : block.textAlign,
       justify: false,
       isTerminal: false,
       charOffsetInBlock: charConsumed,
     });
-    charConsumed += line.text.replace(/\u2060/g, '').length;
+    charConsumed += line.text.replace(/\u2060/g, "").length;
     cursor = line.end;
     isFirstLine = false;
   }
@@ -651,9 +651,9 @@ function resolveBlockPretext(block: PaginationBlockInput, availW: number): Pagin
   for (let index = 0; index < lines.length; index++) {
     const isTerminal = index === lines.length - 1;
     lines[index].isTerminal = isTerminal;
-    lines[index].justify = block.textAlign === 'justify' && !isTerminal;
-    if (block.textAlign === 'justify' && !isTerminal) {
-      lines[index].textAlign = 'justify';
+    lines[index].justify = block.textAlign === "justify" && !isTerminal;
+    if (block.textAlign === "justify" && !isTerminal) {
+      lines[index].textAlign = "justify";
     }
   }
 
@@ -750,8 +750,8 @@ export function usePagination() {
     container: HTMLElement,
     typography: ReaderTypography,
     padding: number | ReaderPagePadding,
-    initialPage: 'first' | 'last' = 'first',
-    prefixHtml = '',
+    initialPage: "first" | "last" = "first",
+    prefixHtml = "",
     /** 用于恢复阅读位置的锚点，优先于 initialPage */
     anchor?: ReadingAnchor,
     /**
@@ -760,7 +760,7 @@ export function usePagination() {
      * - 'dom'     真实 DOM 渲染测量，天然支持系统缩放，兼容性最佳，部分旧版 Android 可能更准
      * 旧值 'auto'/'simple' 向后兼容，均视为 'pretext'
      */
-    paginationEngine: PaginationEngine = 'pretext',
+    paginationEngine: PaginationEngine = "pretext",
   ) {
     const myToken = ++cancelToken;
     isPaginating.value = true;
@@ -778,7 +778,7 @@ export function usePagination() {
     const availW = cW - resolvedPadding.left - resolvedPadding.right;
     const availH = cH - resolvedPadding.top - resolvedPadding.bottom;
     if (availW <= 0 || availH <= 0) {
-      pages.value = [wrapRawPageHtml('')];
+      pages.value = [wrapRawPageHtml("")];
       totalPages.value = 1;
       currentPage.value = 0;
       isPaginating.value = false;
@@ -786,17 +786,17 @@ export function usePagination() {
     }
 
     // 向后兼容旧存储值 'auto'/'simple'，默认为 'pretext'
-    const effectiveEngine: 'dom' | 'pretext' = paginationEngine === 'dom' ? 'dom' : 'pretext';
+    const effectiveEngine: "dom" | "pretext" = paginationEngine === "dom" ? "dom" : "pretext";
 
     const blocks = resolveHorizontalBlocks(content, prefixHtml, typography);
 
     // DOM 引擎：创建复用的测量层，所有 block 共享，最后统一清理
     let measureLayer: HTMLDivElement | null = null;
-    if (effectiveEngine === 'dom') {
+    if (effectiveEngine === "dom") {
       measureLayer = createMeasureLayer(container);
     }
     if (blocks.length === 0) {
-      pages.value = [wrapRawPageHtml('')];
+      pages.value = [wrapRawPageHtml("")];
       pageMetas.value = [{ charOffset: 0, paragraphIndex: 0, paragraphCharOffset: 0 }];
       totalPages.value = 1;
       currentPage.value = 0;
@@ -815,7 +815,7 @@ export function usePagination() {
     } | null = null;
     let publishedCount = 0;
     const useAnchor = anchor !== undefined;
-    const deferForLast = !useAnchor && initialPage === 'last';
+    const deferForLast = !useAnchor && initialPage === "last";
     let firstVisiblePublished = false;
 
     // ── 锚点强制断页 ──────────────────────────────────────────────
@@ -888,7 +888,7 @@ export function usePagination() {
     for (let blockIndex = 0; blockIndex < blocks.length; blockIndex++) {
       const inputBlock = blocks[blockIndex];
       const block =
-        effectiveEngine === 'dom'
+        effectiveEngine === "dom"
           ? resolveBlockDOM(inputBlock, measureLayer!, availW, typography)
           : resolveBlockPretext(inputBlock, availW);
       if (block.lines.length === 0) {
@@ -978,7 +978,7 @@ export function usePagination() {
     }
 
     if (builtPages.length === 0) {
-      builtPages.push(wrapRawPageHtml(''));
+      builtPages.push(wrapRawPageHtml(""));
       builtMetas.push({ charOffset: 0, paragraphIndex: 0, paragraphCharOffset: 0 });
     }
 
@@ -992,7 +992,7 @@ export function usePagination() {
             ? Math.min(anchorPageIndex, totalPages.value - 1)
             : findPageByAnchor(anchor, builtMetas, builtPages.length);
       } else {
-        currentPage.value = initialPage === 'last' ? Math.max(0, totalPages.value - 1) : 0;
+        currentPage.value = initialPage === "last" ? Math.max(0, totalPages.value - 1) : 0;
       }
       isPaginating.value = false;
       return;
@@ -1064,8 +1064,8 @@ function yieldToMain(): Promise<void> {
 
 function escapeHtml(text: string): string {
   return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }

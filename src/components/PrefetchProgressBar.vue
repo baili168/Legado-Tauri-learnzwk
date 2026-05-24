@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { RefreshCw, X } from 'lucide-vue-next';
-import { storeToRefs } from 'pinia';
-import { computed } from 'vue';
-import { usePrefetchStore } from '@/stores';
+import { RefreshCw, X } from "lucide-vue-next";
+import { storeToRefs } from "pinia";
+import { computed } from "vue";
+import { usePrefetchStore } from "@/stores";
 
 const prefetchStore = usePrefetchStore();
 const { manualRunning, manualProgress, manualBookName } = storeToRefs(prefetchStore);

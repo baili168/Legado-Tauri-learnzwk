@@ -70,21 +70,12 @@ export async function listBookSources(): Promise<BookSourceMeta[]> {
  * 流式列举书源：立即返回，后台通过 `booksource:batch` 事件分批推送。
  * 调用方需在调用本函数前监听 `booksource:batch` 事件，并通过 `requestId` 过滤。
  */
-export async function listBookSourcesStreaming(
-  requestId: string,
-): Promise<void> {
-  return invokeWithTimeout<void>(
-    "booksource_list_streaming",
-    { requestId },
-    10000,
-  );
+export async function listBookSourcesStreaming(requestId: string): Promise<void> {
+  return invokeWithTimeout<void>("booksource_list_streaming", { requestId }, 10000);
 }
 
 /** 读取单个书源 JS 内容 */
-export async function readBookSource(
-  fileName: string,
-  sourceDir?: string,
-): Promise<string> {
+export async function readBookSource(fileName: string, sourceDir?: string): Promise<string> {
   return invokeWithTimeout<string>(
     "booksource_read",
     { fileName, sourceDir: sourceDir ?? null },
@@ -106,10 +97,7 @@ export async function saveBookSource(
 }
 
 /** 删除书源文件 */
-export async function deleteBookSource(
-  fileName: string,
-  sourceDir?: string,
-): Promise<void> {
+export async function deleteBookSource(fileName: string, sourceDir?: string): Promise<void> {
   return invokeWithTimeout<void>(
     "booksource_delete",
     { fileName, sourceDir: sourceDir ?? null },
@@ -131,10 +119,7 @@ export async function toggleBookSource(
 }
 
 /** 用 VS Code 打开指定书源文件 */
-export async function openInVscode(
-  fileName: string,
-  sourceDir?: string,
-): Promise<void> {
+export async function openInVscode(fileName: string, sourceDir?: string): Promise<void> {
   return invokeWithTimeout<void>(
     "booksource_open_in_vscode",
     { fileName, sourceDir: sourceDir ?? null },
@@ -146,18 +131,15 @@ export async function openInVscode(
  * 在 Android 系统默认编辑器中打开书源文件（通过 FileProvider + ACTION_EDIT Intent）。
  * 外部编辑器保存后，文件监听器会自动检测变更并刷新编辑器内容。
  */
-export async function openInExternalEditor(
-  fileName: string,
-  sourceDir?: string,
-): Promise<void> {
+export async function openInExternalEditor(fileName: string, sourceDir?: string): Promise<void> {
   const path = await invokeWithTimeout<string>(
     "booksource_resolve_path",
     { fileName, sourceDir: sourceDir ?? null },
     10000,
   );
-  const bridge = (window as unknown as Record<string, unknown>)[
-    "LegadoAndroidInput"
-  ] as { openFileInEditor(p: string): void } | undefined;
+  const bridge = (window as unknown as Record<string, unknown>)["LegadoAndroidInput"] as
+    | { openFileInEditor(p: string): void }
+    | undefined;
   if (!bridge?.openFileInEditor) {
     throw new Error("外部编辑器功能仅在 Android 上可用");
   }
@@ -169,10 +151,7 @@ export async function openInExternalEditor(
  * - entryCode 为空时：返回书源内定义的所有顶层函数列表。
  * - entryCode 非空时：在书源作用域内执行该代码，返回结果字符串。
  */
-export async function evalBookSource(
-  fileName: string,
-  entryCode?: string,
-): Promise<string> {
+export async function evalBookSource(fileName: string, entryCode?: string): Promise<string> {
   return invokeWithTimeout<string>(
     "booksource_eval",
     { fileName, entryCode: entryCode ?? null },
@@ -196,11 +175,7 @@ export async function exploreBookSource(
   category: string,
   page = 1,
 ): Promise<unknown> {
-  return invokeWithTimeout(
-    "booksource_explore",
-    { fileName, page, category },
-    35000,
-  );
+  return invokeWithTimeout("booksource_explore", { fileName, page, category }, 35000);
 }
 
 // ── 脚本配置持久化（对应 Rust script_config 命令） ────────────────────────
@@ -234,24 +209,13 @@ export async function configWrite(
   value: ScriptConfigJsonValue,
 ): Promise<void> {
   if (typeof value === "string") {
-    return invokeWithTimeout<void>(
-      "config_write",
-      { scope, key, value },
-      10000,
-    );
+    return invokeWithTimeout<void>("config_write", { scope, key, value }, 10000);
   }
-  return invokeWithTimeout<void>(
-    "config_write_json",
-    { scope, key, value },
-    10000,
-  );
+  return invokeWithTimeout<void>("config_write_json", { scope, key, value }, 10000);
 }
 
 /** 删除指定配置键 */
-export async function configDeleteKey(
-  scope: string,
-  key: string,
-): Promise<void> {
+export async function configDeleteKey(scope: string, key: string): Promise<void> {
   return invokeWithTimeout<void>("config_delete_key", { scope, key }, 10000);
 }
 
@@ -261,9 +225,10 @@ export async function configReadAll(scope: string): Promise<string> {
 }
 
 /** 读取脚本配置的原生 JSON 值；键不存在时返回 null */
-export async function configReadJson<
-  T extends ScriptConfigJsonValue = ScriptConfigJsonValue,
->(scope: string, key: string): Promise<T | null> {
+export async function configReadJson<T extends ScriptConfigJsonValue = ScriptConfigJsonValue>(
+  scope: string,
+  key: string,
+): Promise<T | null> {
   return invokeWithTimeout<T | null>("config_read_json", { scope, key }, 10000);
 }
 
@@ -280,15 +245,8 @@ export async function configClear(scope: string): Promise<void> {
  * @param key   配置键名
  * @returns     Uint8Array，键不存在时返回空数组
  */
-export async function configReadBytes(
-  scope: string,
-  key: string,
-): Promise<Uint8Array> {
-  const arr = await invokeWithTimeout<number[]>(
-    "config_read_bytes",
-    { scope, key },
-    10000,
-  );
+export async function configReadBytes(scope: string, key: string): Promise<Uint8Array> {
+  const arr = await invokeWithTimeout<number[]>("config_read_bytes", { scope, key }, 10000);
   return new Uint8Array(arr);
 }
 
@@ -396,11 +354,7 @@ export async function comicCacheClearChapter(
  * @returns 释放的字节数
  */
 export async function comicCacheClear(fileName?: string): Promise<number> {
-  return invokeWithTimeout<number>(
-    "comic_cache_clear",
-    { fileName: fileName ?? null },
-    30000,
-  );
+  return invokeWithTimeout<number>("comic_cache_clear", { fileName: fileName ?? null }, 30000);
 }
 
 /**
@@ -423,25 +377,15 @@ export interface UpdateCheckResult {
 /**
  * 检测单个书源是否有更新（需要书源设置了 @updateUrl）
  */
-export async function checkBookSourceUpdate(
-  fileName: string,
-): Promise<UpdateCheckResult> {
-  return invokeWithTimeout<UpdateCheckResult>(
-    "booksource_check_update",
-    { fileName },
-    20000,
-  );
+export async function checkBookSourceUpdate(fileName: string): Promise<UpdateCheckResult> {
+  return invokeWithTimeout<UpdateCheckResult>("booksource_check_update", { fileName }, 20000);
 }
 
 /**
  * 从 @updateUrl 拉取最新内容并覆盖本地文件
  */
 export async function applyBookSourceUpdate(fileName: string): Promise<void> {
-  return invokeWithTimeout<void>(
-    "booksource_apply_update",
-    { fileName },
-    20000,
-  );
+  return invokeWithTimeout<void>("booksource_apply_update", { fileName }, 20000);
 }
 
 /** 将任意字符串转为合法 JS 文件名 */
@@ -668,16 +612,11 @@ export interface RepoManifest {
   sources: RepoSourceInfo[];
 }
 
-export function getBookSourceIdentity(source: {
-  uuid?: string | null;
-  name: string;
-}): string {
+export function getBookSourceIdentity(source: { uuid?: string | null; name: string }): string {
   return source.uuid?.trim() ?? source.name.trim();
 }
 
-export function hasExplicitBookSourceUuid(source: {
-  uuid?: string | null;
-}): boolean {
+export function hasExplicitBookSourceUuid(source: { uuid?: string | null }): boolean {
   return !!source.uuid?.trim();
 }
 

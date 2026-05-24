@@ -6,10 +6,10 @@
  * 避免 `fluid: true` 的 intrinsic padding-top 重绘开销。
  */
 
-import type Hls from 'hls.js';
-import type VideoJs from 'video.js';
-import type { IVideoPlayer, VideoPlayerEvent, VideoSource } from '../types';
-import { useAppConfig } from '../../../../composables/useAppConfig';
+import type Hls from "hls.js";
+import type VideoJs from "video.js";
+import type { IVideoPlayer, VideoPlayerEvent, VideoSource } from "../types";
+import { useAppConfig } from "../../../../composables/useAppConfig";
 
 export class VideojsAdapter implements IVideoPlayer {
   private player: ReturnType<typeof VideoJs> | null = null;
@@ -18,9 +18,9 @@ export class VideojsAdapter implements IVideoPlayer {
 
   async mount(container: HTMLElement, source: VideoSource): Promise<void> {
     // 创建 video 元素
-    this.videoEl = document.createElement('video');
-    this.videoEl.className = 'video-js vjs-big-play-centered vjs-fluid';
-    this.videoEl.setAttribute('playsinline', '');
+    this.videoEl = document.createElement("video");
+    this.videoEl.className = "video-js vjs-big-play-centered vjs-fluid";
+    this.videoEl.setAttribute("playsinline", "");
     container.appendChild(this.videoEl);
 
     // 等待播放器初始化完成（含动态 import）
@@ -28,9 +28,9 @@ export class VideojsAdapter implements IVideoPlayer {
   }
 
   private async initPlayer(source: VideoSource): Promise<void> {
-    const [videojsModule, hlsModule] = await Promise.all([import('video.js'), import('hls.js')]);
+    const [videojsModule, hlsModule] = await Promise.all([import("video.js"), import("hls.js")]);
     // video.js CSS
-    await import('video.js/dist/video-js.css');
+    await import("video.js/dist/video-js.css");
 
     const videojs = videojsModule.default;
     const Hls = hlsModule.default;
@@ -44,7 +44,7 @@ export class VideojsAdapter implements IVideoPlayer {
     this.player = videojs(this.videoEl, {
       controls: true,
       autoplay: false,
-      preload: videoVjsPreload.value as 'auto' | 'metadata' | 'none',
+      preload: videoVjsPreload.value as "auto" | "metadata" | "none",
       // fill 填满父容器（父容器已通过 aspect-ratio 固定宽高比，不需要 fluid 的 padding-top 技巧）
       fill: true,
       playbackRates: [0.5, 0.75, 1, 1.25, 1.5, 2, 3],
@@ -61,9 +61,9 @@ export class VideojsAdapter implements IVideoPlayer {
       for (const sub of source.subtitles) {
         this.player.addRemoteTextTrack(
           {
-            kind: 'subtitles',
+            kind: "subtitles",
             label: sub.label,
-            srclang: sub.srclang ?? 'zh',
+            srclang: sub.srclang ?? "zh",
             src: sub.url,
             default: sub.default ?? false,
           },
@@ -73,7 +73,7 @@ export class VideojsAdapter implements IVideoPlayer {
     }
 
     // HLS 流使用 hls.js（WebView2 不原生支持 HLS）
-    if (source.type === 'hls' && Hls.isSupported()) {
+    if (source.type === "hls" && Hls.isSupported()) {
       this.hlsInstance = new Hls({
         xhrSetup: source.headers
           ? (xhr: XMLHttpRequest) => {
@@ -90,7 +90,7 @@ export class VideojsAdapter implements IVideoPlayer {
     } else {
       this.player.src({
         src: source.url,
-        type: source.type === 'mp4' ? 'video/mp4' : `application/x-${source.type}`,
+        type: source.type === "mp4" ? "video/mp4" : `application/x-${source.type}`,
       });
     }
   }
@@ -142,12 +142,12 @@ export class VideojsAdapter implements IVideoPlayer {
   }
 
   destroy(): void {
-    console.debug('[VideojsAdapter] destroy start');
+    console.debug("[VideojsAdapter] destroy start");
     // 先强制停止音频（dispose 内部可能有异步延迟）
     if (this.videoEl) {
       try {
         this.videoEl.pause();
-        this.videoEl.removeAttribute('src');
+        this.videoEl.removeAttribute("src");
         this.videoEl.load();
       } catch {
         /* ignore */
@@ -160,6 +160,6 @@ export class VideojsAdapter implements IVideoPlayer {
       this.player = null;
     }
     this.videoEl = null;
-    console.debug('[VideojsAdapter] destroy done');
+    console.debug("[VideojsAdapter] destroy done");
   }
 }

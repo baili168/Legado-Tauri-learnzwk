@@ -46,10 +46,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue';
-import { Bold, Italic, Heading2, Link, List, Quote } from 'lucide-vue-next';
-import { NModal, NInput } from 'naive-ui';
-import type { HighlightAnnotation } from '@/features/reader/stores/readerBookmarks';
+import { ref, watch, computed } from "vue";
+import { Bold, Italic, Heading2, Link, List, Quote } from "lucide-vue-next";
+import { NModal, NInput } from "naive-ui";
+import type { HighlightAnnotation } from "@/features/reader/stores/readerBookmarks";
 
 interface MarkdownTool {
   action: string;
@@ -61,19 +61,54 @@ interface MarkdownTool {
 }
 
 const markdownTools: MarkdownTool[] = [
-  { action: 'bold', label: '粗体', icon: Bold, prefix: '**', suffix: '**', placeholder: '粗体文字' },
-  { action: 'italic', label: '斜体', icon: Italic, prefix: '*', suffix: '*', placeholder: '斜体文字' },
-  { action: 'heading', label: '标题', icon: Heading2, prefix: '## ', suffix: '', placeholder: '标题' },
-  { action: 'link', label: '链接', icon: Link, prefix: '[', suffix: '](url)', placeholder: '链接文字' },
-  { action: 'list', label: '列表', icon: List, prefix: '- ', suffix: '', placeholder: '列表项' },
-  { action: 'quote', label: '引用', icon: Quote, prefix: '> ', suffix: '', placeholder: '引用内容' },
+  {
+    action: "bold",
+    label: "粗体",
+    icon: Bold,
+    prefix: "**",
+    suffix: "**",
+    placeholder: "粗体文字",
+  },
+  {
+    action: "italic",
+    label: "斜体",
+    icon: Italic,
+    prefix: "*",
+    suffix: "*",
+    placeholder: "斜体文字",
+  },
+  {
+    action: "heading",
+    label: "标题",
+    icon: Heading2,
+    prefix: "## ",
+    suffix: "",
+    placeholder: "标题",
+  },
+  {
+    action: "link",
+    label: "链接",
+    icon: Link,
+    prefix: "[",
+    suffix: "](url)",
+    placeholder: "链接文字",
+  },
+  { action: "list", label: "列表", icon: List, prefix: "- ", suffix: "", placeholder: "列表项" },
+  {
+    action: "quote",
+    label: "引用",
+    icon: Quote,
+    prefix: "> ",
+    suffix: "",
+    placeholder: "引用内容",
+  },
 ];
 
 const colorMap: Record<string, string> = {
-  yellow: '#fef08a',
-  blue: '#93c5fd',
-  green: '#86efac',
-  pink: '#f9a8d4',
+  yellow: "#fef08a",
+  blue: "#93c5fd",
+  green: "#86efac",
+  pink: "#f9a8d4",
 };
 
 const props = defineProps<{
@@ -84,29 +119,29 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  'update:visible': [value: boolean];
-  'save': [note: string];
-  'close': [];
+  "update:visible": [value: boolean];
+  save: [note: string];
+  close: [];
 }>();
 
-const title = '添加笔记';
-const saveText = '保存';
-const cancelText = '取消';
+const title = "添加笔记";
+const saveText = "保存";
+const cancelText = "取消";
 
-const noteContent = ref('');
+const noteContent = ref("");
 
 const visible = computed({
   get: () => props.visible,
-  set: (val) => emit('update:visible', val),
+  set: (val) => emit("update:visible", val),
 });
 
 watch(
   () => props.highlight,
   (newHighlight) => {
     if (newHighlight) {
-      noteContent.value = newHighlight.note || '';
+      noteContent.value = newHighlight.note || "";
     } else {
-      noteContent.value = '';
+      noteContent.value = "";
     }
   },
   { immediate: true },
@@ -116,7 +151,7 @@ function insertMarkdown(action: string) {
   const tool = markdownTools.find((t) => t.action === action);
   if (!tool) return;
 
-  const textarea = document.querySelector('.note-textarea textarea') as HTMLTextAreaElement;
+  const textarea = document.querySelector(".note-textarea textarea") as HTMLTextAreaElement;
   if (!textarea) return;
 
   const start = textarea.selectionStart;
@@ -142,7 +177,7 @@ function insertMarkdown(action: string) {
 
 function handleSave() {
   const note = noteContent.value.trim();
-  emit('save', note);
+  emit("save", note);
   if (props.onSave) {
     props.onSave(note);
   }
@@ -151,7 +186,7 @@ function handleSave() {
 
 function handleClose() {
   visible.value = false;
-  emit('close');
+  emit("close");
   if (props.onClose) {
     props.onClose();
   }

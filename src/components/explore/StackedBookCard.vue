@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { ChevronRight } from 'lucide-vue-next';
-import { ref } from 'vue';
-import type { BookItem } from '@/stores';
-import type { AggregatedBook, TaggedBookItem } from '@/types';
-import { useOverlayBackstack } from '@/composables/useOverlayBackstack';
-import { getBookMetaBadges, getBookMetaLine, getLatestChapterText } from '@/utils/bookMeta';
-import defaultLogoUrl from '../../assets/booksource-default.svg';
-import BookCoverImg from '../BookCoverImg.vue';
+import { ChevronRight } from "lucide-vue-next";
+import { ref } from "vue";
+import type { BookItem } from "@/stores";
+import type { AggregatedBook, TaggedBookItem } from "@/types";
+import { useOverlayBackstack } from "@/composables/useOverlayBackstack";
+import { getBookMetaBadges, getBookMetaLine, getLatestChapterText } from "@/utils/bookMeta";
+import defaultLogoUrl from "../../assets/booksource-default.svg";
+import BookCoverImg from "../BookCoverImg.vue";
 
 const props = defineProps<{
   group: AggregatedBook;
@@ -14,7 +14,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'select', book: BookItem, fileName: string): void;
+  (e: "select", book: BookItem, fileName: string): void;
 }>();
 
 const showSourcePicker = ref(false);
@@ -31,13 +31,13 @@ function handleClick() {
     showSourcePicker.value = true;
   } else {
     const item = props.group.primary;
-    emit('select', item.book, item.fileName);
+    emit("select", item.book, item.fileName);
   }
 }
 
 function selectSource(item: TaggedBookItem) {
   showSourcePicker.value = false;
-  emit('select', item.book, item.fileName);
+  emit("select", item.book, item.fileName);
 }
 
 function latestChapter(book: BookItem): string {
@@ -74,14 +74,14 @@ function metaLine(book: BookItem): string[] {
           :class="{ 'stacked-card__name--placeholder': !group.primary.book.name }"
           :title="group.primary.book.name || '未知书名'"
         >
-          {{ group.primary.book.name || '未知书名' }}
+          {{ group.primary.book.name || "未知书名" }}
         </span>
         <span
           class="stacked-card__author"
           :class="{ 'stacked-card__author--placeholder': !group.primary.book.author }"
           :title="group.primary.book.author || '佚名'"
         >
-          {{ group.primary.book.author || '佚名' }}
+          {{ group.primary.book.author || "佚名" }}
         </span>
         <div v-if="getBookMetaBadges(group.primary.book).length" class="stacked-card__tags">
           <n-tag
@@ -353,7 +353,7 @@ function metaLine(book: BookItem): string[] {
   white-space: nowrap;
 }
 .stacked-card__meta-item + .stacked-card__meta-item::before {
-  content: '·';
+  content: "·";
   margin-right: 6px;
   opacity: 0.6;
 }
@@ -513,7 +513,7 @@ function metaLine(book: BookItem): string[] {
   color: var(--color-text-muted);
 }
 .source-picker__meta-item + .source-picker__meta-item::before {
-  content: '·';
+  content: "·";
   margin-right: 8px;
   opacity: 0.65;
 }

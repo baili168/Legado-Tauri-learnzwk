@@ -1,8 +1,8 @@
-import type { ComputedRef, Ref } from 'vue';
-import { nextTick } from 'vue';
-import type { ChapterItem } from '@/stores';
-import type { ReaderSettings } from '../types';
-import type { usePagedChapterCache } from './usePagedChapterCache';
+import type { ComputedRef, Ref } from "vue";
+import { nextTick } from "vue";
+import type { ChapterItem } from "@/stores";
+import type { ReaderSettings } from "../types";
+import type { usePagedChapterCache } from "./usePagedChapterCache";
 
 type PagedCacheInstance = ReturnType<typeof usePagedChapterCache>;
 
@@ -46,35 +46,35 @@ function buildRectSnapshot(rect: DOMRect | DOMRectReadOnly) {
 function collectReaderCssVars(target: HTMLElement) {
   const style = getComputedStyle(target);
   const varNames = [
-    '--reader-font-family',
-    '--reader-font-size',
-    '--reader-line-height',
-    '--reader-letter-spacing',
-    '--reader-word-spacing',
-    '--reader-paragraph-spacing',
-    '--reader-text-indent',
-    '--reader-font-weight',
-    '--reader-font-style',
-    '--reader-text-align',
-    '--reader-text-decoration',
-    '--reader-font-variant',
-    '--reader-text-stroke-width',
-    '--reader-text-stroke-color',
-    '--reader-text-shadow',
-    '--reader-text-color',
-    '--reader-bg-color',
-    '--reader-selection-color',
-    '--reader-padding-top',
-    '--reader-padding-right',
-    '--reader-padding-bottom',
-    '--reader-padding-left',
-    '--reader-padding',
-    '--reader-bg-image',
-    '--reader-bg-size',
-    '--reader-bg-position',
-    '--reader-bg-repeat',
-    '--reader-bg-attachment',
-    '--reader-bg-blend-mode',
+    "--reader-font-family",
+    "--reader-font-size",
+    "--reader-line-height",
+    "--reader-letter-spacing",
+    "--reader-word-spacing",
+    "--reader-paragraph-spacing",
+    "--reader-text-indent",
+    "--reader-font-weight",
+    "--reader-font-style",
+    "--reader-text-align",
+    "--reader-text-decoration",
+    "--reader-font-variant",
+    "--reader-text-stroke-width",
+    "--reader-text-stroke-color",
+    "--reader-text-shadow",
+    "--reader-text-color",
+    "--reader-bg-color",
+    "--reader-selection-color",
+    "--reader-padding-top",
+    "--reader-padding-right",
+    "--reader-padding-bottom",
+    "--reader-padding-left",
+    "--reader-padding",
+    "--reader-bg-image",
+    "--reader-bg-size",
+    "--reader-bg-position",
+    "--reader-bg-repeat",
+    "--reader-bg-attachment",
+    "--reader-bg-blend-mode",
   ] as const;
 
   return Object.fromEntries(varNames.map((name) => [name, style.getPropertyValue(name).trim()]));
@@ -83,38 +83,38 @@ function collectReaderCssVars(target: HTMLElement) {
 function buildStyleSnapshot(target: HTMLElement) {
   const style = getComputedStyle(target);
   const cssProps = [
-    'display',
-    'position',
-    'overflow',
-    'overflowX',
-    'overflowY',
-    'boxSizing',
-    'width',
-    'height',
-    'paddingTop',
-    'paddingRight',
-    'paddingBottom',
-    'paddingLeft',
-    'marginTop',
-    'marginRight',
-    'marginBottom',
-    'marginLeft',
-    'fontFamily',
-    'fontSize',
-    'fontWeight',
-    'fontStyle',
-    'lineHeight',
-    'letterSpacing',
-    'wordSpacing',
-    'textAlign',
-    'textIndent',
-    'whiteSpace',
-    'wordBreak',
-    'overflowWrap',
-    'transform',
-    'transformOrigin',
-    'opacity',
-    'zIndex',
+    "display",
+    "position",
+    "overflow",
+    "overflowX",
+    "overflowY",
+    "boxSizing",
+    "width",
+    "height",
+    "paddingTop",
+    "paddingRight",
+    "paddingBottom",
+    "paddingLeft",
+    "marginTop",
+    "marginRight",
+    "marginBottom",
+    "marginLeft",
+    "fontFamily",
+    "fontSize",
+    "fontWeight",
+    "fontStyle",
+    "lineHeight",
+    "letterSpacing",
+    "wordSpacing",
+    "textAlign",
+    "textIndent",
+    "whiteSpace",
+    "wordBreak",
+    "overflowWrap",
+    "transform",
+    "transformOrigin",
+    "opacity",
+    "zIndex",
   ] as const;
 
   return Object.fromEntries(cssProps.map((name) => [name, style[name]]));
@@ -129,7 +129,7 @@ function trimDebugText(text: string, maxChars: number) {
 }
 
 function prettifyHtmlForDebug(html: string, maxChars: number) {
-  return trimDebugText(html.replace(/></g, '>\n<'), maxChars);
+  return trimDebugText(html.replace(/></g, ">\n<"), maxChars);
 }
 
 export function useReaderLayoutDump(options: UseReaderLayoutDumpOptions) {
@@ -161,36 +161,36 @@ export function useReaderLayoutDump(options: UseReaderLayoutDumpOptions) {
       return null;
     }
 
-    if (legacyPagedMode.value === 'slide') {
+    if (legacyPagedMode.value === "slide") {
       return root.querySelector<HTMLElement>(
-        '.paged-mode__slide-track > .paged-mode__page:nth-child(2)',
+        ".paged-mode__slide-track > .paged-mode__page:nth-child(2)",
       );
     }
 
-    if (legacyPagedMode.value === 'cover' || legacyPagedMode.value === 'simulation') {
-      return root.querySelector<HTMLElement>('.paged-mode__fg');
+    if (legacyPagedMode.value === "cover" || legacyPagedMode.value === "simulation") {
+      return root.querySelector<HTMLElement>(".paged-mode__fg");
     }
 
-    if (legacyPagedMode.value === 'none') {
-      return root.querySelector<HTMLElement>('.paged-mode__page--none');
+    if (legacyPagedMode.value === "none") {
+      return root.querySelector<HTMLElement>(".paged-mode__page--none");
     }
 
-    return root.querySelector<HTMLElement>('.paged-mode__page');
+    return root.querySelector<HTMLElement>(".paged-mode__page");
   }
 
   async function dumpPaginationLayoutDebug() {
     await nextTick();
 
     if (!isPagedMode.value) {
-      appendDebugLog('[ReaderLayoutDump] 当前不是分页模式，未输出排版诊断。');
-      message.warning('当前不是分页模式');
+      appendDebugLog("[ReaderLayoutDump] 当前不是分页模式，未输出排版诊断。");
+      message.warning("当前不是分页模式");
       return;
     }
 
     const chapter = getChapter(activeChapterIndex.value);
     const currentPage = Math.max(0, pagedPageIndex.value);
     const pages = activePagedPages.value;
-    const pageHtml = pages[currentPage] ?? '';
+    const pageHtml = pages[currentPage] ?? "";
     const pageMetas = pagedCache.getPageMetas(activeChapterIndex.value);
     const pageMeta = pageMetas[currentPage] ?? null;
     const anchor = pagedCache.buildAnchorForChapterPage(activeChapterIndex.value, currentPage);
@@ -199,21 +199,21 @@ export function useReaderLayoutDump(options: UseReaderLayoutDumpOptions) {
     const pageCount = pages.length;
 
     if (!readerRoot || !pageElement) {
-      appendDebugLog('[ReaderLayoutDump] 找不到当前页 DOM，未输出排版诊断。');
-      message.warning('当前页 DOM 未就绪');
+      appendDebugLog("[ReaderLayoutDump] 找不到当前页 DOM，未输出排版诊断。");
+      message.warning("当前页 DOM 未就绪");
       return;
     }
 
-    const pageBlocks = Array.from(pageElement.querySelectorAll<HTMLElement>('.reader-block'));
-    const pageLines = Array.from(pageElement.querySelectorAll<HTMLElement>('.reader-line'));
-    const pageGaps = Array.from(pageElement.querySelectorAll<HTMLElement>('.reader-gap'));
+    const pageBlocks = Array.from(pageElement.querySelectorAll<HTMLElement>(".reader-block"));
+    const pageLines = Array.from(pageElement.querySelectorAll<HTMLElement>(".reader-line"));
+    const pageGaps = Array.from(pageElement.querySelectorAll<HTMLElement>(".reader-gap"));
     const pageText = pageElement.innerText;
     const pageRect = pageElement.getBoundingClientRect();
     const readerRect = readerRoot.getBoundingClientRect();
-    const modeRoot = readerRoot.querySelector<HTMLElement>('.paged-mode') ?? readerRoot;
+    const modeRoot = readerRoot.querySelector<HTMLElement>(".paged-mode") ?? readerRoot;
 
     const dump = {
-      tag: 'ReaderLayoutDump',
+      tag: "ReaderLayoutDump",
       createdAt: new Date().toISOString(),
       chapter: {
         index: activeChapterIndex.value,
@@ -291,7 +291,7 @@ export function useReaderLayoutDump(options: UseReaderLayoutDumpOptions) {
       },
       blocks: pageBlocks.map((block, index) => {
         const rect = block.getBoundingClientRect();
-        const lines = Array.from(block.querySelectorAll<HTMLElement>('.reader-line'));
+        const lines = Array.from(block.querySelectorAll<HTMLElement>(".reader-line"));
         return {
           index,
           className: block.className,
@@ -327,7 +327,7 @@ export function useReaderLayoutDump(options: UseReaderLayoutDumpOptions) {
     };
 
     appendDebugLog(`[ReaderLayoutDump]\n${JSON.stringify(dump, null, 2)}`);
-    message.success('当前页排版信息已输出到实时日志');
+    message.success("当前页排版信息已输出到实时日志");
   }
 
   return { dumpPaginationLayoutDebug };

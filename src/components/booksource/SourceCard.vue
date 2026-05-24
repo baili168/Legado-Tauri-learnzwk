@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { NTag, NSwitch, NButton, NPopover, NInputNumber } from 'naive-ui';
-import type { BookSourceMeta, UpdateCheckResult } from '@/composables/useBookSource';
+import { computed } from "vue";
+import { NTag, NSwitch, NButton, NPopover, NInputNumber } from "naive-ui";
+import type { BookSourceMeta, UpdateCheckResult } from "@/composables/useBookSource";
+import type { HealthResult } from "@/composables/useSourceHealth";
 
-defineProps<{
+const props = defineProps<{
   src: BookSourceMeta;
   sourceDir: string;
   defaultLogoUrl: string;
@@ -12,6 +14,8 @@ defineProps<{
   delayOverride: number;
   updateInfo?: UpdateCheckResult;
   updateBusy: boolean;
+  healthResult?: HealthResult | null;
+  healthBusy?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -19,14 +23,43 @@ const emit = defineEmits<{
   edit: [];
   reload: [];
   delete: [];
-  'navigate-debug': [];
-  'open-url': [url: string];
-  'toggle-search': [];
-  'toggle-explore': [];
-  'load-delay': [];
-  'save-delay': [value: number | null];
-  'apply-update': [];
+  "navigate-debug": [];
+  "open-url": [url: string];
+  "toggle-search": [];
+  "toggle-explore": [];
+  "load-delay": [];
+  "save-delay": [value: number | null];
+  "apply-update": [];
+  "test-health": [];
 }>();
+
+const healthDotClass = computed(() => {
+  if (!props.healthResult) return "src-health-dot--untested";
+  switch (props.healthResult.status) {
+    case "normal":
+      return "src-health-dot--normal";
+    case "slow":
+      return "src-health-dot--slow";
+    case "dead":
+      return "src-health-dot--dead";
+    default:
+      return "src-health-dot--untested";
+  }
+});
+
+const healthLabel = computed(() => {
+  if (!props.healthResult) return "未检测";
+  switch (props.healthResult.status) {
+    case "normal":
+      return `${props.healthResult.latency}ms`;
+    case "slow":
+      return `慢 ${props.healthResult.latency}ms`;
+    case "dead":
+      return "无响应";
+    default:
+      return "未检测";
+  }
+});
 </script>
 
 <template>
@@ -44,6 +77,11 @@ const emit = defineEmits<{
 
       <div class="src-card__title">
         <div class="src-card__name-line">
+          <span
+            class="src-health-dot"
+            :class="healthDotClass"
+            :title="healthLabel"
+          />
           <span class="src-card__name">{{ src.name }}</span>
           <n-tag
             v-if="!src.enabled"
@@ -113,7 +151,7 @@ const emit = defineEmits<{
           :type="searchEnabled ? 'success' : 'default'"
           class="src-card__cap"
           @click.stop="emit('toggle-search')"
-          >搜索{{ searchEnabled ? '✓' : '✗' }}</n-tag
+          >搜索{{ searchEnabled ? "✓" : "✗" }}</n-tag
         >
         <n-tag
           v-if="capabilities?.has('explore')"
@@ -122,7 +160,7 @@ const emit = defineEmits<{
           :type="exploreEnabled ? 'info' : 'default'"
           class="src-card__cap"
           @click.stop="emit('toggle-explore')"
-          >发现{{ exploreEnabled ? '✓' : '✗' }}</n-tag
+          >发现{{ exploreEnabled ? "✓" : "✗" }}</n-tag
         >
         <n-tag
           v-if="capabilities?.has('bookInfo')"
@@ -177,6 +215,15 @@ const emit = defineEmits<{
         :disabled="updateBusy"
         @click="emit('apply-update')"
         >升级</n-button
+      >
+      <n-button
+        size="tiny"
+        quaternary
+        class="src-action src-action--health"
+        :loading="healthBusy"
+        :disabled="healthBusy"
+        @click="emit('test-health')"
+        >检测</n-button
       >
       <n-button size="tiny" quaternary class="src-action src-action--edit" @click="emit('edit')"
         >编辑</n-button
@@ -469,6 +516,42 @@ const emit = defineEmits<{
   --n-text-color: var(--color-danger) !important;
   --n-text-color-hover: var(--color-danger) !important;
   --n-color-hover: var(--color-danger-subtle) !important;
+}
+
+.src-action--health {
+  --n-text-color: var(--color-text-muted) !important;
+  --n-text-color-hover: var(--color-text-soft) !important;
+  --n-color-hover: var(--color-surface-hover) !important;
+}
+
+.src-health-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--color-text-muted);
+  opacity: 0.4;
+  transition: opacity var(--transition-fast);
+}
+
+.src-health-dot--normal {
+  background: #22c55e;
+  opacity: 1;
+}
+
+.src-health-dot--slow {
+  background: #eab308;
+  opacity: 1;
+}
+
+.src-health-dot--dead {
+  background: var(--color-danger);
+  opacity: 1;
+}
+
+.src-health-dot--untested {
+  background: var(--color-text-muted);
+  opacity: 0.35;
 }
 
 /* ---- 移动端 ---- */

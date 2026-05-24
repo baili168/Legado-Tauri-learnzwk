@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { formatVersion } from '@/utils/versionUtils';
-import type { RepoSourceInfo } from '../../composables/useBookSource';
+import { formatVersion } from "@/utils/versionUtils";
+import type { RepoSourceInfo } from "../../composables/useBookSource";
 
 const props = defineProps<{
   src: RepoSourceInfo;
   defaultLogoUrl: string;
   installed: boolean;
-  versionDiff: 'upgrade' | 'downgrade' | 'same' | null;
+  versionDiff: "upgrade" | "downgrade" | "same" | null;
   localVersion: string | undefined;
   bulkBusy: boolean;
   deleting: boolean;
@@ -15,7 +15,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   install: [];
   delete: [];
-  'open-url': [url: string];
+  "open-url": [url: string];
 }>();
 </script>
 
@@ -169,8 +169,8 @@ const emit = defineEmits<{
       <span v-if="props.src.fileSize" class="src-card__file-size">
         {{
           props.src.fileSize > 1024
-            ? (props.src.fileSize / 1024).toFixed(1) + ' KB'
-            : props.src.fileSize + ' B'
+            ? (props.src.fileSize / 1024).toFixed(1) + " KB"
+            : props.src.fileSize + " B"
         }}
       </span>
     </div>

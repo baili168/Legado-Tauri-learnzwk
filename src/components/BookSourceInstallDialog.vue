@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { X } from 'lucide-vue-next';
-import { useDialog, useMessage } from 'naive-ui';
-import { computed, ref, watch } from 'vue';
+import { X } from "lucide-vue-next";
+import { useDialog, useMessage } from "naive-ui";
+import { computed, ref, watch } from "vue";
 import {
   checkRepositorySourceSync,
   installFromRepository,
@@ -11,8 +11,8 @@ import {
   type BookSourceMeta,
   type RepoSourceSyncResult,
   type RemoteBookSourcePreview,
-} from '@/composables/useBookSource';
-import { useOverlayBackstack } from '@/composables/useOverlayBackstack';
+} from "@/composables/useBookSource";
+import { useOverlayBackstack } from "@/composables/useOverlayBackstack";
 
 const props = defineProps<{
   show: boolean;
@@ -27,7 +27,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  'update:show': [value: boolean];
+  "update:show": [value: boolean];
   /** 安装成功后触发 */
   installed: [payload: { name: string; fileName: string; uuid: string }];
 }>();
@@ -35,18 +35,18 @@ const emit = defineEmits<{
 const message = useMessage();
 const dialog = useDialog();
 
-type RemoteSyncStatus = 'idle' | 'checking' | 'same' | 'different' | 'error';
+type RemoteSyncStatus = "idle" | "checking" | "same" | "different" | "error";
 
 const loading = ref(false);
 const installing = ref(false);
-const error = ref('');
+const error = ref("");
 const preview = ref<RemoteBookSourcePreview | null>(null);
 const installedSources = ref<BookSourceMeta[]>([]);
 const localSource = ref<BookSourceMeta | null>(null);
-const syncStatus = ref<RemoteSyncStatus>('idle');
-const syncError = ref('');
-const localVersion = ref('');
-const remoteVersion = ref('');
+const syncStatus = ref<RemoteSyncStatus>("idle");
+const syncError = ref("");
+const localVersion = ref("");
+const remoteVersion = ref("");
 
 let loadRunId = 0;
 
@@ -56,23 +56,23 @@ const meta = computed(() => preview.value?.meta ?? null);
 const mirrorUrls = computed(() => meta.value?.urls.slice(1) ?? []);
 const requireUrls = computed(() => meta.value?.requireUrls ?? []);
 const hasResolvedUrl = computed(
-  () => !!props.downloadUrl && props.downloadUrl !== (props.rawLink ?? ''),
+  () => !!props.downloadUrl && props.downloadUrl !== (props.rawLink ?? ""),
 );
 const sourceTypeLabel = computed(() => {
   switch (meta.value?.sourceType) {
-    case 'comic':
-      return '漫画';
-    case 'video':
-      return '视频';
+    case "comic":
+      return "漫画";
+    case "video":
+      return "视频";
     default:
-      return '小说';
+      return "小说";
   }
 });
-const installActionText = computed(() => (localSource.value ? '覆盖安装' : '安装'));
+const installActionText = computed(() => (localSource.value ? "覆盖安装" : "安装"));
 const installTargetFileName = computed(() => {
   const current = meta.value;
   if (!current) {
-    return '';
+    return "";
   }
   if (localSource.value) {
     return localSource.value.fileName;
@@ -88,101 +88,101 @@ const fileNameConflict = computed(() => {
 });
 const localSourcePath = computed(() => {
   if (!localSource.value) {
-    return '';
+    return "";
   }
-  const dir = localSource.value.sourceDir || '';
-  const sep = dir.includes('\\') ? '\\' : '/';
+  const dir = localSource.value.sourceDir || "";
+  const sep = dir.includes("\\") ? "\\" : "/";
   if (!dir) {
     return localSource.value.fileName;
   }
-  return dir.endsWith('\\') || dir.endsWith('/')
+  return dir.endsWith("\\") || dir.endsWith("/")
     ? `${dir}${localSource.value.fileName}`
     : `${dir}${sep}${localSource.value.fileName}`;
 });
-const versionDiff = computed<'upgrade' | 'downgrade' | 'same' | null>(() => {
+const versionDiff = computed<"upgrade" | "downgrade" | "same" | null>(() => {
   if (!localSource.value) {
     return null;
   }
-  const cmp = compareVersions(remoteVersion.value || meta.value?.version || '', localVersion.value);
+  const cmp = compareVersions(remoteVersion.value || meta.value?.version || "", localVersion.value);
   if (cmp === null) {
     return null;
   }
   if (cmp > 0) {
-    return 'upgrade';
+    return "upgrade";
   }
   if (cmp < 0) {
-    return 'downgrade';
+    return "downgrade";
   }
-  return 'same';
+  return "same";
 });
-const installStateAlertType = computed<'info' | 'warning' | 'error' | 'success'>(() => {
-  if (syncStatus.value === 'error') {
-    return 'warning';
+const installStateAlertType = computed<"info" | "warning" | "error" | "success">(() => {
+  if (syncStatus.value === "error") {
+    return "warning";
   }
   if (!localSource.value) {
-    return 'info';
+    return "info";
   }
   switch (syncStatus.value) {
-    case 'same':
-      return 'success';
-    case 'different':
-      return versionDiff.value === 'downgrade' ? 'error' : 'warning';
+    case "same":
+      return "success";
+    case "different":
+      return versionDiff.value === "downgrade" ? "error" : "warning";
     default:
-      return 'info';
+      return "info";
   }
 });
 const installStateTitle = computed(() => {
-  if (syncStatus.value === 'error' && !localSource.value) {
-    return '本地安装状态检测失败';
+  if (syncStatus.value === "error" && !localSource.value) {
+    return "本地安装状态检测失败";
   }
   if (!localSource.value) {
-    return '将作为新书源安装';
+    return "将作为新书源安装";
   }
   switch (syncStatus.value) {
-    case 'checking':
-      return '检测到同一 UUID 已安装书源，正在比较差异';
-    case 'same':
-      return '检测到同一 UUID 已安装书源，远端内容与本地一致';
-    case 'different':
-      if (versionDiff.value === 'upgrade') {
-        return '检测到同一 UUID 已安装书源，将升级覆盖';
+    case "checking":
+      return "检测到同一 UUID 已安装书源，正在比较差异";
+    case "same":
+      return "检测到同一 UUID 已安装书源，远端内容与本地一致";
+    case "different":
+      if (versionDiff.value === "upgrade") {
+        return "检测到同一 UUID 已安装书源，将升级覆盖";
       }
-      if (versionDiff.value === 'downgrade') {
-        return '检测到同一 UUID 已安装书源，将降级覆盖';
+      if (versionDiff.value === "downgrade") {
+        return "检测到同一 UUID 已安装书源，将降级覆盖";
       }
-      return '检测到同一 UUID 已安装书源，将覆盖本地内容';
-    case 'error':
-      return '检测到同一 UUID 已安装书源，但差异检查失败';
+      return "检测到同一 UUID 已安装书源，将覆盖本地内容";
+    case "error":
+      return "检测到同一 UUID 已安装书源，但差异检查失败";
     default:
-      return '检测到同一 UUID 已安装书源';
+      return "检测到同一 UUID 已安装书源";
   }
 });
 const installStateText = computed(() => {
-  if (syncStatus.value === 'error' && !localSource.value) {
-    return syncError.value || '无法确认本地是否已存在同一 UUID 书源，请手动留意覆盖风险。';
+  if (syncStatus.value === "error" && !localSource.value) {
+    return syncError.value || "无法确认本地是否已存在同一 UUID 书源，请手动留意覆盖风险。";
   }
   if (!localSource.value) {
     return fileNameConflict.value
       ? `本地存在同名但 UUID 不同的书源，将改用文件名 ${installTargetFileName.value} 安装。`
-      : '本地未发现同一 UUID 的书源，将作为新书源安装。';
+      : "本地未发现同一 UUID 的书源，将作为新书源安装。";
   }
   switch (syncStatus.value) {
-    case 'checking':
-      return '正在比较服务器与本地源码，@enabled 行会被忽略；安装时会再次确认覆盖。';
-    case 'same':
-      return '比较时已忽略 @enabled 行；如果继续覆盖，主要会刷新源码本体。';
-    case 'different':
-      if (versionDiff.value === 'upgrade') {
-        return '远端版本高于本地版本，继续后将覆盖现有文件。';
+    case "checking":
+      return "正在比较服务器与本地源码，@enabled 行会被忽略；安装时会再次确认覆盖。";
+    case "same":
+      return "比较时已忽略 @enabled 行；如果继续覆盖，主要会刷新源码本体。";
+    case "different":
+      if (versionDiff.value === "upgrade") {
+        return "远端版本高于本地版本，继续后将覆盖现有文件。";
       }
-      if (versionDiff.value === 'downgrade') {
-        return '远端版本低于本地版本，继续后会发生降级覆盖，请谨慎操作。';
+      if (versionDiff.value === "downgrade") {
+        return "远端版本低于本地版本，继续后会发生降级覆盖，请谨慎操作。";
       }
-      return '远端与本地内容不一致，继续后将直接覆盖当前同一 UUID 书源。';
-    case 'error':
-      return syncError.value || '无法完成本地与远端差异检查，继续安装仍会覆盖同名文件。';
+      return "远端与本地内容不一致，继续后将直接覆盖当前同一 UUID 书源。";
+    case "error":
+      return syncError.value || "无法完成本地与远端差异检查，继续安装仍会覆盖同名文件。";
     default:
-      return '当前同一 UUID 书源已存在，继续安装会覆盖本地文件。';
+      return "当前同一 UUID 书源已存在，继续安装会覆盖本地文件。";
   }
 });
 
@@ -199,20 +199,20 @@ function formatFileSize(size: number) {
 }
 
 function normalizeText(value: string | undefined | null) {
-  return value?.trim() || '未提供';
+  return value?.trim() || "未提供";
 }
 
 function formatVersion(value: string | undefined | null) {
-  const v = value?.trim().replace(/^v/i, '') || '';
-  return v ? `v${v}` : '未标注版本';
+  const v = value?.trim().replace(/^v/i, "") || "";
+  return v ? `v${v}` : "未标注版本";
 }
 
 function cleanVersion(v: string) {
-  return v.trim().replace(/^v/i, '');
+  return v.trim().replace(/^v/i, "");
 }
 
 function parseVersion(v: string) {
-  return v.split('.').map((p) => parseInt(p, 10) || 0);
+  return v.split(".").map((p) => parseInt(p, 10) || 0);
 }
 
 function compareVersions(a: string, b: string): 1 | -1 | 0 | null {
@@ -240,18 +240,18 @@ function compareVersions(a: string, b: string): 1 | -1 | 0 | null {
 function resetInstallState() {
   installedSources.value = [];
   localSource.value = null;
-  syncStatus.value = 'idle';
-  syncError.value = '';
-  localVersion.value = '';
-  remoteVersion.value = '';
+  syncStatus.value = "idle";
+  syncError.value = "";
+  localVersion.value = "";
+  remoteVersion.value = "";
 }
 
 function uniqueFileName(baseName: string, usedNames: Set<string>) {
-  const dot = baseName.toLowerCase().endsWith('.js') ? baseName.length - 3 : baseName.length;
-  const stem = baseName.slice(0, dot) || 'booksource';
-  const ext = baseName.toLowerCase().endsWith('.js') ? baseName.slice(dot) : '.js';
+  const dot = baseName.toLowerCase().endsWith(".js") ? baseName.length - 3 : baseName.length;
+  const stem = baseName.slice(0, dot) || "booksource";
+  const ext = baseName.toLowerCase().endsWith(".js") ? baseName.slice(dot) : ".js";
   let index = 2;
-  let candidate = baseName.toLowerCase().endsWith('.js') ? baseName : `${baseName}.js`;
+  let candidate = baseName.toLowerCase().endsWith(".js") ? baseName : `${baseName}.js`;
   while (usedNames.has(candidate)) {
     candidate = `${stem}-${index}${ext}`;
     index += 1;
@@ -261,7 +261,7 @@ function uniqueFileName(baseName: string, usedNames: Set<string>) {
 
 function getAvailableFileName(preferredFileName: string, fallbackName: string) {
   const used = new Set(installedSources.value.map((source) => source.fileName));
-  const preferred = preferredFileName || toSafeFileName(fallbackName || 'booksource');
+  const preferred = preferredFileName || toSafeFileName(fallbackName || "booksource");
   return uniqueFileName(preferred, used);
 }
 
@@ -288,13 +288,13 @@ async function loadInstalledState(
         : undefined) ??
       null;
     localSource.value = existing;
-    localVersion.value = existing?.version ?? '';
+    localVersion.value = existing?.version ?? "";
     remoteVersion.value = fallbackRemoteVersion;
     if (!existing) {
       return;
     }
 
-    syncStatus.value = 'checking';
+    syncStatus.value = "checking";
     try {
       const result: RepoSourceSyncResult = await checkRepositorySourceSync(
         existing.fileName,
@@ -304,21 +304,21 @@ async function loadInstalledState(
       if (runId !== loadRunId) {
         return;
       }
-      syncStatus.value = result.isConsistent ? 'same' : 'different';
-      localVersion.value = result.localVersion || existing.version || '';
+      syncStatus.value = result.isConsistent ? "same" : "different";
+      localVersion.value = result.localVersion || existing.version || "";
       remoteVersion.value = result.remoteVersion || fallbackRemoteVersion;
     } catch (e: unknown) {
       if (runId !== loadRunId) {
         return;
       }
-      syncStatus.value = 'error';
+      syncStatus.value = "error";
       syncError.value = e instanceof Error ? e.message : String(e);
     }
   } catch (e: unknown) {
     if (runId !== loadRunId) {
       return;
     }
-    syncStatus.value = 'error';
+    syncStatus.value = "error";
     syncError.value = `本地安装状态读取失败: ${e instanceof Error ? e.message : String(e)}`;
   }
 }
@@ -328,7 +328,7 @@ async function loadInstalledState(
 async function startLoad() {
   const runId = ++loadRunId;
   loading.value = true;
-  error.value = '';
+  error.value = "";
   preview.value = null;
   resetInstallState();
 
@@ -360,7 +360,7 @@ async function startLoad() {
 // ── dialog control ────────────────────────────────────────────────────────
 
 function closeDialog() {
-  emit('update:show', false);
+  emit("update:show", false);
 }
 
 useOverlayBackstack(() => props.show, closeDialog);
@@ -374,7 +374,7 @@ watch(
       loading.value = false;
       installing.value = false;
       preview.value = null;
-      error.value = '';
+      error.value = "";
       resetInstallState();
       return;
     }
@@ -384,7 +384,7 @@ watch(
       return;
     }
     if (!props.downloadUrl) {
-      error.value = '书源地址为空';
+      error.value = "书源地址为空";
       return;
     }
     void startLoad();
@@ -396,23 +396,23 @@ watch(
 function buildOverwriteContent(current: RemoteBookSourcePreview) {
   const local = localSource.value;
   if (!local) {
-    return '';
+    return "";
   }
   const localLabel = formatVersion(localVersion.value || local.version);
   const remoteLabel = formatVersion(remoteVersion.value || current.meta.version);
   switch (syncStatus.value) {
-    case 'same':
+    case "same":
       return `本地已存在同一 UUID 书源「${current.meta.name}」，且远端内容与本地一致（比较时已忽略 @enabled 与 @uuid）。仍要重新覆盖安装吗？`;
-    case 'different':
-      if (versionDiff.value === 'upgrade') {
+    case "different":
+      if (versionDiff.value === "upgrade") {
         return `本地已安装「${current.meta.name}」，将从 ${localLabel} 覆盖为 ${remoteLabel}。确认继续？`;
       }
-      if (versionDiff.value === 'downgrade') {
+      if (versionDiff.value === "downgrade") {
         return `仓库版本 ${remoteLabel} 低于本地版本 ${localLabel}，继续会降级覆盖「${current.meta.name}」。确认继续？`;
       }
       return `本地已存在同一 UUID 书源「${current.meta.name}」，远端与本地内容不一致，继续会直接覆盖当前文件。确认继续？`;
-    case 'error':
-      return `本地已存在同一 UUID 书源「${current.meta.name}」，但差异检查失败（${syncError.value || '未知错误'}）。仍要覆盖安装吗？`;
+    case "error":
+      return `本地已存在同一 UUID 书源「${current.meta.name}」，但差异检查失败（${syncError.value || "未知错误"}）。仍要覆盖安装吗？`;
     default:
       return `本地已存在同一 UUID 书源「${current.meta.name}」，继续会覆盖当前文件。确认继续？`;
   }
@@ -428,14 +428,14 @@ async function performInstall(current: RemoteBookSourcePreview) {
       // 如果目标路径存在另一个 UUID 的文件（可能因 UUID 去重未出现在已安装列表中），
       // 自动改用备用文件名重试一次
       const msg = e instanceof Error ? e.message : String(e);
-      if (msg.includes('属于另一个')) {
-        const dot = targetFileName.toLowerCase().endsWith('.js')
+      if (msg.includes("属于另一个")) {
+        const dot = targetFileName.toLowerCase().endsWith(".js")
           ? targetFileName.length - 3
           : targetFileName.length;
-        const stem = targetFileName.slice(0, dot) || 'booksource';
-        const ext = targetFileName.toLowerCase().endsWith('.js')
+        const stem = targetFileName.slice(0, dot) || "booksource";
+        const ext = targetFileName.toLowerCase().endsWith(".js")
           ? targetFileName.slice(dot)
-          : '.js';
+          : ".js";
         const usedNames = new Set(installedSources.value.map((s) => s.fileName));
         let index = 2;
         let fallback = `${stem}-${index}${ext}`;
@@ -445,14 +445,14 @@ async function performInstall(current: RemoteBookSourcePreview) {
         }
         await installFromRepository(current.downloadUrl, fallback, current.meta.uuid);
         message.success(`已安装「${current.meta.name}」`);
-        emit('installed', { name: current.meta.name, fileName: fallback, uuid: current.meta.uuid });
+        emit("installed", { name: current.meta.name, fileName: fallback, uuid: current.meta.uuid });
         closeDialog();
         return;
       }
       throw e;
     }
     message.success(`已安装「${current.meta.name}」`);
-    emit('installed', {
+    emit("installed", {
       name: current.meta.name,
       fileName: targetFileName,
       uuid: current.meta.uuid,
@@ -473,10 +473,10 @@ async function confirmInstall() {
 
   if (localSource.value) {
     dialog.warning({
-      title: '覆盖安装书源',
+      title: "覆盖安装书源",
       content: buildOverwriteContent(current),
       positiveText: installActionText.value,
-      negativeText: '取消',
+      negativeText: "取消",
       onPositiveClick: async () => {
         await performInstall(current);
       },
@@ -548,7 +548,7 @@ async function confirmInstall() {
             <strong>{{ normalizeText(meta.url) }}</strong>
             <span>备用网址</span>
             <strong class="bsid__multiline">
-              {{ mirrorUrls.length ? mirrorUrls.join('\n') : '未提供' }}
+              {{ mirrorUrls.length ? mirrorUrls.join("\n") : "未提供" }}
             </strong>
             <span>下载地址</span>
             <strong>{{ downloadUrl }}</strong>
@@ -559,12 +559,12 @@ async function confirmInstall() {
             <span>文件大小</span>
             <strong>{{ formatFileSize(meta.fileSize) }}</strong>
             <span>请求间隔</span>
-            <strong>{{ meta.minDelayMs ? `${meta.minDelayMs} ms` : '未提供' }}</strong>
+            <strong>{{ meta.minDelayMs ? `${meta.minDelayMs} ms` : "未提供" }}</strong>
             <span>标签</span>
-            <strong>{{ meta.tags.length ? meta.tags.join('、') : '未提供' }}</strong>
+            <strong>{{ meta.tags.length ? meta.tags.join("、") : "未提供" }}</strong>
             <span>依赖脚本</span>
             <strong class="bsid__multiline">
-              {{ requireUrls.length ? requireUrls.join('\n') : '无' }}
+              {{ requireUrls.length ? requireUrls.join("\n") : "无" }}
             </strong>
           </div>
 

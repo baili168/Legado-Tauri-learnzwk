@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { Image, ImageOff, LayoutGrid, List, Search } from 'lucide-vue-next';
-import { useMessage } from 'naive-ui';
-import { storeToRefs } from 'pinia';
-import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue';
-import type { CardSizeKey } from '@/composables/useViewCardDensity';
-import type { TaggedBookItem, BookSourceMeta, BookItem } from '@/types';
-import { useBookDetailDrawerState } from '@/composables/useBookDetailDrawerState';
-import { eventListen } from '@/composables/useEventBus';
-import { useInlineBookReader } from '@/composables/useInlineBookReader';
-import { useViewCardDensity } from '@/composables/useViewCardDensity';
+import { Image, ImageOff, LayoutGrid, List, Search } from "lucide-vue-next";
+import { useMessage } from "naive-ui";
+import { storeToRefs } from "pinia";
+import { ref, reactive, computed, onMounted, onUnmounted, watch } from "vue";
+import type { CardSizeKey } from "@/composables/useViewCardDensity";
+import type { TaggedBookItem, BookSourceMeta, BookItem } from "@/types";
+import { useBookDetailDrawerState } from "@/composables/useBookDetailDrawerState";
+import { eventListen } from "@/composables/useEventBus";
+import { useInlineBookReader } from "@/composables/useInlineBookReader";
+import { useViewCardDensity } from "@/composables/useViewCardDensity";
 import {
   useBookSourceStore,
   useNavigationStore,
@@ -16,15 +16,15 @@ import {
   usePreferencesStore,
   usePrivacyModeStore,
   useScriptBridgeStore,
-} from '@/stores';
-import { mapWithConcurrencyLimit } from '@/utils/async';
-import AppEmpty from '../components/base/AppEmpty.vue';
-import AggregatedSearchResults from '../components/explore/AggregatedSearchResults.vue';
-import BookDetailDrawer from '../components/explore/BookDetailDrawer.vue';
-import ChapterReaderModal from '../components/explore/ChapterReaderModal.vue';
-import SourceSearchGroup from '../components/explore/SourceSearchGroup.vue';
-import AppPageHeader from '../components/layout/AppPageHeader.vue';
-import MobileToolbarMenu from '../components/layout/MobileToolbarMenu.vue';
+} from "@/stores";
+import { mapWithConcurrencyLimit } from "@/utils/async";
+import AppEmpty from "../components/base/AppEmpty.vue";
+import AggregatedSearchResults from "../components/explore/AggregatedSearchResults.vue";
+import BookDetailDrawer from "../components/explore/BookDetailDrawer.vue";
+import ChapterReaderModal from "../components/explore/ChapterReaderModal.vue";
+import SourceSearchGroup from "../components/explore/SourceSearchGroup.vue";
+import AppPageHeader from "../components/layout/AppPageHeader.vue";
+import MobileToolbarMenu from "../components/layout/MobileToolbarMenu.vue";
 
 const message = useMessage();
 const bookSourceStore = useBookSourceStore();
@@ -41,22 +41,22 @@ const {
   activeSizeKey,
   style: searchDensityStyle,
   setSize,
-} = useViewCardDensity('search');
+} = useViewCardDensity("search");
 
 // ── 书源列表 & 能力检测 ──────────────────────────────────────────────────
 /** 参与搜索的书源：有 search 能力 + 用户未禁用（来自 bookSourceStore，自动响应式） */
 const allSearchableSources = computed(() => bookSourceStore.searchableSources);
 
-const ALL_SOURCES_VALUE = '__all__';
-type SearchSourceType = 'all' | 'novel' | 'comic' | 'video' | 'music';
+const ALL_SOURCES_VALUE = "__all__";
+type SearchSourceType = "all" | "novel" | "comic" | "video" | "music";
 
-const selectedSearchType = ref<SearchSourceType>('all');
+const selectedSearchType = ref<SearchSourceType>("all");
 const sourceTypeLabels: Record<SearchSourceType, string> = {
-  all: '全部',
-  novel: '小说',
-  comic: '漫画',
-  video: '视频',
-  music: '音乐',
+  all: "全部",
+  novel: "小说",
+  comic: "漫画",
+  video: "视频",
+  music: "音乐",
 };
 const sourceTypeOptions = computed(() => {
   const counts = allSearchableSources.value.reduce(
@@ -69,21 +69,21 @@ const sourceTypeOptions = computed(() => {
     { all: 0, novel: 0, comic: 0, video: 0, music: 0 } satisfies Record<SearchSourceType, number>,
   );
 
-  return (['all', 'novel', 'comic', 'video', 'music'] as const).map((type) => ({
+  return (["all", "novel", "comic", "video", "music"] as const).map((type) => ({
     label: `${sourceTypeLabels[type]}（${counts[type]}）`,
     value: type,
   }));
 });
 
-function normalizeSourceType(sourceType?: string | null): Exclude<SearchSourceType, 'all'> {
-  if (sourceType === 'comic' || sourceType === 'video' || sourceType === 'music') {
+function normalizeSourceType(sourceType?: string | null): Exclude<SearchSourceType, "all"> {
+  if (sourceType === "comic" || sourceType === "video" || sourceType === "music") {
     return sourceType;
   }
-  return 'novel';
+  return "novel";
 }
 
 const searchableSources = computed(() => {
-  if (selectedSearchType.value === 'all') {
+  if (selectedSearchType.value === "all") {
     return allSearchableSources.value;
   }
   return allSearchableSources.value.filter(
@@ -93,7 +93,7 @@ const searchableSources = computed(() => {
 
 /** 当前限制到单一书源（来自发现页跳转或搜索页手动选择） */
 const limitedSource = ref<BookSourceMeta | null>(null);
-const limitedSourceName = computed(() => limitedSource.value?.name ?? '');
+const limitedSourceName = computed(() => limitedSource.value?.name ?? "");
 const selectedTypeLabel = computed(() => sourceTypeLabels[selectedSearchType.value]);
 
 const searchScopeOptions = computed(() => [
@@ -115,11 +115,11 @@ const activeSources = computed(() =>
 const searchStartDescription = computed(() =>
   limitedSource.value
     ? `输入关键词后点击搜索，仅搜索当前书源（${selectedTypeLabel.value}）`
-    : `输入关键词后点击搜索，将搜索${selectedSearchType.value === 'all' ? '全部可用书源' : `可用${selectedTypeLabel.value}书源`}`,
+    : `输入关键词后点击搜索，将搜索${selectedSearchType.value === "all" ? "全部可用书源" : `可用${selectedTypeLabel.value}书源`}`,
 );
 
 const aggregatedEmptyDescription = computed(() =>
-  limitedSource.value ? `${limitedSourceName.value} 暂无搜索结果` : '当前搜索范围暂无结果',
+  limitedSource.value ? `${limitedSourceName.value} 暂无搜索结果` : "当前搜索范围暂无结果",
 );
 const hasSearchKeyword = computed(() => searchKeyword.value.trim().length > 0);
 
@@ -193,7 +193,7 @@ watch(searchableSources, (nextSources) => {
 });
 
 watch(selectedSearchType, (type) => {
-  if (!limitedSource.value || type === 'all') {
+  if (!limitedSource.value || type === "all") {
     return;
   }
   if (normalizeSourceType(limitedSource.value.sourceType) !== type) {
@@ -202,20 +202,20 @@ watch(selectedSearchType, (type) => {
 });
 
 // ── 搜索 ─────────────────────────────────────────────────────────────────
-const searchKeyword = ref('');
+const searchKeyword = ref("");
 const searchRunning = ref(false);
 const showCovers = ref(true);
 const searchPage = ref(1);
 
 /** 搜索模式：'grouped' 按书源分组 | 'aggregated' 聚合排序 */
-const searchMode = ref<'grouped' | 'aggregated'>('aggregated');
+const searchMode = ref<"grouped" | "aggregated">("aggregated");
 const reloadingSources = ref(false);
 
 // ── 移动端三点菜单 ──────────────────────────────────────────────────────
 const mobileMenuOptions = computed(() => [
   {
-    label: showCovers.value ? '隐藏封面' : '显示封面',
-    key: 'toggle-covers',
+    label: showCovers.value ? "隐藏封面" : "显示封面",
+    key: "toggle-covers",
   },
   ...CARD_SIZES.map((size) => ({
     label: `卡片大小：${size.label}`,
@@ -223,38 +223,38 @@ const mobileMenuOptions = computed(() => [
     disabled: activeSizeKey.value === size.key,
   })),
   {
-    label: '聚合模式',
-    key: 'mode-aggregated',
-    disabled: searchMode.value === 'aggregated',
+    label: "聚合模式",
+    key: "mode-aggregated",
+    disabled: searchMode.value === "aggregated",
   },
   {
-    label: '分组模式',
-    key: 'mode-grouped',
-    disabled: searchMode.value === 'grouped',
+    label: "分组模式",
+    key: "mode-grouped",
+    disabled: searchMode.value === "grouped",
   },
   {
-    label: '强制刷新',
-    key: 'reload',
+    label: "强制刷新",
+    key: "reload",
     disabled: reloadingSources.value || searchRunning.value,
   },
 ]);
 
 function handleMobileMenuSelect(key: string) {
-  if (key.startsWith('size-')) {
+  if (key.startsWith("size-")) {
     setSize(key.slice(5) as CardSizeKey);
     return;
   }
   switch (key) {
-    case 'toggle-covers':
+    case "toggle-covers":
       showCovers.value = !showCovers.value;
       break;
-    case 'mode-aggregated':
-      searchMode.value = 'aggregated';
+    case "mode-aggregated":
+      searchMode.value = "aggregated";
       break;
-    case 'mode-grouped':
-      searchMode.value = 'grouped';
+    case "mode-grouped":
+      searchMode.value = "grouped";
       break;
-    case 'reload':
+    case "reload":
       void handleForceReload();
       break;
   }
@@ -330,7 +330,7 @@ function stopSearch() {
 async function doSearch(page = 1) {
   const kw = searchKeyword.value.trim();
   if (!kw) {
-    message.warning('请输入搜索关键词');
+    message.warning("请输入搜索关键词");
     return;
   }
   if (searchRunning.value) {
@@ -338,7 +338,7 @@ async function doSearch(page = 1) {
     return;
   }
   if (!activeSources.value.length) {
-    message.warning('没有可用的搜索书源');
+    message.warning("没有可用的搜索书源");
     return;
   }
 
@@ -350,7 +350,7 @@ async function doSearch(page = 1) {
   const sourcesToSearch = [...activeSources.value];
 
   for (const src of sourcesToSearch) {
-    searchStates[src.fileName] = { loading: true, results: [], error: '' };
+    searchStates[src.fileName] = { loading: true, results: [], error: "" };
   }
 
   try {
@@ -473,9 +473,9 @@ const unlisteners: (() => void)[] = [];
 onMounted(async () => {
   await loadSources();
   unlisteners.push(
-    await eventListen<{ fileName: string; reason?: string }>('booksource:changed', (event) => {
+    await eventListen<{ fileName: string; reason?: string }>("booksource:changed", (event) => {
       const { fileName: changed, reason } = event.payload ?? {};
-      if (reason === 'toggle') {
+      if (reason === "toggle") {
         return;
       }
       if (changed) {
@@ -487,18 +487,18 @@ onMounted(async () => {
     }),
   );
   unlisteners.push(
-    await eventListen<{ scope: string; fileName?: string }>('app:booksource-reload', (event) => {
-      if (event.payload.scope === 'all') {
+    await eventListen<{ scope: string; fileName?: string }>("app:booksource-reload", (event) => {
+      if (event.payload.scope === "all") {
         bookSourceStore.invalidateAllCapabilities();
-      } else if (event.payload.scope === 'single' && event.payload.fileName) {
+      } else if (event.payload.scope === "single" && event.payload.fileName) {
         bookSourceStore.invalidateCapability(event.payload.fileName);
       }
       void bookSourceStore.loadSources();
     }),
   );
   unlisteners.push(
-    await eventListen<{ view?: string }>('app:view-reload', async (event) => {
-      if (event.payload?.view === 'search') {
+    await eventListen<{ view?: string }>("app:view-reload", async (event) => {
+      if (event.payload?.view === "search") {
         await handleForceReload();
       }
     }),
@@ -519,7 +519,7 @@ onUnmounted(() => {
           {{ activeSources.length }} 个搜索源{{
             limitedSource && (!hasSearched || !hasSearchKeyword)
               ? `（仅限：${limitedSourceName}）`
-              : ''
+              : ""
           }}
         </span>
       </template>
@@ -556,7 +556,7 @@ onUnmounted(() => {
                 </template>
               </n-button>
             </template>
-            {{ showCovers ? '隐藏封面图片' : '显示封面图片' }}
+            {{ showCovers ? "隐藏封面图片" : "显示封面图片" }}
           </n-tooltip>
 
           <n-dropdown

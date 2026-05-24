@@ -1,4 +1,4 @@
-import { importTheme } from '@/composables/useMaterialYou';
+import { importTheme } from "@/composables/useMaterialYou";
 
 export interface ThemeEntry {
   id: string;
@@ -14,23 +14,24 @@ export interface ThemeManifest {
   themes: ThemeEntry[];
 }
 
-export const DEFAULT_THEME_SOURCE_URL = 'https://raw.githubusercontent.com/legado-themes/repository/main/manifest.json';
+export const DEFAULT_THEME_SOURCE_URL =
+  "https://raw.githubusercontent.com/legado-themes/repository/main/manifest.json";
 
 export function useOnlineThemeSource() {
   function validateManifest(data: unknown): ThemeManifest {
-    if (!data || typeof data !== 'object') {
-      throw new Error('在线主题源格式无效：响应不是 JSON 对象');
+    if (!data || typeof data !== "object") {
+      throw new Error("在线主题源格式无效：响应不是 JSON 对象");
     }
     const obj = data as Record<string, unknown>;
-    if (typeof obj.name !== 'string' || !obj.name.trim()) {
-      throw new Error('在线主题源格式无效：缺少 name 字段');
+    if (typeof obj.name !== "string" || !obj.name.trim()) {
+      throw new Error("在线主题源格式无效：缺少 name 字段");
     }
     if (!Array.isArray(obj.themes)) {
-      throw new Error('在线主题源格式无效：缺少 themes 数组');
+      throw new Error("在线主题源格式无效：缺少 themes 数组");
     }
     return {
       name: obj.name,
-      version: typeof obj.version === 'string' ? obj.version : '0.0.0',
+      version: typeof obj.version === "string" ? obj.version : "0.0.0",
       themes: obj.themes as ThemeEntry[],
     };
   }
@@ -42,16 +43,16 @@ export function useOnlineThemeSource() {
     try {
       const response = await fetch(url, {
         signal: controller.signal,
-        headers: { 'Accept': 'application/json' },
+        headers: { Accept: "application/json" },
       });
 
       if (!response.ok) {
         throw new Error(`获取主题清单失败：HTTP ${response.status} ${response.statusText}`);
       }
 
-      const contentType = response.headers.get('content-type') ?? '';
-      if (!contentType.includes('application/json') && !contentType.includes('text/plain')) {
-        throw new Error('获取主题清单失败：响应不是 JSON 格式');
+      const contentType = response.headers.get("content-type") ?? "";
+      if (!contentType.includes("application/json") && !contentType.includes("text/plain")) {
+        throw new Error("获取主题清单失败：响应不是 JSON 格式");
       }
 
       const raw = await response.text();
@@ -59,13 +60,13 @@ export function useOnlineThemeSource() {
       try {
         data = JSON.parse(raw);
       } catch {
-        throw new Error('获取主题清单失败：无法解析 JSON');
+        throw new Error("获取主题清单失败：无法解析 JSON");
       }
 
       return validateManifest(data);
     } catch (error) {
-      if (error instanceof DOMException && error.name === 'AbortError') {
-        throw new Error('获取主题清单超时（10 秒）');
+      if (error instanceof DOMException && error.name === "AbortError") {
+        throw new Error("获取主题清单超时（10 秒）");
       }
       throw error;
     } finally {

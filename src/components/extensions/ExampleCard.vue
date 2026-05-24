@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { NTag, NButton } from 'naive-ui';
-import type { ExampleScript } from '@/data/extensionExamples';
-import { catDot, catType, runAtLabel } from '@/utils/extensionDisplayUtils';
+import { NTag, NButton } from "naive-ui";
+import type { ExampleScript } from "@/data/extensionExamples";
+import { catDot, catType, runAtLabel } from "@/utils/extensionDisplayUtils";
 
 const props = defineProps<{
   ex: ExampleScript;
@@ -10,7 +10,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  'view-code': [];
+  "view-code": [];
   install: [];
 }>();
 </script>
@@ -22,7 +22,7 @@ const emit = defineEmits<{
       <div class="example-card__name-row">
         <span class="example-card__name">{{ props.ex.meta.name }}</span>
         <n-tag :type="catType(props.ex.meta.category ?? '') as any" size="tiny" :bordered="false">
-          {{ props.ex.meta.category || '其他' }}
+          {{ props.ex.meta.category || "其他" }}
         </n-tag>
       </div>
       <p class="example-card__desc">{{ props.ex.meta.description }}</p>
@@ -36,7 +36,7 @@ const emit = defineEmits<{
         <span class="ext-card__dot" />
         <span>{{ props.ex.meta.author }}</span>
         <span class="ext-card__dot" />
-        <span>{{ runAtLabel(props.ex.meta.runAt ?? 'document-idle') }}</span>
+        <span>{{ runAtLabel(props.ex.meta.runAt ?? "document-idle") }}</span>
       </div>
     </div>
     <div class="example-card__foot">
@@ -48,7 +48,7 @@ const emit = defineEmits<{
         :loading="props.installLoading"
         @click="emit('install')"
       >
-        {{ props.installed ? '已安装' : '安装' }}
+        {{ props.installed ? "已安装" : "安装" }}
       </n-button>
     </div>
   </div>
@@ -105,7 +105,7 @@ const emit = defineEmits<{
   margin-bottom: 8px;
 }
 .example-card__grant-tag {
-  font-family: 'Cascadia Code', 'Consolas', monospace;
+  font-family: "Cascadia Code", "Consolas", monospace;
   font-size: 0.64rem;
   background: var(--color-surface-secondary, rgba(0, 0, 0, 0.04));
   border: 1px solid var(--color-border);

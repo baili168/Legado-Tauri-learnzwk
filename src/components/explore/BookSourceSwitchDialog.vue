@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ChevronLeft, X, ChevronRight } from 'lucide-vue-next';
-import { useMessage } from 'naive-ui';
-import { computed, ref, watch } from 'vue';
-import type { BookDetail, BookItem, BookSourceMeta, ChapterItem } from '@/types';
-import { useOverlayBackstack } from '@/composables/useOverlayBackstack';
+import { ChevronLeft, X, ChevronRight } from "lucide-vue-next";
+import { useMessage } from "naive-ui";
+import { computed, ref, watch } from "vue";
+import type { BookDetail, BookItem, BookSourceMeta, ChapterItem } from "@/types";
+import { useOverlayBackstack } from "@/composables/useOverlayBackstack";
 import {
   type CachedChapter,
   type ShelfBook,
@@ -11,11 +11,11 @@ import {
   useBookshelfStore,
   usePreferencesStore,
   useScriptBridgeStore,
-} from '@/stores';
-import { listBookSources } from '../../composables/useBookSource';
-import { isMobile } from '../../composables/useEnv';
-import { mapWithConcurrencyLimit } from '../../utils/async';
-import { getBookMetaLine, getLatestChapterText } from '../../utils/bookMeta';
+} from "@/stores";
+import { listBookSources } from "../../composables/useBookSource";
+import { isMobile } from "../../composables/useEnv";
+import { mapWithConcurrencyLimit } from "../../utils/async";
+import { getBookMetaLine, getLatestChapterText } from "../../utils/bookMeta";
 import {
   SWITCHABLE_METADATA_FIELDS,
   buildDiffPair,
@@ -29,9 +29,9 @@ import {
   getMetadataValue,
   rankBookCandidates,
   rankChapterMatches,
-} from '../../utils/bookSourceSwitch';
-import { getCoverImageUrl } from '../../utils/coverImage';
-import BookCoverImg from '../BookCoverImg.vue';
+} from "../../utils/bookSourceSwitch";
+import { getCoverImageUrl } from "../../utils/coverImage";
+import BookCoverImg from "../BookCoverImg.vue";
 
 interface WholeBookSwitchedPayload {
   shelfBook: ShelfBook;
@@ -55,7 +55,7 @@ interface TemporaryChapterSwitchPayload {
 
 const props = defineProps<{
   show: boolean;
-  mode: 'whole-book' | 'chapter-temp';
+  mode: "whole-book" | "chapter-temp";
   currentBook: SwitchableBookMeta;
   currentFileName: string;
   currentSourceName: string;
@@ -67,9 +67,9 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'update:show', value: boolean): void;
-  (e: 'whole-book-switched', payload: WholeBookSwitchedPayload): void;
-  (e: 'chapter-temp-switched', payload: TemporaryChapterSwitchPayload): void;
+  (e: "update:show", value: boolean): void;
+  (e: "whole-book-switched", payload: WholeBookSwitchedPayload): void;
+  (e: "chapter-temp-switched", payload: TemporaryChapterSwitchPayload): void;
 }>();
 
 const message = useMessage();
@@ -81,21 +81,21 @@ const availableSources = ref<BookSourceMeta[]>([]);
 const searching = ref(false);
 const loadingCandidate = ref(false);
 const applying = ref(false);
-const searchKeyword = ref('');
+const searchKeyword = ref("");
 const currentBookState = ref<SwitchableBookMeta>({ ...props.currentBook });
 const candidates = ref<SourceCandidate[]>([]);
-const selectedCandidateKey = ref('');
+const selectedCandidateKey = ref("");
 const candidateDetail = ref<BookDetail | null>(null);
 const candidateChapters = ref<ChapterItem[]>([]);
 const selectedMetadataFields = ref<MetadataFieldKey[]>([]);
 const syncFutureChapters = ref(true);
 const selectedMatchChapterIndex = ref<number | null>(null);
-const mobilePage = ref<'list' | 'detail'>('list');
+const mobilePage = ref<"list" | "detail">("list");
 const activeSearchToken = ref(0);
 const activeDetailToken = ref(0);
 
 const dialogTitle = computed(() =>
-  props.mode === 'chapter-temp' ? '当前章节临时换源' : '整本换源与元信息覆盖',
+  props.mode === "chapter-temp" ? "当前章节临时换源" : "整本换源与元信息覆盖",
 );
 
 const selectedCandidate = computed(
@@ -121,7 +121,7 @@ const comparisonRows = computed(() =>
     const currentValue = getMetadataValue(currentBookState.value, key).trim();
     const candidateValue = candidateMeta.value
       ? getMetadataValue(candidateMeta.value, key).trim()
-      : '';
+      : "";
     return {
       key,
       label,
@@ -154,36 +154,34 @@ const canApplyMetadataOnly = computed(
     selectedMetadataFields.value.some((field) => {
       const row = comparisonRows.value.find((item) => item.key === field);
       return !!row?.candidateValue;
-    }) || props.mode === 'chapter-temp',
+    }) || props.mode === "chapter-temp",
 );
 
 const applyButtonText = computed(() => {
-  if (props.mode === 'chapter-temp') {
-    return '替换当前章节正文';
+  if (props.mode === "chapter-temp") {
+    return "替换当前章节正文";
   }
-  return syncFutureChapters.value ? '应用整本换源' : '批量应用选中字段';
+  return syncFutureChapters.value ? "应用整本换源" : "批量应用选中字段";
 });
 
 const showDesktopSplit = computed(() => false);
-const showMobileList = computed(() => mobilePage.value === 'list');
-const showMobileDetail = computed(
-  () => mobilePage.value === 'detail' && !!selectedCandidate.value,
-);
+const showMobileList = computed(() => mobilePage.value === "list");
+const showMobileDetail = computed(() => mobilePage.value === "detail" && !!selectedCandidate.value);
 const desktopDetailVisible = computed(() => false);
 
 useOverlayBackstack(() => props.show, closeDialog);
 
 function closeDialog() {
-  emit('update:show', false);
+  emit("update:show", false);
 }
 
 function goMobileList() {
-  mobilePage.value = 'list';
+  mobilePage.value = "list";
 }
 
 function selectCandidate(candidateKey: string) {
   selectedCandidateKey.value = candidateKey;
-  mobilePage.value = 'detail';
+  mobilePage.value = "detail";
 }
 
 function refreshSelectedMetadataFields(nextCurrent = currentBookState.value) {
@@ -214,20 +212,20 @@ function toggleMetadataField(field: MetadataFieldKey, checked: boolean) {
 
 function buildMetadataOnlyPayload(nextCurrent: SwitchableBookMeta): UpdateShelfBookPayload {
   return {
-    id: props.shelfBookId ?? '',
+    id: props.shelfBookId ?? "",
     name: currentBookState.value.name,
     author: nextCurrent.author,
     coverUrl: getCoverImageUrl(nextCurrent.coverUrl),
     intro: nextCurrent.intro,
     kind: nextCurrent.kind,
-    bookUrl: currentBookState.value.bookUrl ?? '',
+    bookUrl: currentBookState.value.bookUrl ?? "",
     fileName: props.currentFileName,
     sourceName: props.currentSourceName,
     lastChapter: nextCurrent.lastChapter,
     totalChapters: props.currentChapters.length,
     readChapterIndex: props.currentReadChapterIndex,
     readChapterUrl: props.currentReadChapterUrl,
-    sourceType: props.currentSourceType ?? 'novel',
+    sourceType: props.currentSourceType ?? "novel",
     createSourceSwitchBackup: false,
     clearContentCache: false,
   };
@@ -235,11 +233,11 @@ function buildMetadataOnlyPayload(nextCurrent: SwitchableBookMeta): UpdateShelfB
 
 async function applySingleField(field: MetadataFieldKey) {
   if (!props.shelfBookId) {
-    message.warning('请先把当前书籍加入书架，再写入单个字段');
+    message.warning("请先把当前书籍加入书架，再写入单个字段");
     return;
   }
   if (!candidateMeta.value?.[field]) {
-    message.warning('候选书源没有可写入的值');
+    message.warning("候选书源没有可写入的值");
     return;
   }
 
@@ -251,7 +249,7 @@ async function applySingleField(field: MetadataFieldKey) {
     const shelfBook = await updateBook(buildMetadataOnlyPayload(nextCurrent));
     currentBookState.value = nextCurrent;
     refreshSelectedMetadataFields(nextCurrent);
-    emit('whole-book-switched', {
+    emit("whole-book-switched", {
       shelfBook,
       chapters: props.currentChapters,
       matchedChapterIndex: props.currentReadChapterIndex,
@@ -290,7 +288,7 @@ async function performSearch() {
   activeSearchToken.value = requestToken;
   if (!keyword) {
     candidates.value = [];
-    selectedCandidateKey.value = '';
+    selectedCandidateKey.value = "";
     return;
   }
 
@@ -330,9 +328,9 @@ async function performSearch() {
     const merged = results.flatMap((result) => result);
     merged.sort((left, right) => right.score - left.score);
     candidates.value = merged;
-    selectedCandidateKey.value = merged[0]?.key ?? '';
+    selectedCandidateKey.value = merged[0]?.key ?? "";
     if (merged[0]) {
-      mobilePage.value = 'list';
+      mobilePage.value = "list";
     }
   } finally {
     searching.value = false;
@@ -387,12 +385,12 @@ async function loadSelectedCandidate() {
 async function initialize() {
   activeSearchToken.value += 1;
   activeDetailToken.value += 1;
-  searchKeyword.value = props.currentBook.name?.trim() || '';
+  searchKeyword.value = props.currentBook.name?.trim() || "";
   currentBookState.value = { ...props.currentBook };
-  syncFutureChapters.value = props.mode === 'whole-book';
-  mobilePage.value = 'list';
+  syncFutureChapters.value = props.mode === "whole-book";
+  mobilePage.value = "list";
   candidates.value = [];
-  selectedCandidateKey.value = '';
+  selectedCandidateKey.value = "";
   candidateDetail.value = null;
   candidateChapters.value = [];
   selectedMetadataFields.value = [];
@@ -407,24 +405,24 @@ async function applySelection() {
   const candidate = selectedCandidate.value;
   const nextMeta = candidateMeta.value;
   if (!candidate || !nextMeta) {
-    message.warning('请先选择一个候选书源');
+    message.warning("请先选择一个候选书源");
     return;
   }
 
-  if (props.mode === 'chapter-temp') {
+  if (props.mode === "chapter-temp") {
     const match = selectedMatch.value;
     if (!match) {
-      message.warning('当前未找到可用的章节匹配结果');
+      message.warning("当前未找到可用的章节匹配结果");
       return;
     }
-    emit('chapter-temp-switched', {
+    emit("chapter-temp-switched", {
       chapterIndex: props.currentReadChapterIndex,
       fileName: candidate.fileName,
       sourceName: candidate.sourceName,
       sourceBookUrl: candidate.book.bookUrl,
       chapterUrl: match.url,
       chapterName: match.name,
-      reason: match.reasons.join(' / '),
+      reason: match.reasons.join(" / "),
       score: match.score,
     });
     closeDialog();
@@ -432,15 +430,15 @@ async function applySelection() {
   }
 
   if (!props.shelfBookId) {
-    message.warning('请先把当前书籍加入书架，再使用整本换源');
+    message.warning("请先把当前书籍加入书架，再使用整本换源");
     return;
   }
   if (!syncFutureChapters.value && !canApplyMetadataOnly.value) {
-    message.warning('至少选择一个可覆盖字段');
+    message.warning("至少选择一个可覆盖字段");
     return;
   }
   if (syncFutureChapters.value && !candidateChapters.value.length) {
-    message.warning('目标书源未返回章节目录，无法整本换源');
+    message.warning("目标书源未返回章节目录，无法整本换源");
     return;
   }
 
@@ -454,7 +452,7 @@ async function applySelection() {
 
     let nextFileName = props.currentFileName;
     let nextSourceName = props.currentSourceName;
-    let nextBookUrl = currentBookState.value.bookUrl ?? '';
+    let nextBookUrl = currentBookState.value.bookUrl ?? "";
     let nextChapters = props.currentChapters;
     let nextReadChapterIndex = props.currentReadChapterIndex;
     let nextReadChapterUrl = props.currentReadChapterUrl;
@@ -472,10 +470,10 @@ async function applySelection() {
             url:
               candidateChapters.value[
                 Math.min(props.currentReadChapterIndex, candidateChapters.value.length - 1)
-              ]?.url ?? '',
+              ]?.url ?? "",
           };
         if (!match) {
-          message.warning('没有可用的章节匹配结果，无法保持阅读位置');
+          message.warning("没有可用的章节匹配结果，无法保持阅读位置");
           return;
         }
         nextReadChapterIndex = match.index;
@@ -499,7 +497,7 @@ async function applySelection() {
       totalChapters: syncFutureChapters.value ? nextChapters.length : props.currentChapters.length,
       readChapterIndex: nextReadChapterIndex,
       readChapterUrl: nextReadChapterUrl,
-      sourceType: props.currentSourceType ?? 'novel',
+      sourceType: props.currentSourceType ?? "novel",
       createSourceSwitchBackup: syncFutureChapters.value,
       clearContentCache: syncFutureChapters.value,
     };
@@ -509,7 +507,7 @@ async function applySelection() {
       syncFutureChapters.value ? buildCachedChapters(nextChapters) : undefined,
     );
 
-    emit('whole-book-switched', {
+    emit("whole-book-switched", {
       shelfBook,
       chapters: nextChapters,
       matchedChapterIndex: nextReadChapterIndex,
@@ -519,7 +517,7 @@ async function applySelection() {
       sourceSwitched: syncFutureChapters.value,
     });
 
-    message.success(syncFutureChapters.value ? '整本换源已应用' : '元信息已覆盖');
+    message.success(syncFutureChapters.value ? "整本换源已应用" : "元信息已覆盖");
     closeDialog();
   } catch (error) {
     message.error(`应用换源失败: ${error instanceof Error ? error.message : String(error)}`);
@@ -568,9 +566,7 @@ watch(matchingChapters, (matches) => {
     @update:show="emit('update:show', $event)"
   >
     <div class="switch-dialog__viewport">
-      <div
-        class="switch-dialog__shell switch-dialog__shell--compact"
-      >
+      <div class="switch-dialog__shell switch-dialog__shell--compact">
         <div class="switch-dialog__topbar">
           <button
             v-if="showMobileDetail"
@@ -593,8 +589,8 @@ watch(matchingChapters, (matches) => {
             <div class="switch-dialog__topbar-subtitle">
               {{
                 showMobileDetail
-                  ? `${selectedCandidate?.sourceName ?? ''} · 差异详情`
-                  : '选择候选书源并比较差异'
+                  ? `${selectedCandidate?.sourceName ?? ""} · 差异详情`
+                  : "选择候选书源并比较差异"
               }}
             </div>
           </div>
@@ -604,9 +600,7 @@ watch(matchingChapters, (matches) => {
           </button>
         </div>
 
-        <div
-          class="switch-dialog__body switch-dialog__body--compact"
-        >
+        <div class="switch-dialog__body switch-dialog__body--compact">
           <section
             v-show="showMobileList"
             class="switch-dialog__panel switch-dialog__panel--list switch-dialog__panel--list-compact"
@@ -673,7 +667,7 @@ watch(matchingChapters, (matches) => {
                           <span>匹配 {{ candidate.score }}</span>
                         </div>
                         <div class="switch-dialog__candidate-sub">
-                          {{ candidate.book.author || '作者未知' }}
+                          {{ candidate.book.author || "作者未知" }}
                         </div>
                         <div
                           v-if="candidateLatestChapter(candidate.book)"
@@ -688,7 +682,7 @@ watch(matchingChapters, (matches) => {
                           v-if="candidateMetaLine(candidate.book).length"
                           class="switch-dialog__candidate-sub"
                         >
-                          {{ candidateMetaLine(candidate.book).join(' · ') }}
+                          {{ candidateMetaLine(candidate.book).join(" · ") }}
                         </div>
                       </div>
                     </div>
@@ -715,7 +709,7 @@ watch(matchingChapters, (matches) => {
                     <div class="switch-dialog__subtitle">
                       {{ selectedCandidate.sourceName }}
                       ·
-                      {{ candidateMeta?.author || selectedCandidate.book.author || '作者未知' }}
+                      {{ candidateMeta?.author || selectedCandidate.book.author || "作者未知" }}
                     </div>
                   </div>
                   <div class="switch-dialog__header-tags">
@@ -771,7 +765,7 @@ watch(matchingChapters, (matches) => {
                             />
                           </div>
                           <div class="switch-dialog__cover-url">
-                            {{ row.currentValue || '无封面地址' }}
+                            {{ row.currentValue || "无封面地址" }}
                           </div>
                         </div>
 
@@ -785,7 +779,7 @@ watch(matchingChapters, (matches) => {
                             />
                           </div>
                           <div class="switch-dialog__cover-url">
-                            {{ row.candidateValue || '无封面地址' }}
+                            {{ row.candidateValue || "无封面地址" }}
                           </div>
                         </div>
                       </div>
@@ -875,7 +869,7 @@ watch(matchingChapters, (matches) => {
                             <n-tag size="small" :bordered="false">评分 {{ match.score }}</n-tag>
                           </div>
                           <div class="switch-dialog__match-reason">
-                            {{ match.reasons.join(' / ') }}
+                            {{ match.reasons.join(" / ") }}
                           </div>
                         </div>
                       </label>

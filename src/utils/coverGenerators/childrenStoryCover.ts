@@ -1,6 +1,6 @@
-import type { ShelfBook } from '@/stores';
-import type { BuiltinCoverGeneratorDefinition } from './types';
-import { bookAuthor, bookKind, buildDataUrl, textSpans, wrapText } from './shared';
+import type { ShelfBook } from "@/stores";
+import type { BuiltinCoverGeneratorDefinition } from "./types";
+import { bookAuthor, bookKind, buildDataUrl, textSpans, wrapText } from "./shared";
 
 function generateChildrenStoryCover(book: ShelfBook): string {
   const title = textSpans(wrapText(book.name, 6, 4), { x: 300, lineHeight: 108 });
@@ -15,14 +15,14 @@ function generateChildrenStoryCover(book: ShelfBook): string {
   <circle cx="476" cy="226" r="14" fill="#1f2937" />
   <path d="M420 276C448 304 486 300 504 274" stroke="#1f2937" stroke-width="9" stroke-linecap="round" fill="none" />
   <text x="300" y="328" text-anchor="middle" fill="#1f2937" font-size="104" font-weight="900" font-family="'Noto Sans SC','Source Han Sans SC',sans-serif">${title}</text>
-  <text x="300" y="562" text-anchor="middle" fill="#14532d" font-size="48" font-weight="800">${bookKind(book, '儿童故事')}</text>
+  <text x="300" y="562" text-anchor="middle" fill="#14532d" font-size="48" font-weight="800">${bookKind(book, "儿童故事")}</text>
   <text x="300" y="612" text-anchor="middle" fill="#1f2937" font-size="56" font-weight="900">${bookAuthor(book)}</text>
 </svg>`);
 }
 
 export const childrenStoryCoverGenerator: BuiltinCoverGeneratorDefinition = {
-  id: 'builtin:children-story',
-  name: '儿童童趣',
-  description: '明亮色块和童趣图形，适合儿童读物、童话、启蒙故事。',
+  id: "builtin:children-story",
+  name: "儿童童趣",
+  description: "明亮色块和童趣图形，适合儿童读物、童话、启蒙故事。",
   generate: generateChildrenStoryCover,
 };

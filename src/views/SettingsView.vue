@@ -1,52 +1,62 @@
 <script setup lang="ts">
-import { ChevronLeft, ChevronRight } from 'lucide-vue-next';
-import { storeToRefs } from 'pinia';
-import { computed, onBeforeUnmount, ref, watch } from 'vue';
-import AppPageHeader from '@/components/layout/AppPageHeader.vue';
-import SectionAbout from '@/components/settings/SectionAbout.vue';
-import SectionAdvanced from '@/components/settings/SectionAdvanced.vue';
-import SectionDeveloper from '@/components/settings/SectionDeveloper.vue';
-import SectionGeneral from '@/components/settings/SectionGeneral.vue';
-import SectionNetwork from '@/components/settings/SectionNetwork.vue';
-import SectionReader from '@/components/settings/SectionReader.vue';
-import SectionStorage from '@/components/settings/SectionStorage.vue';
-import SectionSync from '@/components/settings/SectionSync.vue';
-import SectionVideo from '@/components/settings/SectionVideo.vue';
-import ReadingStatsPanel from '@/components/reading/ReadingStatsPanel.vue';
-import { isHarmonyNative } from '@/composables/useEnv';
-import { useResponsiveControl } from '@/composables/useResponsiveControl';
-import { useNavigationStore, useBackStackStore } from '@/stores';
+import { ChevronLeft, ChevronRight } from "lucide-vue-next";
+import { storeToRefs } from "pinia";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
+import AppPageHeader from "@/components/layout/AppPageHeader.vue";
+import SectionAbout from "@/components/settings/SectionAbout.vue";
+import SectionAdvanced from "@/components/settings/SectionAdvanced.vue";
+import SectionDeveloper from "@/components/settings/SectionDeveloper.vue";
+import SectionGeneral from "@/components/settings/SectionGeneral.vue";
+import SectionNetwork from "@/components/settings/SectionNetwork.vue";
+import SectionPrivacy from "@/components/settings/SectionPrivacy.vue";
+import SectionReader from "@/components/settings/SectionReader.vue";
+import SectionStorage from "@/components/settings/SectionStorage.vue";
+import SectionSync from "@/components/settings/SectionSync.vue";
+import SectionVideo from "@/components/settings/SectionVideo.vue";
+import SectionNotification from "@/components/settings/SectionNotification.vue";
+import WebDAVPanel from "@/components/settings/WebDAVPanel.vue";
+import ReadingStatsPanel from "@/components/settings/ReadingStatsPanel.vue";
+import AppLockSetup from "@/components/settings/AppLockSetup.vue";
+import { isHarmonyNative } from "@/composables/useEnv";
+import { useResponsiveControl } from "@/composables/useResponsiveControl";
+import { useNavigationStore, useBackStackStore } from "@/stores";
 
 interface TabItem {
   id: string;
   label: string;
 }
 
-type MobileStage = 'menu' | 'detail';
+type MobileStage = "menu" | "detail";
 
 const TABS = computed<TabItem[]>(() => {
   const base: TabItem[] = [
-    { id: 'general', label: '通用' },
-    { id: 'reader', label: '阅读偏好' },
-    { id: 'reading-stats', label: '阅读统计' },
-    { id: 'video', label: '视频播放' },
-    { id: 'network', label: '网络' },
-    { id: 'sync', label: '同步' },
-    { id: 'storage', label: '存储' },
-    { id: 'advanced', label: '服务模式' },
-    { id: 'developer', label: '开发设置' },
-    { id: 'about', label: '关于' },
+    { id: "general", label: "通用" },
+    { id: "notification", label: "通知" },
+    { id: "reader", label: "阅读偏好" },
+    { id: "reading-stats", label: "阅读统计" },
+    { id: "video", label: "视频播放" },
+    { id: "privacy", label: "隐私与安全" },
+    { id: "network", label: "网络" },
+    { id: "sync", label: "同步" },
+    { id: "webdav", label: "WebDAV 备份" },
+    { id: "storage", label: "存储" },
+    { id: "advanced", label: "服务模式" },
+    { id: "developer", label: "开发设置" },
+    { id: "about", label: "关于" },
   ];
-  return isHarmonyNative ? base.filter((t) => t.id !== 'sync') : base;
+  return isHarmonyNative ? base.filter((t) => t.id !== "sync") : base;
 });
 
 const TAB_COMPONENTS = {
   general: SectionGeneral,
+  notification: SectionNotification,
   reader: SectionReader,
-  'reading-stats': ReadingStatsPanel,
+  "reading-stats": ReadingStatsPanel,
   video: SectionVideo,
+  privacy: SectionPrivacy,
   network: SectionNetwork,
   sync: SectionSync,
+  webdav: WebDAVPanel,
   storage: SectionStorage,
   advanced: SectionAdvanced,
   developer: SectionDeveloper,
@@ -57,10 +67,10 @@ const navigationStore = useNavigationStore();
 const { activeView } = storeToRefs(navigationStore);
 
 const { breakpoint: bp } = useResponsiveControl();
-const isWideLayout = computed(() => bp.value === 'expanded' || bp.value === 'wide');
+const isWideLayout = computed(() => bp.value === "expanded" || bp.value === "wide");
 
-const activeTab = ref<keyof typeof TAB_COMPONENTS>('general');
-const mobileStage = ref<MobileStage>('menu');
+const activeTab = ref<keyof typeof TAB_COMPONENTS>("general");
+const mobileStage = ref<MobileStage>("menu");
 
 const _backStack = useBackStackStore();
 let _backHandler: (() => void) | null = null;
@@ -69,13 +79,13 @@ const activeSectionComponent = computed(() => TAB_COMPONENTS[activeTab.value]);
 const activeTabIndex = computed(() => TABS.value.findIndex((tab) => tab.id === activeTab.value));
 const activeTabLabel = computed(() => TABS.value[activeTabIndex.value]?.label ?? activeTab.value);
 const isSettingsDetailActive = computed(
-  () => activeView.value === 'settings' && mobileStage.value === 'detail',
+  () => activeView.value === "settings" && mobileStage.value === "detail",
 );
 
 function selectTab(id: keyof typeof TAB_COMPONENTS) {
   activeTab.value = id;
   if (!isWideLayout.value) {
-    mobileStage.value = 'detail';
+    mobileStage.value = "detail";
   }
 }
 
@@ -86,7 +96,7 @@ function openMobileTab(id: string) {
 }
 
 function showMobileMenu() {
-  mobileStage.value = 'menu';
+  mobileStage.value = "menu";
 }
 
 function activateHistoryGuard() {
@@ -131,7 +141,7 @@ function onMobileKeyDown(event: KeyboardEvent) {
   if (!isSettingsDetailActive.value) {
     return;
   }
-  if (event.key === 'Escape' || event.key === 'BrowserBack') {
+  if (event.key === "Escape" || event.key === "BrowserBack") {
     event.preventDefault();
     goBackFromDetail();
   }
@@ -140,21 +150,21 @@ function onMobileKeyDown(event: KeyboardEvent) {
 watch(isSettingsDetailActive, (enabled) => {
   if (enabled) {
     activateHistoryGuard();
-    window.addEventListener('keydown', onMobileKeyDown);
+    window.addEventListener("keydown", onMobileKeyDown);
     return;
   }
-  window.removeEventListener('keydown', onMobileKeyDown);
-  deactivateHistoryGuard({ consume: activeView.value !== 'settings' });
+  window.removeEventListener("keydown", onMobileKeyDown);
+  deactivateHistoryGuard({ consume: activeView.value !== "settings" });
 });
 
 watch(activeView, (view) => {
-  if (view !== 'settings') {
-    mobileStage.value = 'menu';
+  if (view !== "settings") {
+    mobileStage.value = "menu";
   }
 });
 
 onBeforeUnmount(() => {
-  window.removeEventListener('keydown', onMobileKeyDown);
+  window.removeEventListener("keydown", onMobileKeyDown);
   if (_backHandler) {
     _backStack.detach(_backHandler);
     _backHandler = null;

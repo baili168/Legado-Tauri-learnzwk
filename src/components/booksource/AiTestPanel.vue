@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useMessage } from 'naive-ui';
+import { useMessage } from "naive-ui";
 /**
  * AI 书源工作台 — 独立调试面板
  *
@@ -9,9 +9,9 @@ import { useMessage } from 'naive-ui';
  *
  * 选项卡顶部徽标实时反映当前最新结果（手动 > AI 自动）。
  */
-import { ref, computed, watch } from 'vue';
-import type { TestResult } from '../../composables/useAiAgent';
-import { invokeWithTimeout } from '../../composables/useInvoke';
+import { ref, computed, watch } from "vue";
+import type { TestResult } from "../../composables/useAiAgent";
+import { invokeWithTimeout } from "../../composables/useInvoke";
 
 // ── Props ─────────────────────────────────────────────────────────────────
 const props = defineProps<{
@@ -22,7 +22,7 @@ const props = defineProps<{
 }>();
 
 // ── 选项卡定义 ────────────────────────────────────────────────────────────
-type TabId = 'search' | 'bookInfo' | 'chapterList' | 'chapterContent' | 'explore';
+type TabId = "search" | "bookInfo" | "chapterList" | "chapterContent" | "explore";
 
 interface TabDef {
   id: TabId;
@@ -32,23 +32,23 @@ interface TabDef {
 }
 
 const TAB_DEFS: TabDef[] = [
-  { id: 'search', label: '搜索', aiKey: '搜索' },
-  { id: 'bookInfo', label: '详情', aiKey: '书籍详情' },
-  { id: 'chapterList', label: '目录', aiKey: '章节目录' },
-  { id: 'chapterContent', label: '正文', aiKey: '章节正文' },
-  { id: 'explore', label: '发现', aiKey: null },
+  { id: "search", label: "搜索", aiKey: "搜索" },
+  { id: "bookInfo", label: "详情", aiKey: "书籍详情" },
+  { id: "chapterList", label: "目录", aiKey: "章节目录" },
+  { id: "chapterContent", label: "正文", aiKey: "章节正文" },
+  { id: "explore", label: "发现", aiKey: null },
 ];
 
 // ── 状态：每个选项卡的手动测试状态 ───────────────────────────────────────
 interface RunState {
-  status: 'idle' | 'running' | 'ok' | 'error';
+  status: "idle" | "running" | "ok" | "error";
   output: string;
   durationMs: number;
   lastRunAt: number | null;
 }
 
 function emptyState(): RunState {
-  return { status: 'idle', output: '', durationMs: 0, lastRunAt: null };
+  return { status: "idle", output: "", durationMs: 0, lastRunAt: null };
 }
 
 const runStates = ref<Record<TabId, RunState>>({
@@ -60,15 +60,15 @@ const runStates = ref<Record<TabId, RunState>>({
 });
 
 // ── 输入字段 ──────────────────────────────────────────────────────────────
-const searchKeyword = ref('');
+const searchKeyword = ref("");
 const searchPage = ref(1);
-const bookInfoUrl = ref('');
-const chapterListUrl = ref('');
-const chapterContentUrl = ref('');
-const exploreCategory = ref('');
+const bookInfoUrl = ref("");
+const chapterListUrl = ref("");
+const chapterContentUrl = ref("");
+const exploreCategory = ref("");
 const explorePage = ref(1);
 
-const activeTab = ref<TabId>('search');
+const activeTab = ref<TabId>("search");
 const message = useMessage();
 
 // ── 从文件名变更时重置所有手动测试状态 ───────────────────────────────────
@@ -91,24 +91,24 @@ function getAiResult(tabId: TabId): TestResult | null {
 }
 
 // ── 选项卡徽标（手动结果优先，其次 AI 结果）─────────────────────────────
-function getTabBadgeInfo(tabId: TabId): { text: string; type: 'success' | 'error' | 'muted' } {
+function getTabBadgeInfo(tabId: TabId): { text: string; type: "success" | "error" | "muted" } {
   const manual = runStates.value[tabId];
-  if (manual.status === 'ok') {
-    return { text: '✓', type: 'success' };
+  if (manual.status === "ok") {
+    return { text: "✓", type: "success" };
   }
-  if (manual.status === 'error') {
-    return { text: '✗', type: 'error' };
+  if (manual.status === "error") {
+    return { text: "✗", type: "error" };
   }
   const ai = getAiResult(tabId);
   if (ai) {
-    if (ai.status === 'ok') {
-      return { text: 'AI✓', type: 'success' };
+    if (ai.status === "ok") {
+      return { text: "AI✓", type: "success" };
     }
-    if (ai.status === 'error') {
-      return { text: 'AI✗', type: 'error' };
+    if (ai.status === "error") {
+      return { text: "AI✗", type: "error" };
     }
   }
-  return { text: '—', type: 'muted' };
+  return { text: "—", type: "muted" };
 }
 
 // ── 把 JSON 数组中的首个 bookUrl 提取出来 ────────────────────────────────
@@ -117,12 +117,12 @@ function extractFirstBookUrl(json: string): string {
     const arr = JSON.parse(json);
     if (Array.isArray(arr) && arr.length > 0) {
       const first = arr[0] as Record<string, unknown>;
-      return (first.bookUrl as string) || (first.url as string) || '';
+      return (first.bookUrl as string) || (first.url as string) || "";
     }
   } catch {
     // ignore
   }
-  return '';
+  return "";
 }
 
 function extractFirstChapterUrl(json: string): string {
@@ -136,36 +136,36 @@ function extractFirstChapterUrl(json: string): string {
           : [item],
       );
       const first = flat[0] as Record<string, unknown>;
-      return (first?.url as string) || (first?.chapterUrl as string) || '';
+      return (first?.url as string) || (first?.chapterUrl as string) || "";
     }
   } catch {
     // ignore
   }
-  return '';
+  return "";
 }
 
 // ── 搜索 ──────────────────────────────────────────────────────────────────
 async function runSearch() {
   if (!props.fileName) {
-    message.warning('当前草稿尚未命名，请先让 AI 保存书源');
+    message.warning("当前草稿尚未命名，请先让 AI 保存书源");
     return;
   }
   if (!searchKeyword.value.trim()) {
-    message.warning('请输入搜索关键词');
+    message.warning("请输入搜索关键词");
     return;
   }
   const st = runStates.value.search;
-  st.status = 'running';
-  st.output = '';
+  st.status = "running";
+  st.output = "";
   const t0 = Date.now();
   try {
     const raw = await invokeWithTimeout<unknown>(
-      'booksource_search',
+      "booksource_search",
       { fileName: props.fileName, keyword: searchKeyword.value.trim(), page: searchPage.value },
       35000,
     );
     st.output = JSON.stringify(raw, null, 2);
-    st.status = 'ok';
+    st.status = "ok";
     // 链式填入：把第一个 bookUrl 自动填到详情输入框
     const url = extractFirstBookUrl(st.output);
     if (url && !bookInfoUrl.value) {
@@ -173,7 +173,7 @@ async function runSearch() {
     }
   } catch (e: unknown) {
     st.output = e instanceof Error ? e.message : String(e);
-    st.status = 'error';
+    st.status = "error";
   }
   st.durationMs = Date.now() - t0;
   st.lastRunAt = Date.now();
@@ -182,25 +182,25 @@ async function runSearch() {
 // ── 书籍详情 ──────────────────────────────────────────────────────────────
 async function runBookInfo() {
   if (!props.fileName) {
-    message.warning('当前草稿尚未命名');
+    message.warning("当前草稿尚未命名");
     return;
   }
   if (!bookInfoUrl.value.trim()) {
-    message.warning('请输入书籍 URL');
+    message.warning("请输入书籍 URL");
     return;
   }
   const st = runStates.value.bookInfo;
-  st.status = 'running';
-  st.output = '';
+  st.status = "running";
+  st.output = "";
   const t0 = Date.now();
   try {
     const raw = await invokeWithTimeout<unknown>(
-      'booksource_book_info',
+      "booksource_book_info",
       { fileName: props.fileName, bookUrl: bookInfoUrl.value.trim() },
       35000,
     );
     st.output = JSON.stringify(raw, null, 2);
-    st.status = 'ok';
+    st.status = "ok";
     // 链式：详情返回的 bookUrl 填入目录
     const detail = raw as Record<string, unknown>;
     const tocUrl = (detail?.bookUrl as string) || bookInfoUrl.value;
@@ -209,7 +209,7 @@ async function runBookInfo() {
     }
   } catch (e: unknown) {
     st.output = e instanceof Error ? e.message : String(e);
-    st.status = 'error';
+    st.status = "error";
   }
   st.durationMs = Date.now() - t0;
   st.lastRunAt = Date.now();
@@ -218,25 +218,25 @@ async function runBookInfo() {
 // ── 章节目录 ──────────────────────────────────────────────────────────────
 async function runChapterList() {
   if (!props.fileName) {
-    message.warning('当前草稿尚未命名');
+    message.warning("当前草稿尚未命名");
     return;
   }
   if (!chapterListUrl.value.trim()) {
-    message.warning('请输入书籍 URL');
+    message.warning("请输入书籍 URL");
     return;
   }
   const st = runStates.value.chapterList;
-  st.status = 'running';
-  st.output = '';
+  st.status = "running";
+  st.output = "";
   const t0 = Date.now();
   try {
     const raw = await invokeWithTimeout<unknown>(
-      'booksource_chapter_list',
+      "booksource_chapter_list",
       { fileName: props.fileName, bookUrl: chapterListUrl.value.trim(), taskId: null },
       125000,
     );
     st.output = JSON.stringify(raw, null, 2);
-    st.status = 'ok';
+    st.status = "ok";
     // 链式：把第一章 URL 填入正文
     const chUrl = extractFirstChapterUrl(st.output);
     if (chUrl && !chapterContentUrl.value) {
@@ -244,7 +244,7 @@ async function runChapterList() {
     }
   } catch (e: unknown) {
     st.output = e instanceof Error ? e.message : String(e);
-    st.status = 'error';
+    st.status = "error";
   }
   st.durationMs = Date.now() - t0;
   st.lastRunAt = Date.now();
@@ -253,28 +253,28 @@ async function runChapterList() {
 // ── 章节正文 ──────────────────────────────────────────────────────────────
 async function runChapterContent() {
   if (!props.fileName) {
-    message.warning('当前草稿尚未命名');
+    message.warning("当前草稿尚未命名");
     return;
   }
   if (!chapterContentUrl.value.trim()) {
-    message.warning('请输入章节 URL');
+    message.warning("请输入章节 URL");
     return;
   }
   const st = runStates.value.chapterContent;
-  st.status = 'running';
-  st.output = '';
+  st.status = "running";
+  st.output = "";
   const t0 = Date.now();
   try {
     const raw = await invokeWithTimeout<unknown>(
-      'booksource_chapter_content',
+      "booksource_chapter_content",
       { fileName: props.fileName, chapterUrl: chapterContentUrl.value.trim() },
       35000,
     );
     st.output = JSON.stringify(raw, null, 2);
-    st.status = 'ok';
+    st.status = "ok";
   } catch (e: unknown) {
     st.output = e instanceof Error ? e.message : String(e);
-    st.status = 'error';
+    st.status = "error";
   }
   st.durationMs = Date.now() - t0;
   st.lastRunAt = Date.now();
@@ -283,28 +283,28 @@ async function runChapterContent() {
 // ── 发现页 ────────────────────────────────────────────────────────────────
 async function runExplore() {
   if (!props.fileName) {
-    message.warning('当前草稿尚未命名');
+    message.warning("当前草稿尚未命名");
     return;
   }
   const st = runStates.value.explore;
-  st.status = 'running';
-  st.output = '';
+  st.status = "running";
+  st.output = "";
   const t0 = Date.now();
   try {
     const raw = await invokeWithTimeout<unknown>(
-      'booksource_explore',
+      "booksource_explore",
       {
         fileName: props.fileName,
-        category: exploreCategory.value.trim() || '',
+        category: exploreCategory.value.trim() || "",
         page: explorePage.value,
       },
       35000,
     );
     st.output = JSON.stringify(raw, null, 2);
-    st.status = 'ok';
+    st.status = "ok";
   } catch (e: unknown) {
     st.output = e instanceof Error ? e.message : String(e);
-    st.status = 'error';
+    st.status = "error";
   }
   st.durationMs = Date.now() - t0;
   st.lastRunAt = Date.now();
@@ -315,7 +315,7 @@ function fmtMs(ms: number): string {
   return ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${ms}ms`;
 }
 
-const isRunning = computed(() => TAB_DEFS.some((t) => runStates.value[t.id].status === 'running'));
+const isRunning = computed(() => TAB_DEFS.some((t) => runStates.value[t.id].status === "running"));
 
 // 把搜索结果第一个 bookUrl 快速填到对应输入框
 function fillBookUrlFromSearch() {
@@ -323,14 +323,14 @@ function fillBookUrlFromSearch() {
   if (url) {
     bookInfoUrl.value = url;
     chapterListUrl.value = url;
-    activeTab.value = 'bookInfo';
+    activeTab.value = "bookInfo";
   }
 }
 function fillChapterUrlFromList() {
   const url = extractFirstChapterUrl(runStates.value.chapterList.output);
   if (url) {
     chapterContentUrl.value = url;
-    activeTab.value = 'chapterContent';
+    activeTab.value = "chapterContent";
   }
 }
 function fillBookUrlFromDetail() {
@@ -339,12 +339,12 @@ function fillBookUrlFromDetail() {
     const url = (obj?.bookUrl as string) || bookInfoUrl.value;
     if (url) {
       chapterListUrl.value = url;
-      activeTab.value = 'chapterList';
+      activeTab.value = "chapterList";
     }
   } catch {
     if (bookInfoUrl.value) {
       chapterListUrl.value = bookInfoUrl.value;
-      activeTab.value = 'chapterList';
+      activeTab.value = "chapterList";
     }
   }
 }
@@ -389,10 +389,10 @@ function clearState(tabId: TabId) {
               size="tiny"
               round
             >
-              {{ getAiResult('search')!.status === 'ok' ? '通过' : '失败' }}
+              {{ getAiResult("search")!.status === "ok" ? "通过" : "失败" }}
             </n-tag>
           </div>
-          <pre class="atp-pre atp-pre--ai">{{ getAiResult('search')!.output }}</pre>
+          <pre class="atp-pre atp-pre--ai">{{ getAiResult("search")!.output }}</pre>
         </div>
         <!-- 手动测试 -->
         <div class="manual-section">
@@ -403,7 +403,7 @@ function clearState(tabId: TabId) {
               class="manual-meta"
               :class="runStates.search.status === 'ok' ? 'meta--ok' : 'meta--err'"
             >
-              {{ runStates.search.status === 'ok' ? '✓ 通过' : '✗ 失败' }}
+              {{ runStates.search.status === "ok" ? "✓ 通过" : "✗ 失败" }}
               &nbsp;{{ fmtMs(runStates.search.durationMs) }}
             </span>
           </div>
@@ -449,7 +449,7 @@ function clearState(tabId: TabId) {
           <div v-if="runStates.search.output" class="manual-output">
             <div class="output-hd">
               <span class="output-label">{{
-                runStates.search.status === 'error' ? '错误信息' : '返回结果 (JSON)'
+                runStates.search.status === "error" ? "错误信息" : "返回结果 (JSON)"
               }}</span>
             </div>
             <pre
@@ -472,10 +472,10 @@ function clearState(tabId: TabId) {
               size="tiny"
               round
             >
-              {{ getAiResult('bookInfo')!.status === 'ok' ? '通过' : '失败' }}
+              {{ getAiResult("bookInfo")!.status === "ok" ? "通过" : "失败" }}
             </n-tag>
           </div>
-          <pre class="atp-pre atp-pre--ai">{{ getAiResult('bookInfo')!.output }}</pre>
+          <pre class="atp-pre atp-pre--ai">{{ getAiResult("bookInfo")!.output }}</pre>
         </div>
         <div class="manual-section">
           <div class="manual-hd">
@@ -485,7 +485,7 @@ function clearState(tabId: TabId) {
               class="manual-meta"
               :class="runStates.bookInfo.status === 'ok' ? 'meta--ok' : 'meta--err'"
             >
-              {{ runStates.bookInfo.status === 'ok' ? '✓ 通过' : '✗ 失败' }}
+              {{ runStates.bookInfo.status === "ok" ? "✓ 通过" : "✗ 失败" }}
               &nbsp;{{ fmtMs(runStates.bookInfo.durationMs) }}
             </span>
           </div>
@@ -520,7 +520,7 @@ function clearState(tabId: TabId) {
           <div v-if="runStates.bookInfo.output" class="manual-output">
             <div class="output-hd">
               <span class="output-label">{{
-                runStates.bookInfo.status === 'error' ? '错误信息' : '返回结果 (JSON)'
+                runStates.bookInfo.status === "error" ? "错误信息" : "返回结果 (JSON)"
               }}</span>
             </div>
             <pre
@@ -543,10 +543,10 @@ function clearState(tabId: TabId) {
               size="tiny"
               round
             >
-              {{ getAiResult('chapterList')!.status === 'ok' ? '通过' : '失败' }}
+              {{ getAiResult("chapterList")!.status === "ok" ? "通过" : "失败" }}
             </n-tag>
           </div>
-          <pre class="atp-pre atp-pre--ai">{{ getAiResult('chapterList')!.output }}</pre>
+          <pre class="atp-pre atp-pre--ai">{{ getAiResult("chapterList")!.output }}</pre>
         </div>
         <div class="manual-section">
           <div class="manual-hd">
@@ -556,7 +556,7 @@ function clearState(tabId: TabId) {
               class="manual-meta"
               :class="runStates.chapterList.status === 'ok' ? 'meta--ok' : 'meta--err'"
             >
-              {{ runStates.chapterList.status === 'ok' ? '✓ 通过' : '✗ 失败' }}
+              {{ runStates.chapterList.status === "ok" ? "✓ 通过" : "✗ 失败" }}
               &nbsp;{{ fmtMs(runStates.chapterList.durationMs) }}
             </span>
           </div>
@@ -591,7 +591,7 @@ function clearState(tabId: TabId) {
           <div v-if="runStates.chapterList.output" class="manual-output">
             <div class="output-hd">
               <span class="output-label">{{
-                runStates.chapterList.status === 'error' ? '错误信息' : '返回结果 (JSON)'
+                runStates.chapterList.status === "error" ? "错误信息" : "返回结果 (JSON)"
               }}</span>
             </div>
             <pre
@@ -614,10 +614,10 @@ function clearState(tabId: TabId) {
               size="tiny"
               round
             >
-              {{ getAiResult('chapterContent')!.status === 'ok' ? '通过' : '失败' }}
+              {{ getAiResult("chapterContent")!.status === "ok" ? "通过" : "失败" }}
             </n-tag>
           </div>
-          <pre class="atp-pre atp-pre--ai">{{ getAiResult('chapterContent')!.output }}</pre>
+          <pre class="atp-pre atp-pre--ai">{{ getAiResult("chapterContent")!.output }}</pre>
         </div>
         <div class="manual-section">
           <div class="manual-hd">
@@ -627,7 +627,7 @@ function clearState(tabId: TabId) {
               class="manual-meta"
               :class="runStates.chapterContent.status === 'ok' ? 'meta--ok' : 'meta--err'"
             >
-              {{ runStates.chapterContent.status === 'ok' ? '✓ 通过' : '✗ 失败' }}
+              {{ runStates.chapterContent.status === "ok" ? "✓ 通过" : "✗ 失败" }}
               &nbsp;{{ fmtMs(runStates.chapterContent.durationMs) }}
             </span>
           </div>
@@ -658,7 +658,7 @@ function clearState(tabId: TabId) {
           <div v-if="runStates.chapterContent.output" class="manual-output">
             <div class="output-hd">
               <span class="output-label">{{
-                runStates.chapterContent.status === 'error' ? '错误信息' : '返回结果 (JSON)'
+                runStates.chapterContent.status === "error" ? "错误信息" : "返回结果 (JSON)"
               }}</span>
             </div>
             <pre
@@ -687,7 +687,7 @@ function clearState(tabId: TabId) {
               class="manual-meta"
               :class="runStates.explore.status === 'ok' ? 'meta--ok' : 'meta--err'"
             >
-              {{ runStates.explore.status === 'ok' ? '✓ 通过' : '✗ 失败' }}
+              {{ runStates.explore.status === "ok" ? "✓ 通过" : "✗ 失败" }}
               &nbsp;{{ fmtMs(runStates.explore.durationMs) }}
             </span>
           </div>
@@ -725,7 +725,7 @@ function clearState(tabId: TabId) {
           <div v-if="runStates.explore.output" class="manual-output">
             <div class="output-hd">
               <span class="output-label">{{
-                runStates.explore.status === 'error' ? '错误信息' : '返回结果 (JSON)'
+                runStates.explore.status === "error" ? "错误信息" : "返回结果 (JSON)"
               }}</span>
             </div>
             <pre
@@ -946,7 +946,7 @@ function clearState(tabId: TabId) {
   margin: 0;
   padding: 8px 10px;
   font-size: 12px;
-  font-family: 'Consolas', 'Menlo', monospace;
+  font-family: "Consolas", "Menlo", monospace;
   white-space: pre;
   overflow: auto;
   line-height: 1.55;

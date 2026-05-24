@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { isMobile } from '@/composables/useEnv';
+import { isMobile } from "@/composables/useEnv";
 
 const props = withDefaults(
   defineProps<{

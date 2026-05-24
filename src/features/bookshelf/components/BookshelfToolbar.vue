@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import AppInput from '@/components/base/AppInput.vue';
+import AppInput from "@/components/base/AppInput.vue";
 
 defineProps<{
   show: boolean;
@@ -7,7 +7,7 @@ defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'update:searchKw', value: string): void;
+  (e: "update:searchKw", value: string): void;
 }>();
 </script>
 

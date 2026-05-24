@@ -81,15 +81,15 @@ const FULLWIDTH_CHAPTER_RE =
 
 export const BUILTIN_RULES: ChapterRule[] = [
   {
-    id: 'cn-chapter',
-    name: '标准中文章节',
+    id: "cn-chapter",
+    name: "标准中文章节",
     description: '匹配"第X章/节/回/话/卷"等写法，及序章、楔子、尾声、番外等特殊章节',
     test: (line) => CN_CHAPTER_RE.test(line) || FULLWIDTH_CHAPTER_RE.test(line),
   },
   {
-    id: 'cn-chapter-loose',
-    name: '宽松中文章节',
-    description: '在标准规则基础上，额外匹配行首章节关键字开头的短行（≤60字）',
+    id: "cn-chapter-loose",
+    name: "宽松中文章节",
+    description: "在标准规则基础上，额外匹配行首章节关键字开头的短行（≤60字）",
     test: (line) => {
       if (CN_CHAPTER_RE.test(line) || FULLWIDTH_CHAPTER_RE.test(line)) {
         return true;
@@ -99,27 +99,27 @@ export const BUILTIN_RULES: ChapterRule[] = [
     },
   },
   {
-    id: 'en-chapter',
-    name: '英文 Chapter/Part',
+    id: "en-chapter",
+    name: "英文 Chapter/Part",
     description: '匹配 "Chapter 1"、"Part 2"、"Volume 3" 等英文章节格式',
     test: (line) => EN_CHAPTER_RE.test(line),
   },
   {
-    id: 'numbered',
-    name: '数字编号行',
+    id: "numbered",
+    name: "数字编号行",
     description: '匹配 "1." "01." "1、" "1）" 等数字编号短行（≤60字）',
     test: (line) => NUM_HEADING_RE.test(line),
   },
   {
-    id: 'divider',
-    name: '装饰分隔线',
+    id: "divider",
+    name: "装饰分隔线",
     description: '匹配 "===" "---" "***" "───" 等分隔线（至少3个相同字符）',
     test: (line) => DIVIDER_RE.test(line),
   },
   {
-    id: 'cn-chapter-or-divider',
-    name: '中文章节 + 分隔线（推荐）',
-    description: '同时识别中文章节标题和装饰分隔线，适合大多数网文',
+    id: "cn-chapter-or-divider",
+    name: "中文章节 + 分隔线（推荐）",
+    description: "同时识别中文章节标题和装饰分隔线，适合大多数网文",
     test: (line) =>
       CN_CHAPTER_RE.test(line) || FULLWIDTH_CHAPTER_RE.test(line) || DIVIDER_RE.test(line),
   },
@@ -172,11 +172,11 @@ export function getAllRules(): ChapterRule[] {
 export function splitChapters(text: string, rule: ChapterRule): SplitResult {
   const lines = text.split(/\r?\n/);
 
-  let preface = '';
+  let preface = "";
   const chapters: SplitChapter[] = [];
   let truncated = false;
 
-  let currentTitle = '';
+  let currentTitle = "";
   let currentLines: string[] = [];
   let started = false;
 
@@ -187,7 +187,7 @@ export function splitChapters(text: string, rule: ChapterRule): SplitResult {
     if (trimmed && rule.test(trimmed)) {
       if (!started) {
         // 第一章之前的内容作为前言
-        preface = currentLines.join('\n').trim();
+        preface = currentLines.join("\n").trim();
         started = true;
       } else {
         // 保存上一章
@@ -197,7 +197,7 @@ export function splitChapters(text: string, rule: ChapterRule): SplitResult {
         }
         chapters.push({
           title: currentTitle,
-          content: currentLines.join('\n').trimStart(),
+          content: currentLines.join("\n").trimStart(),
         });
       }
       currentTitle = trimmed;
@@ -212,7 +212,7 @@ export function splitChapters(text: string, rule: ChapterRule): SplitResult {
     if (!truncated || chapters.length < MAX_CHAPTERS) {
       chapters.push({
         title: currentTitle,
-        content: currentLines.join('\n').trimStart(),
+        content: currentLines.join("\n").trimStart(),
       });
     }
   }
@@ -220,9 +220,9 @@ export function splitChapters(text: string, rule: ChapterRule): SplitResult {
   // 若全文没匹配到任何章节，将整本书作为单章节返回
   if (chapters.length === 0) {
     return {
-      chapters: [{ title: '正文', content: text.trim() }],
+      chapters: [{ title: "正文", content: text.trim() }],
       truncated: false,
-      preface: '',
+      preface: "",
     };
   }
 

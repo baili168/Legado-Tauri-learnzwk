@@ -1,187 +1,189 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { useMessage } from 'naive-ui'
+import { ref, watch } from "vue";
+import { useMessage } from "naive-ui";
 
 const props = defineProps<{
-  show: boolean
-}>()
+  show: boolean;
+}>();
 
 const emit = defineEmits<{
-  'update:show': [value: boolean]
-  imported: [payload: { name: string; colors: Record<string, string> }]
-}>()
+  "update:show": [value: boolean];
+  imported: [payload: { name: string; colors: Record<string, string> }];
+}>();
 
-const message = useMessage()
+const message = useMessage();
 
-const activeTab = ref('file')
-const urlInput = ref('')
-const urlLoading = ref(false)
-const parsedTheme = ref<{ name: string; colors: Record<string, string> } | null>(null)
-const errorMessage = ref('')
+const activeTab = ref("file");
+const urlInput = ref("");
+const urlLoading = ref(false);
+const parsedTheme = ref<{ name: string; colors: Record<string, string> } | null>(null);
+const errorMessage = ref("");
 
 function close() {
-  emit('update:show', false)
+  emit("update:show", false);
 }
 
 function resetState() {
-  parsedTheme.value = null
-  errorMessage.value = ''
-  urlInput.value = ''
-  urlLoading.value = false
-  activeTab.value = 'file'
+  parsedTheme.value = null;
+  errorMessage.value = "";
+  urlInput.value = "";
+  urlLoading.value = false;
+  activeTab.value = "file";
 }
 
 watch(
   () => props.show,
   (val) => {
     if (!val) {
-      setTimeout(resetState, 200)
+      setTimeout(resetState, 200);
     }
   },
-)
+);
 
-function validateThemeData(data: unknown): data is { name: string; colors: Record<string, string> } {
-  if (!data || typeof data !== 'object') return false
-  const obj = data as Record<string, unknown>
-  if (typeof obj.name !== 'string' || !obj.name.trim()) return false
-  if (!obj.colors || typeof obj.colors !== 'object') return false
-  const colors = obj.colors as Record<string, unknown>
-  if (typeof colors.primary !== 'string' || !colors.primary) return false
-  return true
+function validateThemeData(
+  data: unknown,
+): data is { name: string; colors: Record<string, string> } {
+  if (!data || typeof data !== "object") return false;
+  const obj = data as Record<string, unknown>;
+  if (typeof obj.name !== "string" || !obj.name.trim()) return false;
+  if (!obj.colors || typeof obj.colors !== "object") return false;
+  const colors = obj.colors as Record<string, unknown>;
+  if (typeof colors.primary !== "string" || !colors.primary) return false;
+  return true;
 }
 
 function handleParsedData(data: unknown) {
   if (!validateThemeData(data)) {
-    errorMessage.value = '主题数据不完整：缺少 name/colors/primary 字段'
-    parsedTheme.value = null
-    return
+    errorMessage.value = "主题数据不完整：缺少 name/colors/primary 字段";
+    parsedTheme.value = null;
+    return;
   }
   parsedTheme.value = {
     name: data.name,
     colors: data.colors as Record<string, string>,
-  }
-  errorMessage.value = ''
+  };
+  errorMessage.value = "";
 }
 
 function handleJsonError() {
-  errorMessage.value = 'JSON 格式无效'
-  parsedTheme.value = null
+  errorMessage.value = "JSON 格式无效";
+  parsedTheme.value = null;
 }
 
 function handleFileSelect(event: Event) {
-  const input = event.target as HTMLInputElement
-  const file = input.files?.[0]
-  if (!file) return
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
 
-  const reader = new FileReader()
+  const reader = new FileReader();
   reader.onload = () => {
     try {
-      const data = JSON.parse(reader.result as string)
-      handleParsedData(data)
+      const data = JSON.parse(reader.result as string);
+      handleParsedData(data);
     } catch {
-      handleJsonError()
+      handleJsonError();
     }
-  }
+  };
   reader.onerror = () => {
-    errorMessage.value = '文件读取失败'
-    parsedTheme.value = null
-  }
-  reader.readAsText(file)
-  input.value = ''
+    errorMessage.value = "文件读取失败";
+    parsedTheme.value = null;
+  };
+  reader.readAsText(file);
+  input.value = "";
 }
 
 function handleDrop(event: DragEvent) {
-  event.preventDefault()
-  const file = event.dataTransfer?.files?.[0]
-  if (!file) return
+  event.preventDefault();
+  const file = event.dataTransfer?.files?.[0];
+  if (!file) return;
 
-  const reader = new FileReader()
+  const reader = new FileReader();
   reader.onload = () => {
     try {
-      const data = JSON.parse(reader.result as string)
-      handleParsedData(data)
+      const data = JSON.parse(reader.result as string);
+      handleParsedData(data);
     } catch {
-      handleJsonError()
+      handleJsonError();
     }
-  }
+  };
   reader.onerror = () => {
-    errorMessage.value = '文件读取失败'
-    parsedTheme.value = null
-  }
-  reader.readAsText(file)
+    errorMessage.value = "文件读取失败";
+    parsedTheme.value = null;
+  };
+  reader.readAsText(file);
 }
 
 function handleDragOver(event: DragEvent) {
-  event.preventDefault()
+  event.preventDefault();
 }
 
-const fileInputRef = ref<HTMLInputElement | null>(null)
+const fileInputRef = ref<HTMLInputElement | null>(null);
 
 function triggerFileInput() {
-  fileInputRef.value?.click()
+  fileInputRef.value?.click();
 }
 
 async function handleUrlFetch() {
-  const url = urlInput.value.trim()
+  const url = urlInput.value.trim();
   if (!url) {
-    errorMessage.value = '请输入 URL 地址'
-    return
+    errorMessage.value = "请输入 URL 地址";
+    return;
   }
 
-  urlLoading.value = true
-  errorMessage.value = ''
+  urlLoading.value = true;
+  errorMessage.value = "";
 
-  const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), 10000)
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
 
   try {
-    const response = await fetch(url, { signal: controller.signal })
+    const response = await fetch(url, { signal: controller.signal });
     if (!response.ok) {
-      errorMessage.value = '无法连接到该 URL，请检查地址是否正确'
-      return
+      errorMessage.value = "无法连接到该 URL，请检查地址是否正确";
+      return;
     }
-    const text = await response.text()
+    const text = await response.text();
     try {
-      const data = JSON.parse(text)
-      handleParsedData(data)
+      const data = JSON.parse(text);
+      handleParsedData(data);
     } catch {
-      handleJsonError()
+      handleJsonError();
     }
   } catch (err: unknown) {
-    if (err instanceof DOMException && err.name === 'AbortError') {
-      errorMessage.value = '请求超时，请检查网络连接'
+    if (err instanceof DOMException && err.name === "AbortError") {
+      errorMessage.value = "请求超时，请检查网络连接";
     } else {
-      errorMessage.value = '无法连接到该 URL，请检查地址是否正确'
+      errorMessage.value = "无法连接到该 URL，请检查地址是否正确";
     }
   } finally {
-    clearTimeout(timeoutId)
-    urlLoading.value = false
+    clearTimeout(timeoutId);
+    urlLoading.value = false;
   }
 }
 
 async function handleClipboardImport() {
   try {
-    const text = await navigator.clipboard.readText()
+    const text = await navigator.clipboard.readText();
     try {
-      const data = JSON.parse(text)
-      handleParsedData(data)
+      const data = JSON.parse(text);
+      handleParsedData(data);
     } catch {
-      errorMessage.value = '剪贴板内容不是有效的主题 JSON'
-      parsedTheme.value = null
+      errorMessage.value = "剪贴板内容不是有效的主题 JSON";
+      parsedTheme.value = null;
     }
   } catch {
-    errorMessage.value = '无法读取剪贴板，请检查浏览器权限'
-    parsedTheme.value = null
+    errorMessage.value = "无法读取剪贴板，请检查浏览器权限";
+    parsedTheme.value = null;
   }
 }
 
 function confirmImport() {
-  if (!parsedTheme.value) return
-  emit('imported', { ...parsedTheme.value })
-  close()
+  if (!parsedTheme.value) return;
+  emit("imported", { ...parsedTheme.value });
+  close();
 }
 
-const COLOR_PALETTE_KEYS = ['primary', 'surface', 'error', 'secondary'] as const
+const COLOR_PALETTE_KEYS = ["primary", "surface", "error", "secondary"] as const;
 </script>
 
 <template>
@@ -214,18 +216,8 @@ const COLOR_PALETTE_KEYS = ['primary', 'surface', 'error', 'secondary'] as const
 
       <n-tab-pane name="url" tab="URL 导入">
         <div class="url-import">
-          <n-input
-            v-model:value="urlInput"
-            placeholder="https://..."
-            :disabled="urlLoading"
-          />
-          <n-button
-            type="primary"
-            :loading="urlLoading"
-            @click="handleUrlFetch"
-          >
-            获取
-          </n-button>
+          <n-input v-model:value="urlInput" placeholder="https://..." :disabled="urlLoading" />
+          <n-button type="primary" :loading="urlLoading" @click="handleUrlFetch"> 获取 </n-button>
         </div>
       </n-tab-pane>
 
@@ -256,13 +248,7 @@ const COLOR_PALETTE_KEYS = ['primary', 'surface', 'error', 'secondary'] as const
     <template #footer>
       <div class="import-footer">
         <n-button @click="close">取消</n-button>
-        <n-button
-          v-if="parsedTheme"
-          type="primary"
-          @click="confirmImport"
-        >
-          确认导入
-        </n-button>
+        <n-button v-if="parsedTheme" type="primary" @click="confirmImport"> 确认导入 </n-button>
       </div>
     </template>
   </n-modal>
@@ -278,7 +264,9 @@ const COLOR_PALETTE_KEYS = ['primary', 'surface', 'error', 'secondary'] as const
   border-radius: var(--radius-md);
   background: var(--color-surface);
   cursor: pointer;
-  transition: border-color var(--transition-fast), background var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    background var(--transition-fast);
   position: relative;
 }
 

@@ -1,10 +1,15 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import { BookOpen } from 'lucide-vue-next';
-import type { ShelfBook } from '@/stores';
-import ShelfBookCard from '@/components/bookshelf/ShelfBookCard.vue';
-import { useShelfPullRefresh } from '@/composables/useShelfPullRefresh';
-import { useResponsiveControl } from '@/composables/useResponsiveControl';
+import { computed, ref, type Ref } from "vue";
+import { BookOpen } from "lucide-vue-next";
+import type { ShelfBook } from "@/stores";
+import ShelfBookCard from "@/components/bookshelf/ShelfBookCard.vue";
+import { useShelfPullRefresh } from "@/composables/useShelfPullRefresh";
+import { useResponsiveControl } from "@/composables/useResponsiveControl";
+import { useSmartGroupsStore } from "@/stores/smartGroups";
+
+const LONG_PRESS_DURATION = 500;
+
+const containerRef: Ref<HTMLElement | null> = ref(null);
 
 const props = defineProps<{
   loading: boolean;
@@ -14,31 +19,107 @@ const props = defineProps<{
   openingBookId: string | null;
   editMode?: boolean;
   selectedBookIds?: Set<string>;
+  smartGroupFilter?: string | null;
 }>();
 
 const emit = defineEmits<{
-  (e: 'select', book: ShelfBook): void;
-  (e: 'contextmenu', book: ShelfBook, event: MouseEvent): void;
-  (e: 'refresh'): Promise<void>;
+  (e: "select", book: ShelfBook): void;
+  (e: "contextmenu", book: ShelfBook, event: MouseEvent): void;
+  (e: "refresh"): Promise<void>;
+  (e: "enter-multiselect", book: ShelfBook): void;
+  (e: "toggle-select", book: ShelfBook): void;
 }>();
 
 const { pullDistance, isRefreshing, isReady, onTouchStart, onTouchMove, onTouchEnd, onMouseDown } =
   useShelfPullRefresh({
     onRefresh: async () => {
-      await emit('refresh');
+      await emit("refresh");
     },
   });
 
 const { columns, breakpoint } = useResponsiveControl();
 
+const smartGroupsStore = useSmartGroupsStore();
+
 const gridStyle = computed(() => ({
   gridTemplateColumns: `repeat(${columns.value}, 1fr)`,
 }));
+
+const displayBooks = computed(() => {
+  if (!props.smartGroupFilter) return props.filteredBooks;
+  const group = smartGroupsStore.getGroupByType(props.smartGroupFilter as "unread" | "reading" | "finished");
+  if (!group) return props.filteredBooks;
+  const idSet = new Set(group.bookIds);
+  return props.filteredBooks.filter((b) => idSet.has(b.id));
+});
+
+const longPressTimer = ref<ReturnType<typeof setTimeout> | null>(null);
+const longPressBook = ref<ShelfBook | null>(null);
+const longPressStartX = ref(0);
+const longPressStartY = ref(0);
+
+function onCardPointerDown(e: PointerEvent, book: ShelfBook) {
+  if (props.editMode) return;
+  longPressBook.value = book;
+  longPressStartX.value = e.clientX;
+  longPressStartY.value = e.clientY;
+  longPressTimer.value = setTimeout(() => {
+    longPressTimer.value = null;
+    if (longPressBook.value) {
+      emit("enter-multiselect", longPressBook.value);
+      longPressBook.value = null;
+    }
+  }, LONG_PRESS_DURATION);
+}
+
+function onCardPointerMove(e: PointerEvent) {
+  if (!longPressTimer.value) return;
+  const dx = Math.abs(e.clientX - longPressStartX.value);
+  const dy = Math.abs(e.clientY - longPressStartY.value);
+  if (dx > 8 || dy > 8) {
+    clearLongPress();
+  }
+}
+
+function clearLongPress() {
+  if (longPressTimer.value) {
+    clearTimeout(longPressTimer.value);
+    longPressTimer.value = null;
+  }
+  longPressBook.value = null;
+}
+
+function onCardPointerUp(e: PointerEvent, book: ShelfBook) {
+  if (longPressTimer.value) {
+    clearLongPress();
+    if (props.editMode) {
+      emit("toggle-select", book);
+    } else {
+      emit("select", book);
+    }
+  }
+}
+
+function onCardPointerCancel() {
+  clearLongPress();
+}
+
+function onCardClick(book: ShelfBook) {
+  if (props.editMode) {
+    emit("toggle-select", book);
+  } else {
+    emit("select", book);
+  }
+}
+
+function onCardContextMenu(book: ShelfBook, e: MouseEvent) {
+  if (props.editMode) return;
+  emit("contextmenu", book, e);
+}
 </script>
 
 <template>
   <div class="bs-wrapper">
-    <!-- 下拉刷新指示器 -->
     <div
       class="bs-pull-indicator"
       :class="{
@@ -48,7 +129,6 @@ const gridStyle = computed(() => ({
       :style="{ height: `${pullDistance}px` }"
     >
       <div class="bs-pull-indicator__content">
-        <!-- 刷新动画 -->
         <div v-if="isRefreshing" class="bs-pull-indicator__spinner">
           <svg viewBox="0 0 24 24" fill="none">
             <circle
@@ -72,7 +152,6 @@ const gridStyle = computed(() => ({
             />
           </svg>
         </div>
-        <!-- 下拉箭头 -->
         <div
           v-else
           class="bs-pull-indicator__arrow"
@@ -88,7 +167,6 @@ const gridStyle = computed(() => ({
             <path d="M12 19V5M5 12l7-7 7 7" />
           </svg>
         </div>
-        <!-- 提示文字 -->
         <span class="bs-pull-indicator__text">
           <template v-if="isRefreshing">刷新中...</template>
           <template v-else-if="isReady">释放刷新</template>
@@ -115,17 +193,28 @@ const gridStyle = computed(() => ({
         </div>
 
         <div v-else class="bs-grid" :style="gridStyle" :data-breakpoint="breakpoint">
-          <ShelfBookCard
-            v-for="book in filteredBooks"
+          <div
+            v-for="book in displayBooks"
             :key="book.id"
-            :book="book"
-            :privacy-mode-enabled="privacyModeEnabled"
-            :loading="openingBookId === book.id"
-            :edit-mode="editMode"
-            :selected="selectedBookIds?.has(book.id)"
-            @select="emit('select', $event)"
-            @contextmenu="(_, e: MouseEvent) => emit('contextmenu', book, e)"
-          />
+            class="bs-grid-item"
+            :class="{ 'bs-grid-item--selected': editMode && selectedBookIds?.has(book.id) }"
+            @pointerdown.prevent="onCardPointerDown($event, book)"
+            @pointermove.prevent="onCardPointerMove($event)"
+            @pointerup.prevent="onCardPointerUp($event, book)"
+            @pointercancel="onCardPointerCancel"
+            @click="onCardClick(book)"
+            @contextmenu.prevent="onCardContextMenu(book, $event)"
+          >
+            <ShelfBookCard
+              :book="book"
+              :privacy-mode-enabled="privacyModeEnabled"
+              :loading="openingBookId === book.id"
+              :edit-mode="editMode"
+              :selected="selectedBookIds?.has(book.id)"
+              @select="editMode ? emit('toggle-select', book) : emit('select', book)"
+              @contextmenu="(_, e: MouseEvent) => !editMode && emit('contextmenu', book, e)"
+            />
+          </div>
         </div>
       </n-spin>
     </div>
@@ -160,7 +249,7 @@ const gridStyle = computed(() => ({
 }
 
 .bs-pull-indicator--refreshing .bs-pull-indicator__content,
-.bs-pull-indicator:not([style*='height: 0']) .bs-pull-indicator__content {
+.bs-pull-indicator:not([style*="height: 0"]) .bs-pull-indicator__content {
   opacity: 1;
 }
 
@@ -253,6 +342,17 @@ const gridStyle = computed(() => ({
 
 .bs-grid[data-breakpoint="wide"] {
   --bs-card-width: calc((100% - 5 * 12px) / 6);
+}
+
+.bs-grid-item {
+  position: relative;
+  border-radius: var(--radius-md);
+  transition: box-shadow var(--dur-fast) var(--ease-standard);
+  touch-action: manipulation;
+}
+
+.bs-grid-item--selected {
+  border-radius: var(--radius-md);
 }
 
 .bs-empty {

@@ -1,4 +1,4 @@
-import { reactive, type UnwrapNestedRefs } from 'vue';
+import { reactive, type UnwrapNestedRefs } from "vue";
 import {
   ensureFrontendNamespaceLoaded,
   getFrontendStorageItem,
@@ -7,7 +7,7 @@ import {
   legacyLocalStorageGet,
   legacyLocalStorageRemove,
   dbgLog,
-} from './useFrontendStorage';
+} from "./useFrontendStorage";
 
 type DynamicConfigEnvelope<T> = {
   version: number;
@@ -38,8 +38,8 @@ export interface DynamicConfigStore<T extends object> {
 }
 
 const storeRegistry = new Map<string, DynamicConfigStore<object>>();
-const STORAGE_NAMESPACE_PREFIX = 'dynamic-config.';
-const STATE_KEY = 'state';
+const STORAGE_NAMESPACE_PREFIX = "dynamic-config.";
+const STATE_KEY = "state";
 
 function clonePlain<T>(value: T): T {
   // 用 JSON 往返而非 structuredClone，确保剥离 Vue Proxy 及不可克隆对象
@@ -53,7 +53,7 @@ function clonePlain<T>(value: T): T {
 function readFromCache<T>(namespace: string): DynamicConfigEnvelope<T> | null {
   try {
     const raw = getFrontendStorageItem(namespace, STATE_KEY);
-    if (raw !== null && raw !== undefined && raw !== '') {
+    if (raw !== null && raw !== undefined && raw !== "") {
       return JSON.parse(raw) as DynamicConfigEnvelope<T>;
     }
     return null;
@@ -87,7 +87,7 @@ function hydrateFromCache<T extends object>(
   options: DynamicConfigOptions<T>,
 ): T {
   const stored = readFromCache<T>(storageNamespace);
-  if (stored?.version === options.version && stored.data && typeof stored.data === 'object') {
+  if (stored?.version === options.version && stored.data && typeof stored.data === "object") {
     return clonePlain(stored.data);
   }
   return clonePlain(options.defaults());
@@ -116,7 +116,7 @@ export function useDynamicConfig<T extends object>(
       const keys = Object.keys(cachedValues);
       dbgLog(
         `[DynConfig] ${options.namespace}: ensureLoaded 回调，后端 key 数=${keys.length} | ` +
-          (keys.length ? keys.join(', ') : '（空）'),
+          (keys.length ? keys.join(", ") : "（空）"),
       );
       // 后端已有数据 → 直接使用，不做任何覆盖
       if (keys.length > 0) {

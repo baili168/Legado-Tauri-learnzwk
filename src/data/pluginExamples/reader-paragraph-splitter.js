@@ -12,20 +12,20 @@
 // ==/UserScript==
 
 function splitLongParagraphs(content, minLength) {
-  return String(content ?? '')
-    .split('\n')
+  return String(content ?? "")
+    .split("\n")
     .map(function (line) {
       var trimmed = line.trim();
       if (trimmed.length < minLength) {
         return line;
       }
-      return trimmed.replace(/([。！？!?；;])/g, '$1\n').replace(/\n{2,}/g, '\n');
+      return trimmed.replace(/([。！？!?；;])/g, "$1\n").replace(/\n{2,}/g, "\n");
     })
-    .join('\n');
+    .join("\n");
 }
 
 legado.registerPlugin({
-  id: 'reader-paragraph-splitter',
+  id: "reader-paragraph-splitter",
   setup: function () {
     return {
       settings: {
@@ -34,10 +34,10 @@ legado.registerPlugin({
         },
         schema: [
           {
-            type: 'slider',
-            key: 'minLength',
-            label: '最短分段阈值',
-            description: '只有超过该长度的段落才会自动按标点换行',
+            type: "slider",
+            key: "minLength",
+            label: "最短分段阈值",
+            description: "只有超过该长度的段落才会自动按标点换行",
             min: 40,
             max: 220,
             step: 10,
@@ -45,8 +45,8 @@ legado.registerPlugin({
         ],
       },
       hooks: {
-        'reader.content.beforePaginate': function (payload, api) {
-          return splitLongParagraphs(payload.content, api.settings.get('minLength', 90));
+        "reader.content.beforePaginate": function (payload, api) {
+          return splitLongParagraphs(payload.content, api.settings.get("minLength", 90));
         },
       },
     };

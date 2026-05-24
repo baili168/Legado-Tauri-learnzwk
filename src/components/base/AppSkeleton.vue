@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed } from "vue";
 
 const props = withDefaults(
   defineProps<{
-    variant?: 'text' | 'rect' | 'circle' | 'cover';
+    variant?: "text" | "rect" | "circle" | "cover";
     width?: string;
     height?: string;
     lines?: number;
   }>(),
   {
-    variant: 'rect',
+    variant: "rect",
     width: undefined,
     height: undefined,
     lines: 3,
@@ -21,7 +21,7 @@ const style = computed(() => {
   if (props.width) {
     s.width = props.width;
   }
-  if (props.height && props.variant !== 'cover') {
+  if (props.height && props.variant !== "cover") {
     s.height = props.height;
   }
   return s;

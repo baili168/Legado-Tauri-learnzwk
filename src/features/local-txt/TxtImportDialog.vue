@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Upload, BookOpen, X, Check, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-vue-next';
+import { Upload, BookOpen, X, Check, AlertTriangle, ChevronDown, ChevronUp } from "lucide-vue-next";
 import {
   NModal,
   NCard,
@@ -10,25 +10,25 @@ import {
   NSpin,
   NAlert,
   NProgress,
-} from 'naive-ui';
-import { ref, computed, watch } from 'vue';
-import { useOverlayBackstack } from '@/composables/useOverlayBackstack';
+} from "naive-ui";
+import { ref, computed, watch } from "vue";
+import { useOverlayBackstack } from "@/composables/useOverlayBackstack";
 import {
   getAllRules,
   previewAllRules,
   splitChapters,
   MAX_CHAPTERS,
   type ChapterRule,
-} from '@/features/local-txt/chapterSplitter';
+} from "@/features/local-txt/chapterSplitter";
 
 const props = defineProps<{
   show: boolean;
 }>();
 
 const emit = defineEmits<{
-  (e: 'update:show', value: boolean): void;
+  (e: "update:show", value: boolean): void;
   (
-    e: 'imported',
+    e: "imported",
     payload: {
       title: string;
       author: string;
@@ -40,15 +40,15 @@ const emit = defineEmits<{
 
 // ── 状态 ─────────────────────────────────────────────────────────────────
 
-type Phase = 'upload' | 'preview' | 'importing' | 'done';
+type Phase = "upload" | "preview" | "importing" | "done";
 
-const phase = ref<Phase>('upload');
-const errorMsg = ref('');
-const fileName = ref('');
-const rawText = ref('');
-const bookTitle = ref('');
-const bookAuthor = ref('');
-const selectedRuleId = ref('cn-chapter-or-divider');
+const phase = ref<Phase>("upload");
+const errorMsg = ref("");
+const fileName = ref("");
+const rawText = ref("");
+const bookTitle = ref("");
+const bookAuthor = ref("");
+const selectedRuleId = ref("cn-chapter-or-divider");
 const expandedRuleId = ref<string | null>(null);
 const importProgress = ref(0);
 const isDragOver = ref(false);
@@ -79,7 +79,7 @@ const selectedPreview = computed(
 
 const chapterCountLabel = computed(() => {
   if (!selectedPreview.value) {
-    return '';
+    return "";
   }
   const count = selectedPreview.value.count;
   const truncated = count >= MAX_CHAPTERS;
@@ -92,38 +92,38 @@ async function readFileText(file: File): Promise<string> {
   const buffer = await file.arrayBuffer();
   // 优先 UTF-8，若出现替换字符且文件名/内容暗示 GBK，尝试 GBK
   try {
-    const utf8 = new TextDecoder('utf-8', { fatal: true }).decode(buffer);
+    const utf8 = new TextDecoder("utf-8", { fatal: true }).decode(buffer);
     return utf8;
   } catch {
     try {
-      return new TextDecoder('gbk').decode(buffer);
+      return new TextDecoder("gbk").decode(buffer);
     } catch {
-      return new TextDecoder('utf-8', { fatal: false }).decode(buffer);
+      return new TextDecoder("utf-8", { fatal: false }).decode(buffer);
     }
   }
 }
 
 async function handleFile(file: File) {
-  if (!file.name.toLowerCase().endsWith('.txt')) {
-    errorMsg.value = '仅支持 .txt 格式的文件';
+  if (!file.name.toLowerCase().endsWith(".txt")) {
+    errorMsg.value = "仅支持 .txt 格式的文件";
     return;
   }
   if (file.size > 50 * 1024 * 1024) {
-    errorMsg.value = '文件过大（最大支持 50 MB）';
+    errorMsg.value = "文件过大（最大支持 50 MB）";
     return;
   }
-  errorMsg.value = '';
-  phase.value = 'upload';
+  errorMsg.value = "";
+  phase.value = "upload";
 
   try {
     const text = await readFileText(file);
     rawText.value = text;
     // 从文件名提取书名
     fileName.value = file.name;
-    bookTitle.value = file.name.replace(/\.txt$/i, '').trim();
-    bookAuthor.value = '';
+    bookTitle.value = file.name.replace(/\.txt$/i, "").trim();
+    bookAuthor.value = "";
     buildPreviews();
-    phase.value = 'preview';
+    phase.value = "preview";
   } catch (err) {
     errorMsg.value = `读取文件失败: ${err instanceof Error ? err.message : String(err)}`;
   }
@@ -155,7 +155,7 @@ async function onFileChange(e: Event) {
   if (file) {
     await handleFile(file);
   }
-  input.value = '';
+  input.value = "";
 }
 
 // ── 导入 ─────────────────────────────────────────────────────────────────
@@ -170,7 +170,7 @@ async function doImport() {
     return;
   }
 
-  phase.value = 'importing';
+  phase.value = "importing";
   importProgress.value = 0;
 
   // 把分割计算推进微任务，让 UI 先渲染 spinner
@@ -181,7 +181,7 @@ async function doImport() {
 
   await new Promise<void>((resolve) => setTimeout(resolve, 16));
 
-  emit('imported', {
+  emit("imported", {
     title: bookTitle.value.trim(),
     author: bookAuthor.value.trim(),
     chapters: result.chapters,
@@ -189,26 +189,26 @@ async function doImport() {
   });
 
   importProgress.value = 100;
-  phase.value = 'done';
+  phase.value = "done";
 }
 
 // ── 关闭 & 重置 ───────────────────────────────────────────────────────────
 
 function close() {
-  if (phase.value === 'importing') {
+  if (phase.value === "importing") {
     return;
   }
-  emit('update:show', false);
+  emit("update:show", false);
 }
 
 function reset() {
-  phase.value = 'upload';
-  rawText.value = '';
-  fileName.value = '';
-  bookTitle.value = '';
-  bookAuthor.value = '';
+  phase.value = "upload";
+  rawText.value = "";
+  fileName.value = "";
+  bookTitle.value = "";
+  bookAuthor.value = "";
   rulePreviews.value = [];
-  errorMsg.value = '';
+  errorMsg.value = "";
   importProgress.value = 0;
 }
 
@@ -221,7 +221,7 @@ watch(
   },
 );
 
-useOverlayBackstack(() => props.show && phase.value !== 'importing', close);
+useOverlayBackstack(() => props.show && phase.value !== "importing", close);
 
 // ── 规则展开预览 ──────────────────────────────────────────────────────────
 
@@ -229,7 +229,7 @@ function toggleExpand(id: string) {
   expandedRuleId.value = expandedRuleId.value === id ? null : id;
 }
 
-const canClose = computed(() => phase.value !== 'importing');
+const canClose = computed(() => phase.value !== "importing");
 </script>
 
 <template>

@@ -6,14 +6,23 @@
  * 滚动至下一章区域时自动触发 next-chapter-entered 事件通知父组件切换章节元数据。
  * 无下一章时在底部显示章节结束画面。
  */
-import { NSpin } from 'naive-ui';
-import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue';
+import { NSpin } from "naive-ui";
+import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from "vue";
 import {
   decodeScrollLineAnchor,
   encodeScrollLineAnchor,
   type ScrollLineAnchor,
-} from '../composables/useReaderPosition';
-import { useLandscapeDualPage } from '@/composables/useLandscapeDualPage';
+} from "../composables/useReaderPosition";
+import { useLandscapeDualPage } from "@/composables/useLandscapeDualPage";
+import {
+  isEpubContent,
+  renderEpubContent,
+  parseFootnotes,
+  type EpubFootnote,
+} from "@/composables/useEpubRenderer";
+import SelectionToolbar from "../components/SelectionToolbar.vue";
+import EpubFootnotePopup from "@/components/reading/EpubFootnotePopup.vue";
+import type { Annotation } from "@/stores/annotations";
 
 const props = defineProps<{
   content: string;
@@ -39,19 +48,44 @@ const props = defineProps<{
   tapZoneDebug?: boolean;
   /** TTS 当前高亮段落索引，-1 表示无高亮 */
   ttsHighlightIndex?: number;
+  /** TTS 是否激活，用于句子级渲染 */
+  isTtsActive?: boolean;
+  /** TTS 当前高亮句子全局索引，-1 表示无高亮 */
+  ttsActiveSentenceIndex?: number;
   /** 当前章节中需要高亮的书签文本列表 */
   bookmarkTexts?: string[];
+  /** 当前章节的标注高亮列表（用于渲染） */
+  annotationHighlights?: Annotation[];
+  /** 当前书籍 ID（用于保存标注） */
+  bookId?: string;
+  /** 当前章节索引（用于保存标注） */
+  chapterIndex?: number;
+  /** 当前章节名（用于保存标注） */
+  chapterName?: string;
+  /** 书源类型，用于检测 EPUB */
+  sourceType?: string;
+  /** 书源文件名，用于检测 EPUB */
+  fileName?: string;
 }>();
 
 const emit = defineEmits<{
-  (e: 'progress', ratio: number): void;
-  (e: 'reachStart'): void;
-  (e: 'reachEnd'): void;
-  (e: 'tap', zone: 'left' | 'center' | 'right'): void;
+  (e: "progress", ratio: number): void;
+  (e: "reachStart"): void;
+  (e: "reachEnd"): void;
+  (e: "tap", zone: "left" | "center" | "right"): void;
   /** 用户向上滚动进入上一章区域（无缝向前翻章） */
-  (e: 'prev-chapter-entered'): void;
+  (e: "prev-chapter-entered"): void;
   /** 用户向下滚动进入下一章区域，携带当前章节内容区高度（用于无缝滚动位置补偿） */
-  (e: 'next-chapter-entered', sectionHeight: number): void;
+  (e: "next-chapter-entered", sectionHeight: number): void;
+  /** 添加标注（划线高亮） */
+  (
+    e: "add-annotation",
+    data: { text: string; color: string; startOffset: number; endOffset: number },
+  ): void;
+  /** 添加带笔记的标注 */
+  (e: "add-note-annotation", data: Omit<Annotation, "id" | "createdAt" | "updatedAt">): void;
+  /** 点击标注高亮 */
+  (e: "annotation-click", annotationId: string): void;
 }>();
 
 const scrollRef = ref<HTMLElement | null>(null);
@@ -61,6 +95,67 @@ const nextSectionRef = ref<HTMLElement | null>(null);
 const nextChapterSentinelRef = ref<HTMLElement | null>(null);
 
 const { isDualPage, dualPageStyle, columnContainerClass } = useLandscapeDualPage();
+
+const isEpubMode = computed(() =>
+  isEpubContent(props.sourceType ?? '', props.fileName ?? '', props.content ?? ''),
+);
+
+const epubRenderedContent = computed(() => {
+  if (!isEpubMode.value) return '';
+  return renderEpubContent(props.content ?? '');
+});
+
+const epubPrevRendered = computed(() => {
+  if (!isEpubMode.value || !props.prevChapterContent) return '';
+  return renderEpubContent(props.prevChapterContent);
+});
+
+const epubNextRendered = computed(() => {
+  if (!isEpubMode.value || !props.nextChapterContent) return '';
+  return renderEpubContent(props.nextChapterContent);
+});
+
+const footnoteMap = ref<Map<string, EpubFootnote>>(new Map());
+const activeFootnote = ref<EpubFootnote | null>(null);
+const footnoteAnchorEl = ref<HTMLElement | null>(null);
+
+function refreshFootnotes(html: string) {
+  if (!isEpubMode.value || !html) {
+    footnoteMap.value = new Map();
+    return;
+  }
+  footnoteMap.value = parseFootnotes(html);
+}
+
+watch(() => props.content, (val) => {
+  void nextTick(() => refreshFootnotes(val ?? ''));
+}, { immediate: true });
+
+function onEpubFootnoteClick(e: MouseEvent) {
+  const target = e.target as HTMLElement;
+  const footnoteRef = target.closest?.('.epub-footnote-ref') as HTMLElement | null;
+  if (footnoteRef) {
+    const footnoteId = footnoteRef.dataset.footnoteId;
+    if (footnoteId && footnoteMap.value.has(footnoteId)) {
+      activeFootnote.value = footnoteMap.value.get(footnoteId)!;
+      footnoteAnchorEl.value = footnoteRef;
+      e.stopPropagation();
+      e.preventDefault();
+      return;
+    }
+  }
+}
+
+function closeFootnote() {
+  activeFootnote.value = null;
+  footnoteAnchorEl.value = null;
+}
+
+function onFootnoteScrollBack() {
+  if (footnoteAnchorEl.value) {
+    footnoteAnchorEl.value.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
 
 const paragraphs = ref<string[]>([]);
 const prevParagraphs = ref<string[]>([]);
@@ -95,7 +190,7 @@ let restoreRunToken = 0;
 function prepareSeamlessSwap(prevSectionHeight: number) {
   const el = scrollRef.value;
   const nextTop = nextSectionRef.value?.offsetTop ?? nextChapterSentinelRef.value?.offsetTop;
-  if (el && typeof nextTop === 'number') {
+  if (el && typeof nextTop === "number") {
     seamlessSwapAnchorOffset = el.scrollTop - nextTop;
     seamlessSwapFallbackOffset = -1;
     return;
@@ -135,19 +230,19 @@ function setupSentinel() {
           const rootEl = scrollRef.value;
           const nextTop =
             nextSectionRef.value?.offsetTop ?? nextChapterSentinelRef.value?.offsetTop;
-          if (rootEl && typeof nextTop === 'number' && rootEl.scrollTop < nextTop - 1) {
+          if (rootEl && typeof nextTop === "number" && rootEl.scrollTop < nextTop - 1) {
             return;
           }
           teardownSentinel();
           const sectionH = currentSectionRef.value?.offsetHeight ?? 0;
-          emit('next-chapter-entered', sectionH);
+          emit("next-chapter-entered", sectionH);
         }
       }
     },
     {
       root,
       // 哨兵进入视口上半部分时触发（给父组件留出预加载时间）
-      rootMargin: '0px 0px -40% 0px',
+      rootMargin: "0px 0px -40% 0px",
     },
   );
   sentinelObserver.observe(el);
@@ -231,7 +326,7 @@ watch(
       await nextTick();
       const el = scrollRef.value;
       if (el) {
-        el.style.scrollBehavior = 'auto';
+        el.style.scrollBehavior = "auto";
         if (anchorOffset !== null) {
           const currentTop = currentSectionRef.value?.offsetTop ?? 0;
           el.scrollTop = Math.max(0, currentTop + anchorOffset);
@@ -239,7 +334,7 @@ watch(
           el.scrollTop = Math.max(0, el.scrollTop - fallbackOffset);
         }
         requestAnimationFrame(() => {
-          el.style.scrollBehavior = '';
+          el.style.scrollBehavior = "";
         });
       }
       return;
@@ -260,10 +355,10 @@ watch(
     if (!el) {
       return;
     }
-    el.style.scrollBehavior = 'auto';
+    el.style.scrollBehavior = "auto";
     el.scrollTop = prevSectionRef.value?.offsetHeight ?? 0;
     requestAnimationFrame(() => {
-      el.style.scrollBehavior = '';
+      el.style.scrollBehavior = "";
     });
     void applyPendingRestoreAnchor();
   },
@@ -305,10 +400,10 @@ watch(
       await nextTick();
       const prevH = prevSectionRef.value?.offsetHeight ?? 0;
       if (prevH > 0 && el) {
-        el.style.scrollBehavior = 'auto';
+        el.style.scrollBehavior = "auto";
         el.scrollTop = Math.max(0, savedTop + prevH - oldPrevH);
         requestAnimationFrame(() => {
-          el.style.scrollBehavior = '';
+          el.style.scrollBehavior = "";
         });
         void applyPendingRestoreAnchor();
       }
@@ -327,31 +422,234 @@ onBeforeUnmount(() => {
   teardownSentinel();
 });
 
-// ── 书签高亮 ───────────────────────────────────────────────────
+// ── 书签高亮 & 标注高亮 ───────────────────────────────────────────
 function escapeHtml(text: string): string {
   return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
-function highlightParagraph(text: string): string {
-  const texts = props.bookmarkTexts;
-  const escaped = escapeHtml(text);
-  if (!texts || texts.length === 0) {
-    return escaped;
-  }
-  let result = escaped;
-  for (const bmText of texts) {
-    if (!bmText.trim()) {
-      continue;
+/** 计算每个段落在原文中的字符起止偏移 */
+const paragraphOffsets = computed(() => {
+  const raw = props.content;
+  const paras = paragraphs.value;
+  const offsets: { start: number; end: number }[] = [];
+  let searchFrom = 0;
+  for (const para of paras) {
+    const idx = raw.indexOf(para, searchFrom);
+    if (idx >= 0) {
+      offsets.push({ start: idx, end: idx + para.length });
+      searchFrom = idx + para.length;
+    } else {
+      offsets.push({ start: searchFrom, end: searchFrom });
     }
+  }
+  return offsets;
+});
+
+/** 获取某个段落的标注列表（已转换为段落内偏移） */
+function getParagraphAnnotations(paraIndex: number): Array<{
+  id: string;
+  color: string;
+  relStart: number;
+  relEnd: number;
+}> {
+  const annotations = props.annotationHighlights;
+  if (!annotations || annotations.length === 0) return [];
+  const paraOffset = paragraphOffsets.value[paraIndex];
+  if (!paraOffset) return [];
+  const para = paragraphs.value[paraIndex];
+  if (!para) return [];
+  return annotations
+    .filter((a) => a.startOffset < paraOffset.end && a.endOffset > paraOffset.start)
+    .map((a) => ({
+      id: a.id,
+      color: a.color,
+      relStart: Math.max(0, a.startOffset - paraOffset.start),
+      relEnd: Math.min(para.length, a.endOffset - paraOffset.start),
+    }))
+    .sort((a, b) => a.startOffset - b.startOffset);
+}
+
+/** 在段落文本中插入标注 <mark> 标签（返回带标注标记的 HTML） */
+function annotateParagraph(text: string, anns: Array<{ id: string; color: string; relStart: number; relEnd: number }>): string {
+  if (anns.length === 0) return escapeHtml(text);
+  let result = "";
+  let pos = 0;
+  for (const ann of anns) {
+    if (ann.relStart < pos || ann.relStart >= ann.relEnd) continue;
+    result += escapeHtml(text.slice(pos, ann.relStart));
+    const markText = escapeHtml(text.slice(ann.relStart, ann.relEnd));
+    result += `<mark class="annotation-highlight" style="background-color:${ann.color}" data-annotation-id="${ann.id}">${markText}</mark>`;
+    pos = ann.relEnd;
+  }
+  result += escapeHtml(text.slice(pos));
+  return result;
+}
+
+function highlightParagraph(text: string, paraIndex: number): string {
+  const anns = getParagraphAnnotations(paraIndex);
+  let html: string;
+  if (anns.length > 0) {
+    html = annotateParagraph(text, anns);
+  } else {
+    html = escapeHtml(text);
+  }
+  const texts = props.bookmarkTexts;
+  if (!texts || texts.length === 0) return html;
+  let result = html;
+  for (const bmText of texts) {
+    if (!bmText.trim()) continue;
     const escapedBm = escapeHtml(bmText);
     result = result.split(escapedBm).join(`<mark class="reader-bookmark">${escapedBm}</mark>`);
   }
   return result;
 }
+
+// ── 标注选择工具栏事件 ─────────────────────────────────────────────
+const selectionToolbarRef = ref<InstanceType<typeof SelectionToolbar> | null>(null);
+
+/** 用户选中文本后点击"划线" */
+function onSelectionHighlight(text: string, color: string, startOffset: number, endOffset: number) {
+  const paraIdx = findParagraphBySelection();
+  if (paraIdx < 0) return;
+
+  const globalStart = paragraphOffsets.value[paraIdx]?.start ?? 0;
+  const globalEnd = globalStart + (paragraphs.value[paraIdx]?.length ?? 0);
+
+  emit("add-annotation", {
+    text,
+    color,
+    startOffset: globalStart + startOffset,
+    endOffset: globalStart + endOffset,
+  });
+}
+
+/** 用户选中文本后点击"笔记" */
+function onSelectionAddNote(highlight: { text: string; color: string; startOffset: number; endOffset: number }) {
+  const paraIdx = findParagraphBySelection();
+  if (paraIdx < 0) return;
+
+  const globalStart = paragraphOffsets.value[paraIdx]?.start ?? 0;
+
+  emit("add-note-annotation", {
+    bookId: props.bookId ?? "",
+    chapterIndex: props.chapterIndex ?? 0,
+    startOffset: globalStart + highlight.startOffset,
+    endOffset: globalStart + highlight.endOffset,
+    color: highlight.color,
+    text: highlight.text,
+    note: "",
+  });
+}
+
+function findParagraphBySelection(): number {
+  const selection = window.getSelection();
+  if (!selection || !selection.rangeCount) return -1;
+  const container = selection.getRangeAt(0).commonAncestorContainer;
+  const el = container.nodeType === Node.TEXT_NODE ? container.parentElement : container as Element;
+  if (!el) return -1;
+  const para = el.closest(".scroll-mode__para");
+  if (!para) return -1;
+  const currentSection = currentSectionRef.value;
+  if (!currentSection) return -1;
+  const paras = currentSection.querySelectorAll(".scroll-mode__para");
+  for (let i = 0; i < paras.length; i++) {
+    if (paras[i] === para) return i;
+  }
+  return -1;
+}
+
+/** 点击标注高亮时，弹出笔记提示 */
+function onAnnotationMarkClick(e: MouseEvent) {
+  const target = e.target as HTMLElement;
+  if (!target || target.tagName !== "MARK") return;
+  const annotationId = target.dataset.annotationId;
+  if (!annotationId) return;
+  e.stopPropagation();
+  emit("annotation-click", annotationId);
+}
+
+const SENTENCE_SPLIT_RE = /(?<=[。！？.!?；;：:\n])/u;
+const SENTENCE_FILTER_RE = /[。！？.!?；;：:\n]/;
+
+function splitIntoSentences(text: string): string[] {
+  if (!text || !text.trim()) {
+    return [];
+  }
+  const parts = text.split(SENTENCE_SPLIT_RE);
+  const result: string[] = [];
+  let buffer = "";
+  for (const part of parts) {
+    const trimmed = part.trim();
+    if (!trimmed) continue;
+    buffer += trimmed;
+    if (SENTENCE_FILTER_RE.test(trimmed) || buffer.length > 120) {
+      result.push(buffer);
+      buffer = "";
+    }
+  }
+  if (buffer.trim()) {
+    result.push(buffer.trim());
+  }
+  return result;
+}
+
+const paragraphSentenceCounts = computed(() => {
+  return paragraphs.value.map((p) => splitIntoSentences(p).length);
+});
+
+const paragraphSentenceStartIdx = computed(() => {
+  const starts: number[] = [];
+  let acc = 0;
+  for (const count of paragraphSentenceCounts.value) {
+    starts.push(acc);
+    acc += count;
+  }
+  return starts;
+});
+
+const totalSentenceCount = computed(() => {
+  return paragraphSentenceStartIdx.value.length > 0
+    ? paragraphSentenceStartIdx.value[paragraphSentenceStartIdx.value.length - 1] +
+        paragraphSentenceCounts.value[paragraphSentenceCounts.value.length - 1]
+    : 0;
+});
+
+function renderParagraphWithSentenceSpans(paraText: string, paraIndex: number): string {
+  const sentences = splitIntoSentences(paraText);
+  if (sentences.length === 0) return "";
+  const globalStart = paragraphSentenceStartIdx.value[paraIndex] ?? 0;
+  let html = "";
+  for (let si = 0; si < sentences.length; si++) {
+    const globalIdx = globalStart + si;
+    const isActive =
+      props.isTtsActive &&
+      props.ttsActiveSentenceIndex !== undefined &&
+      props.ttsActiveSentenceIndex === globalIdx;
+    const activeClass = isActive ? ' tts-active"' : '"';
+    const escaped = escapeHtml(sentences[si]);
+    html += `<span class="tts-sentence" data-index="${globalIdx}${activeClass}>${escaped}</span>`;
+  }
+  return html;
+}
+
+watch(
+  () => props.ttsActiveSentenceIndex,
+  (newIdx) => {
+    if (newIdx === undefined || newIdx < 0 || !props.isTtsActive) return;
+    void nextTick(() => {
+      const el = document.querySelector(
+        `.scroll-mode__text .tts-sentence[data-index="${newIdx}"]`,
+      );
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    });
+  },
+);
 
 // ── 触摸事件 ────────────────────────────────────────────────────────
 let touchStartX = 0;
@@ -372,7 +670,7 @@ function onTouchEnd(e: TouchEvent) {
     const hasSelection = !!selection && !selection.isCollapsed && !!selection.toString().trim();
     if (dx < 15 && dy < 15 && !hasSelection) {
       suppressNextClick = true;
-      emit('tap', 'center');
+      emit("tap", "center");
     }
   }
 }
@@ -395,7 +693,7 @@ function onScroll() {
     currentSectionH <= clientHeight
       ? 1
       : Math.min(1, Math.max(0, adjustedScrollTop / (currentSectionH - clientHeight)));
-  emit('progress', ratio);
+  emit("progress", ratio);
 
   const prevAtTop = atTop.value;
   const prevAtBottom = atBottom.value;
@@ -410,17 +708,17 @@ function onScroll() {
   }
 
   if (!prevAtTop && atTop.value) {
-    emit('reachStart');
+    emit("reachStart");
   }
   if (!prevAtBottom && atBottom.value) {
-    emit('reachEnd');
+    emit("reachEnd");
   }
 
   // 检测向上进入上一章：滚到上一章区域前 60% 时触发一次
   if (!prevChapterEnteredFired && prevH > 0 && hasPrevChapterContent.value) {
     if (scrollTop <= prevH * 0.6) {
       prevChapterEnteredFired = true;
-      emit('prev-chapter-entered');
+      emit("prev-chapter-entered");
     }
   }
 
@@ -431,7 +729,7 @@ function onScroll() {
     scrollTop >= nextTop - 1
   ) {
     nextBoundaryFallbackFired = true;
-    emit('next-chapter-entered', currentSectionRef.value?.offsetHeight ?? 0);
+    emit("next-chapter-entered", currentSectionRef.value?.offsetHeight ?? 0);
   }
 
   if (
@@ -442,7 +740,7 @@ function onScroll() {
     atTop.value
   ) {
     prevBoundaryFallbackFired = true;
-    emit('prev-chapter-entered');
+    emit("prev-chapter-entered");
   }
 
   if (
@@ -453,12 +751,13 @@ function onScroll() {
     atBottom.value
   ) {
     nextBoundaryFallbackFired = true;
-    emit('next-chapter-entered', currentSectionRef.value?.offsetHeight ?? 0);
+    emit("next-chapter-entered", currentSectionRef.value?.offsetHeight ?? 0);
   }
 }
 
 // ── 点击 ────────────────────────────────────────────────────────────
-function onClick(_e: MouseEvent) {
+function onClick(e: MouseEvent) {
+  onAnnotationMarkClick(e);
   const selection = window.getSelection();
   if (selection && !selection.isCollapsed && selection.toString().trim()) {
     return;
@@ -467,7 +766,7 @@ function onClick(_e: MouseEvent) {
     suppressNextClick = false;
     return;
   }
-  emit('tap', 'center');
+  emit("tap", "center");
 }
 
 // ── 公开方法 ─────────────────────────────────────────────────────────
@@ -479,10 +778,10 @@ function scrollToRatio(ratio: number) {
   const prevH = prevSectionRef.value?.offsetHeight ?? 0;
   const currentH = currentSectionRef.value?.offsetHeight ?? Math.max(0, el.scrollHeight - prevH);
   const max = Math.max(0, currentH - el.clientHeight);
-  el.style.scrollBehavior = 'auto';
+  el.style.scrollBehavior = "auto";
   el.scrollTop = prevH + max * Math.min(1, Math.max(0, ratio));
   requestAnimationFrame(() => {
-    el.style.scrollBehavior = '';
+    el.style.scrollBehavior = "";
   });
 }
 
@@ -492,7 +791,7 @@ function scrollToParagraph(index: number) {
   if (!el || !section) {
     return;
   }
-  const paras = section.querySelectorAll<HTMLElement>('.scroll-mode__para');
+  const paras = section.querySelectorAll<HTMLElement>(".scroll-mode__para");
   if (paras.length === 0) {
     scrollToRatio(0);
     return;
@@ -503,10 +802,10 @@ function scrollToParagraph(index: number) {
   }
   const containerTop = el.getBoundingClientRect().top;
   const targetTop = target.getBoundingClientRect().top;
-  el.style.scrollBehavior = 'auto';
+  el.style.scrollBehavior = "auto";
   el.scrollTop = Math.max(0, el.scrollTop + targetTop - containerTop);
   requestAnimationFrame(() => {
-    el.style.scrollBehavior = '';
+    el.style.scrollBehavior = "";
   });
 }
 
@@ -522,7 +821,7 @@ function getLineGroupingTolerance(para: HTMLElement): number {
 }
 
 function getParagraphTextHost(para: HTMLElement): HTMLElement {
-  return para.querySelector<HTMLElement>('.scroll-mode__text') ?? para;
+  return para.querySelector<HTMLElement>(".scroll-mode__text") ?? para;
 }
 
 function getParagraphLineBoxes(para: HTMLElement): LineBox[] {
@@ -556,7 +855,7 @@ function getSectionFirstVisibleLineAnchor(section: HTMLElement | null): ScrollLi
     return { paragraphIndex: 0, lineIndex: 0 };
   }
   const containerTop = el.getBoundingClientRect().top;
-  const paras = section.querySelectorAll<HTMLElement>('.scroll-mode__para');
+  const paras = section.querySelectorAll<HTMLElement>(".scroll-mode__para");
   for (let paragraphIndex = 0; paragraphIndex < paras.length; paragraphIndex++) {
     const lines = getParagraphLineBoxes(paras[paragraphIndex]);
     for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
@@ -578,7 +877,7 @@ function scrollToParagraphLine(paragraphIndex: number, lineIndex: number) {
     return;
   }
 
-  const paras = section.querySelectorAll<HTMLElement>('.scroll-mode__para');
+  const paras = section.querySelectorAll<HTMLElement>(".scroll-mode__para");
   if (paras.length === 0) {
     scrollToRatio(0);
     return;
@@ -597,10 +896,10 @@ function scrollToParagraphLine(paragraphIndex: number, lineIndex: number) {
   }
 
   const containerTop = el.getBoundingClientRect().top;
-  el.style.scrollBehavior = 'auto';
+  el.style.scrollBehavior = "auto";
   el.scrollTop = Math.max(0, el.scrollTop + targetLine.top - containerTop);
   requestAnimationFrame(() => {
-    el.style.scrollBehavior = '';
+    el.style.scrollBehavior = "";
   });
 }
 
@@ -663,8 +962,8 @@ function getReadingScrollRatio(): number {
   return getSectionRatio(currentSectionRef.value);
 }
 
-function getAdjacentScrollRatio(side: 'prev' | 'next'): number {
-  return side === 'prev'
+function getAdjacentScrollRatio(side: "prev" | "next"): number {
+  return side === "prev"
     ? getSectionRatio(prevSectionRef.value)
     : getSectionRatio(nextSectionRef.value);
 }
@@ -675,7 +974,7 @@ function getSectionFirstVisibleParaIndex(section: HTMLElement | null): number {
     return 0;
   }
   const containerTop = el.getBoundingClientRect().top;
-  const paras = section.querySelectorAll<HTMLElement>('.scroll-mode__para');
+  const paras = section.querySelectorAll<HTMLElement>(".scroll-mode__para");
   for (let i = 0; i < paras.length; i++) {
     const rect = paras[i]?.getBoundingClientRect();
     if (!rect) {
@@ -710,21 +1009,21 @@ function getReadingLineAnchor(): number {
   return encodeScrollLineAnchor(anchor.paragraphIndex, anchor.lineIndex);
 }
 
-function getAdjacentParagraphIndex(side: 'prev' | 'next'): number {
-  return side === 'prev'
+function getAdjacentParagraphIndex(side: "prev" | "next"): number {
+  return side === "prev"
     ? getSectionFirstVisibleParaIndex(prevSectionRef.value)
     : getSectionFirstVisibleParaIndex(nextSectionRef.value);
 }
 
-function getAdjacentLineAnchor(side: 'prev' | 'next'): number {
+function getAdjacentLineAnchor(side: "prev" | "next"): number {
   const anchor =
-    side === 'prev'
+    side === "prev"
       ? getSectionFirstVisibleLineAnchor(prevSectionRef.value)
       : getSectionFirstVisibleLineAnchor(nextSectionRef.value);
   return encodeScrollLineAnchor(anchor.paragraphIndex, anchor.lineIndex);
 }
 
-function scrollByPage(direction: 'up' | 'down'): boolean {
+function scrollByPage(direction: "up" | "down"): boolean {
   const el = scrollRef.value;
   if (!el) {
     return false;
@@ -736,20 +1035,20 @@ function scrollByPage(direction: 'up' | 'down'): boolean {
   const current = el.scrollTop;
   const step = Math.max(80, Math.floor(el.clientHeight * 0.86));
   const target =
-    direction === 'down' ? Math.min(maxScrollTop, current + step) : Math.max(0, current - step);
+    direction === "down" ? Math.min(maxScrollTop, current + step) : Math.max(0, current - step);
   if (Math.abs(target - current) < 1) {
     return false;
   }
-  el.scrollTo({ top: target, behavior: 'smooth' });
+  el.scrollTo({ top: target, behavior: "smooth" });
   return true;
 }
 
 function pageDown(): boolean {
-  return scrollByPage('down');
+  return scrollByPage("down");
 }
 
 function pageUp(): boolean {
-  return scrollByPage('up');
+  return scrollByPage("up");
 }
 
 function getFirstVisibleParaIndex(): number {
@@ -816,9 +1115,15 @@ defineExpose({
         ref="prevSectionRef"
         class="scroll-mode__body scroll-mode__body--prev"
         :class="[{ 'scroll-mode__body--layout-debug': layoutDebug }, columnContainerClass]"
+        @click="onEpubFootnoteClick"
       >
         <p v-if="prevChapterTitle" class="reader-chapter-title">{{ prevChapterTitle }}</p>
-        <template v-if="hasPrevChapterContent">
+        <div
+          v-if="isEpubMode && hasPrevChapterContent"
+          class="scroll-mode__epub-section epub-scoped-host"
+          v-html="epubPrevRendered"
+        />
+        <template v-else-if="hasPrevChapterContent">
           <p
             v-for="(para, i) in prevParagraphs"
             :key="`prev-${i}`"
@@ -840,7 +1145,7 @@ defineExpose({
       <div class="scroll-mode__chapter-sep">
         <div class="scroll-mode__chapter-sep-line" />
         <p class="scroll-mode__chapter-sep-title reader-chapter-title">
-          {{ chapterTitle || '当前章节' }}
+          {{ chapterTitle || "当前章节" }}
         </p>
       </div>
     </template>
@@ -850,6 +1155,7 @@ defineExpose({
       ref="currentSectionRef"
       class="scroll-mode__body"
       :class="[{ 'scroll-mode__body--layout-debug': layoutDebug }, columnContainerClass]"
+      @click="onEpubFootnoteClick"
     >
       <p v-if="showCurrentChapterTitle" class="reader-chapter-title">{{ chapterTitle }}</p>
 
@@ -858,8 +1164,13 @@ defineExpose({
         class="scroll-mode__chapter-loading scroll-mode__chapter-loading--current"
       >
         <n-spin size="small" />
-        <span>{{ chapterTitle || '当前章节' }}加载中...</span>
+        <span>{{ chapterTitle || "当前章节" }}加载中...</span>
       </div>
+      <div
+        v-else-if="isEpubMode"
+        class="scroll-mode__epub-section epub-scoped-host"
+        v-html="epubRenderedContent"
+      />
       <template v-else>
         <p
           v-for="(para, i) in paragraphs"
@@ -871,7 +1182,12 @@ defineExpose({
             marginBottom: `${paragraphSpacing}px`,
           }"
         >
-          <span class="scroll-mode__text" v-html="highlightParagraph(para)" />
+          <span
+            v-if="isTtsActive"
+            class="scroll-mode__text"
+            v-html="renderParagraphWithSentenceSpans(para, i)"
+          />
+          <span v-else class="scroll-mode__text" v-html="highlightParagraph(para, i)" />
         </p>
       </template>
     </div>
@@ -882,7 +1198,7 @@ defineExpose({
       <div class="scroll-mode__chapter-sep">
         <div class="scroll-mode__chapter-sep-line" />
         <p class="scroll-mode__chapter-sep-title reader-chapter-title">
-          {{ nextChapterTitle || '下一章' }}
+          {{ nextChapterTitle || "下一章" }}
         </p>
       </div>
 
@@ -894,8 +1210,14 @@ defineExpose({
         ref="nextSectionRef"
         class="scroll-mode__body scroll-mode__body--next"
         :class="[{ 'scroll-mode__body--layout-debug': layoutDebug }, columnContainerClass]"
+        @click="onEpubFootnoteClick"
       >
-        <template v-if="hasNextChapterContent">
+        <div
+          v-if="isEpubMode && hasNextChapterContent"
+          class="scroll-mode__epub-section epub-scoped-host"
+          v-html="epubNextRendered"
+        />
+        <template v-else-if="hasNextChapterContent">
           <p
             v-for="(para, i) in nextParagraphs"
             :key="i"
@@ -947,6 +1269,19 @@ defineExpose({
       </div>
     </div>
   </div>
+
+  <SelectionToolbar
+    ref="selectionToolbarRef"
+    @highlight="onSelectionHighlight"
+    @add-note="onSelectionAddNote"
+  />
+
+  <EpubFootnotePopup
+    :footnote="activeFootnote"
+    :anchor-el="footnoteAnchorEl"
+    @close="closeFootnote"
+    @scroll-back="onFootnoteScrollBack"
+  />
 </template>
 
 <style scoped>
@@ -1044,6 +1379,16 @@ defineExpose({
   border-radius: 2px;
 }
 
+.scroll-mode__para :deep(.annotation-highlight) {
+  border-radius: 2px;
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+
+.scroll-mode__para :deep(.annotation-highlight:hover) {
+  filter: brightness(0.88);
+}
+
 .scroll-mode__para.tts-playing {
   background-color: var(--reader-tts-hl-bg, rgba(99, 226, 183, 0.2));
   border-radius: 4px;
@@ -1056,6 +1401,15 @@ defineExpose({
   transition: background-color 0.2s ease;
 }
 
+.scroll-mode__text :deep(.tts-sentence) {
+  transition: background-color 0.3s;
+  border-radius: 2px;
+}
+
+.scroll-mode__text :deep(.tts-sentence.tts-active) {
+  background-color: rgba(66, 133, 244, 0.2);
+}
+
 .scroll-mode__body--layout-debug .scroll-mode__para {
   position: relative;
   box-shadow: inset 0 0 0 1px rgba(14, 165, 233, 0.9);
@@ -1063,7 +1417,7 @@ defineExpose({
 }
 
 .scroll-mode__body--layout-debug .scroll-mode__para::after {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   right: 0;
@@ -1174,5 +1528,66 @@ defineExpose({
 
 .dual-page-container > .reader-chapter-title {
   column-span: all;
+}
+
+.scroll-mode__epub-section {
+  color: var(--reader-text-color);
+  font-family: var(--reader-font-family);
+  font-size: var(--reader-font-size);
+  line-height: var(--reader-line-height);
+}
+
+.scroll-mode__epub-section :deep(img) {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: var(--space-3, 12px) auto;
+}
+
+.scroll-mode__epub-section :deep(table) {
+  border-collapse: collapse;
+  max-width: 100%;
+  margin: var(--space-3, 12px) auto;
+  font-size: inherit;
+}
+
+.scroll-mode__epub-section :deep(th),
+.scroll-mode__epub-section :deep(td) {
+  padding: var(--space-1, 4px) var(--space-2, 8px);
+  border: 1px solid var(--gray-300);
+}
+
+.epub-scoped-host :deep(.epub-scoped-container) {
+  container-type: inline-size;
+}
+
+.epub-scoped-host :deep(.epub-scoped-content) {
+  width: 100%;
+}
+
+.epub-scoped-host :deep(.epub-footnote-ref) {
+  color: var(--color-accent, #3b82f6);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 0.8em;
+  vertical-align: super;
+  line-height: 1;
+}
+
+.epub-scoped-host :deep(.epub-footnote-ref:hover) {
+  text-decoration: underline;
+  opacity: 0.8;
+}
+
+.epub-scoped-host :deep(.epub-table-wrapper) {
+  overflow-x: auto;
+}
+
+.epub-scoped-host :deep(.epub-svg-wrapper) {
+  display: flex;
+  justify-content: center;
+  max-width: 100%;
+  overflow: hidden;
 }
 </style>

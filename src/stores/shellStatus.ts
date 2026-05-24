@@ -1,10 +1,10 @@
-import { defineStore } from 'pinia';
-import { computed, reactive, ref, watch } from 'vue';
-import { eventListen } from '@/composables/useEventBus';
-import { useNavigationStore } from './navigation';
-import { usePrefetchStore } from './prefetch';
+import { defineStore } from "pinia";
+import { computed, reactive, ref, watch } from "vue";
+import { eventListen } from "@/composables/useEventBus";
+import { useNavigationStore } from "./navigation";
+import { usePrefetchStore } from "./prefetch";
 
-export type TaskStatus = 'idle' | 'running' | 'success' | 'error' | 'warning';
+export type TaskStatus = "idle" | "running" | "success" | "error" | "warning";
 
 export interface ShellTaskItem {
   id: string;
@@ -19,7 +19,7 @@ export interface ShellTaskItem {
   error?: string;
 }
 
-export type ShellLogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
+export type ShellLogLevel = "DEBUG" | "INFO" | "WARN" | "ERROR";
 
 export interface ShellLogItem {
   id: number;
@@ -30,39 +30,39 @@ export interface ShellLogItem {
 }
 
 const MODULE_LABELS: Record<string, string> = {
-  bookshelf: '书架',
-  explore: '发现',
-  search: '搜索',
-  booksource: '书源管理',
-  extensions: '插件管理',
-  settings: '设置',
+  bookshelf: "书架",
+  explore: "发现",
+  search: "搜索",
+  booksource: "书源管理",
+  extensions: "插件管理",
+  settings: "设置",
 };
 
 function normalizeLevel(level?: string, message?: string): ShellLogLevel {
-  const fromLevel = (level ?? '').toUpperCase();
+  const fromLevel = (level ?? "").toUpperCase();
   if (
-    fromLevel === 'DEBUG' ||
-    fromLevel === 'INFO' ||
-    fromLevel === 'WARN' ||
-    fromLevel === 'ERROR'
+    fromLevel === "DEBUG" ||
+    fromLevel === "INFO" ||
+    fromLevel === "WARN" ||
+    fromLevel === "ERROR"
   ) {
     return fromLevel;
   }
 
-  const text = (message ?? '').toLowerCase();
-  if (text.includes('error') || text.includes('失败') || text.includes('异常')) {
-    return 'ERROR';
+  const text = (message ?? "").toLowerCase();
+  if (text.includes("error") || text.includes("失败") || text.includes("异常")) {
+    return "ERROR";
   }
-  if (text.includes('warn') || text.includes('警告')) {
-    return 'WARN';
+  if (text.includes("warn") || text.includes("警告")) {
+    return "WARN";
   }
-  if (text.includes('debug')) {
-    return 'DEBUG';
+  if (text.includes("debug")) {
+    return "DEBUG";
   }
-  return 'INFO';
+  return "INFO";
 }
 
-export const useShellStatusStore = defineStore('shellStatus', () => {
+export const useShellStatusStore = defineStore("shellStatus", () => {
   const navigationStore = useNavigationStore();
   const prefetchStore = usePrefetchStore();
 
@@ -87,7 +87,7 @@ export const useShellStatusStore = defineStore('shellStatus', () => {
   );
 
   const latestLog = computed(() => state.logs[state.logs.length - 1] ?? null);
-  const latestLogLevel = computed<ShellLogLevel>(() => latestLog.value?.level ?? 'INFO');
+  const latestLogLevel = computed<ShellLogLevel>(() => latestLog.value?.level ?? "INFO");
 
   const summary = computed(() => ({
     running: state.runningTasks.length,
@@ -99,7 +99,7 @@ export const useShellStatusStore = defineStore('shellStatus', () => {
   const mainTask = computed<ShellTaskItem | null>(() => state.runningTasks[0] ?? null);
 
   function syncRunningTasks() {
-    state.runningTasks = Array.from(activeTasks.values()).filter((t) => t.status === 'running');
+    state.runningTasks = Array.from(activeTasks.values()).filter((t) => t.status === "running");
   }
 
   function pushLog(level: ShellLogLevel, module: string, message: string) {
@@ -107,7 +107,7 @@ export const useShellStatusStore = defineStore('shellStatus', () => {
     if (state.logs.length > 1200) {
       state.logs.splice(0, state.logs.length - 1200);
     }
-    if (!state.showLogWindow && level === 'ERROR') {
+    if (!state.showLogWindow && level === "ERROR") {
       state.unreadErrorCount += 1;
     }
   }
@@ -116,11 +116,11 @@ export const useShellStatusStore = defineStore('shellStatus', () => {
     if (prefetchStore.manualBookName) {
       return `缓存《${prefetchStore.manualBookName}》`;
     }
-    return '后台任务';
+    return "后台任务";
   }
 
   function upsertManualTask() {
-    const taskId = prefetchStore.manualTaskId || '';
+    const taskId = prefetchStore.manualTaskId || "";
     if (!taskId) {
       return;
     }
@@ -131,11 +131,11 @@ export const useShellStatusStore = defineStore('shellStatus', () => {
         id: taskId,
         name: normalizeTaskName(),
         module: currentModuleLabel.value,
-        status: 'running',
+        status: "running",
         done: 0,
         total: 0,
         startedAt: Date.now(),
-        phase: '执行中',
+        phase: "执行中",
       };
       activeTasks.set(taskId, task);
     }
@@ -143,8 +143,8 @@ export const useShellStatusStore = defineStore('shellStatus', () => {
     task.name = normalizeTaskName();
     task.done = prefetchStore.manualProgress.done;
     task.total = prefetchStore.manualProgress.total;
-    task.phase = task.total > 0 ? `已完成 ${task.done}/${task.total}` : '执行中';
-    task.status = 'running';
+    task.phase = task.total > 0 ? `已完成 ${task.done}/${task.total}` : "执行中";
+    task.status = "running";
     syncRunningTasks();
   }
 
@@ -160,7 +160,7 @@ export const useShellStatusStore = defineStore('shellStatus', () => {
     activeTasks.delete(taskId);
     syncRunningTasks();
 
-    if (status === 'error') {
+    if (status === "error") {
       state.failedTasks.unshift(task);
       state.failedTasks = state.failedTasks.slice(0, 20);
       return;
@@ -226,7 +226,7 @@ export const useShellStatusStore = defineStore('shellStatus', () => {
         if (!prefetchStore.manualRunning && prefetchStore.manualTaskId) {
           const done = prefetchStore.manualProgress.done;
           const total = prefetchStore.manualProgress.total;
-          const status: TaskStatus = total > 0 && done >= total ? 'success' : 'warning';
+          const status: TaskStatus = total > 0 && done >= total ? "success" : "warning";
           finishTask(prefetchStore.manualTaskId, status);
         }
       },
@@ -234,43 +234,43 @@ export const useShellStatusStore = defineStore('shellStatus', () => {
     );
 
     unlisteners.push(
-      await eventListen<{ taskId: string; error?: string }>('shelf:prefetch-done', (e) => {
+      await eventListen<{ taskId: string; error?: string }>("shelf:prefetch-done", (e) => {
         const error = e.payload.error?.trim();
         if (error) {
-          finishTask(e.payload.taskId, 'error', error);
-          pushLog('ERROR', 'prefetch', error);
+          finishTask(e.payload.taskId, "error", error);
+          pushLog("ERROR", "prefetch", error);
           return;
         }
-        finishTask(e.payload.taskId, 'success');
+        finishTask(e.payload.taskId, "success");
       }),
     );
 
     unlisteners.push(
-      await eventListen<{ taskId: string; error?: string }>('shelf:prefetch-progress', (e) => {
+      await eventListen<{ taskId: string; error?: string }>("shelf:prefetch-progress", (e) => {
         const error = e.payload.error?.trim();
         if (!error) {
           return;
         }
-        finishTask(e.payload.taskId, 'error', error);
-        pushLog('ERROR', 'prefetch', error);
+        finishTask(e.payload.taskId, "error", error);
+        pushLog("ERROR", "prefetch", error);
       }),
     );
 
     unlisteners.push(
-      await eventListen<{ message: string; level?: string }>('app:log', (e) => {
-        pushLog(normalizeLevel(e.payload.level, e.payload.message), 'app', e.payload.message);
+      await eventListen<{ message: string; level?: string }>("app:log", (e) => {
+        pushLog(normalizeLevel(e.payload.level, e.payload.message), "app", e.payload.message);
       }),
     );
 
     unlisteners.push(
-      await eventListen<{ message: string }>('rust:log', (e) => {
-        pushLog(normalizeLevel(undefined, e.payload.message), 'rust', e.payload.message);
+      await eventListen<{ message: string }>("rust:log", (e) => {
+        pushLog(normalizeLevel(undefined, e.payload.message), "rust", e.payload.message);
       }),
     );
 
     unlisteners.push(
-      await eventListen<{ message: string }>('script:log', (e) => {
-        pushLog(normalizeLevel(undefined, e.payload.message), 'script', e.payload.message);
+      await eventListen<{ message: string }>("script:log", (e) => {
+        pushLog(normalizeLevel(undefined, e.payload.message), "script", e.payload.message);
       }),
     );
   }

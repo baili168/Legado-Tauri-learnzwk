@@ -8,11 +8,11 @@ import {
   BarChart3,
   ChevronLeft,
   ChevronRight,
-} from 'lucide-vue-next';
-import { NCard, NStatistic, NList, NListItem, NEmpty, NDivider } from 'naive-ui';
-import { computed, ref, watch } from 'vue';
-import { useReadingStatsStore, type ReadingSession } from '@/stores/readingStats';
-import type { BookStats, GlobalStats, DailyHeatmapEntry } from '@/stores/readingStats';
+} from "lucide-vue-next";
+import { NCard, NStatistic, NList, NListItem, NEmpty, NDivider } from "naive-ui";
+import { computed, ref, watch } from "vue";
+import { useReadingStatsStore, type ReadingSession } from "@/stores/readingStats";
+import type { BookStats, GlobalStats, DailyHeatmapEntry } from "@/stores/readingStats";
 
 const props = withDefaults(
   defineProps<{
@@ -21,7 +21,7 @@ const props = withDefaults(
   }>(),
   {
     bookId: null,
-    bookName: '',
+    bookName: "",
   },
 );
 
@@ -49,15 +49,9 @@ function refreshData() {
       .slice(0, 20);
   } else {
     globalStats.value = store.getGlobalStats();
-    dailyHeatmap.value = store.getDailyHeatmap(
-      heatmapYear.value,
-      heatmapMonth.value,
-    );
+    dailyHeatmap.value = store.getDailyHeatmap(heatmapYear.value, heatmapMonth.value);
 
-    const bookMap = new Map<
-      string,
-      { bookId: string; bookName: string; duration: number }
-    >();
+    const bookMap = new Map<string, { bookId: string; bookName: string; duration: number }>();
     for (const s of store.sessions) {
       const existing = bookMap.get(s.bookId);
       if (existing) {
@@ -70,9 +64,7 @@ function refreshData() {
         });
       }
     }
-    topBooks.value = [...bookMap.values()]
-      .sort((a, b) => b.duration - a.duration)
-      .slice(0, 5);
+    topBooks.value = [...bookMap.values()].sort((a, b) => b.duration - a.duration).slice(0, 5);
   }
 }
 
@@ -97,7 +89,7 @@ function formatDurationShort(secs: number): string {
 }
 
 function formatDate(dateStr: string): string {
-  const parts = dateStr.split('-');
+  const parts = dateStr.split("-");
   return `${parts[1]}月${parts[2]}日`;
 }
 
@@ -121,7 +113,7 @@ const heatmapTitle = computed(() => {
 });
 
 const heatmapDays = computed(() => {
-  const prefix = `${heatmapYear.value}-${String(heatmapMonth.value).padStart(2, '0')}-`;
+  const prefix = `${heatmapYear.value}-${String(heatmapMonth.value).padStart(2, "0")}-`;
   const daysInMonth = new Date(heatmapYear.value, heatmapMonth.value, 0).getDate();
   const firstDayOfWeek = new Date(heatmapYear.value, heatmapMonth.value - 1, 1).getDay();
   const adjustedFirstDay = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
@@ -129,11 +121,11 @@ const heatmapDays = computed(() => {
   const cells: { date: string; day: number; minutes: number; empty: boolean }[] = [];
 
   for (let i = 0; i < adjustedFirstDay; i++) {
-    cells.push({ date: '', day: 0, minutes: 0, empty: true });
+    cells.push({ date: "", day: 0, minutes: 0, empty: true });
   }
 
   for (let d = 1; d <= daysInMonth; d++) {
-    const date = `${prefix}${String(d).padStart(2, '0')}`;
+    const date = `${prefix}${String(d).padStart(2, "0")}`;
     const entry = dailyHeatmap.value.find((e) => e.date === date);
     cells.push({
       date,
@@ -153,10 +145,7 @@ function goToPrevMonth() {
   } else {
     heatmapMonth.value--;
   }
-  dailyHeatmap.value = store.getDailyHeatmap(
-    heatmapYear.value,
-    heatmapMonth.value,
-  );
+  dailyHeatmap.value = store.getDailyHeatmap(heatmapYear.value, heatmapMonth.value);
 }
 
 function goToNextMonth() {
@@ -166,18 +155,15 @@ function goToNextMonth() {
   } else {
     heatmapMonth.value++;
   }
-  dailyHeatmap.value = store.getDailyHeatmap(
-    heatmapYear.value,
-    heatmapMonth.value,
-  );
+  dailyHeatmap.value = store.getDailyHeatmap(heatmapYear.value, heatmapMonth.value);
 }
 
 function getHeatmapTooltip(cell: { date: string; minutes: number }): string {
-  if (!cell.date) return '';
+  if (!cell.date) return "";
   return `${cell.date}: ${cell.minutes}分钟`;
 }
 
-const weekdays = ['一', '二', '三', '四', '五', '六', '日'];
+const weekdays = ["一", "二", "三", "四", "五", "六", "日"];
 
 const hasBookData = computed(() => {
   return bookStats.value && bookStats.value.totalSessions > 0;
@@ -200,16 +186,11 @@ watch(
   <div class="rsp-root">
     <!-- ==================== 单本书统计模式 ==================== -->
     <template v-if="isBookMode">
-      <n-card
-        v-if="bookStats && hasBookData"
-        class="rsp-card"
-        :bordered="false"
-        size="small"
-      >
+      <n-card v-if="bookStats && hasBookData" class="rsp-card" :bordered="false" size="small">
         <template #header>
           <div class="rsp-header">
             <BookOpen :size="18" class="rsp-header-icon" />
-            <span class="rsp-title">{{ props.bookName || '阅读统计' }}</span>
+            <span class="rsp-title">{{ props.bookName || "阅读统计" }}</span>
           </div>
         </template>
 
@@ -248,23 +229,18 @@ watch(
 
         <div class="rsp-section-title">阅读历史</div>
         <n-list v-if="recentSessions.length > 0" class="rsp-session-list">
-          <n-list-item
-            v-for="session in recentSessions"
-            :key="session.id"
-          >
+          <n-list-item v-for="session in recentSessions" :key="session.id">
             <div class="rsp-session-row">
               <span class="rsp-session-date">{{ formatDate(session.date) }}</span>
-              <span class="rsp-session-duration">{{ formatDurationShort(session.durationSecs) }}</span>
+              <span class="rsp-session-duration">{{
+                formatDurationShort(session.durationSecs)
+              }}</span>
               <span class="rsp-session-words">{{ formatNumber(session.wordsRead) }} 字</span>
             </div>
           </n-list-item>
         </n-list>
 
-        <n-empty
-          v-if="recentSessions.length === 0"
-          description="暂无近期阅读记录"
-          size="small"
-        />
+        <n-empty v-if="recentSessions.length === 0" description="暂无近期阅读记录" size="small" />
       </n-card>
 
       <n-card v-else class="rsp-card rsp-card--empty" :bordered="false" size="small">
@@ -278,12 +254,7 @@ watch(
 
     <!-- ==================== 全局统计模式 ==================== -->
     <template v-else>
-      <n-card
-        v-if="globalStats && hasGlobalData"
-        class="rsp-card"
-        :bordered="false"
-        size="small"
-      >
+      <n-card v-if="globalStats && hasGlobalData" class="rsp-card" :bordered="false" size="small">
         <template #header>
           <div class="rsp-header">
             <BarChart3 :size="18" class="rsp-header-icon" />
@@ -386,11 +357,7 @@ watch(
           </n-list-item>
         </n-list>
 
-        <n-empty
-          v-if="topBooks.length === 0"
-          description="暂无书籍记录"
-          size="small"
-        />
+        <n-empty v-if="topBooks.length === 0" description="暂无书籍记录" size="small" />
       </n-card>
 
       <n-card v-else class="rsp-card rsp-card--empty" :bordered="false" size="small">
@@ -523,7 +490,9 @@ watch(
   border-radius: var(--radius-md);
   color: var(--color-text-muted);
   cursor: pointer;
-  transition: color 0.15s, background 0.15s;
+  transition:
+    color 0.15s,
+    background 0.15s;
 }
 
 .rsp-heatmap-nav:hover {

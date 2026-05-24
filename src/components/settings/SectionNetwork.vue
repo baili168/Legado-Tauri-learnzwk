@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { useMessage } from 'naive-ui';
-import { storeToRefs } from 'pinia';
-import { computed, ref, onMounted } from 'vue';
-import { BUILTIN_USER_AGENT } from '@/composables/useAppConfig';
-import { browserProbeClearData } from '@/composables/useBrowserProbe';
-import { isTransportAvailable } from '@/composables/useTransport';
-import { useAppConfigStore, usePreferencesStore } from '@/stores';
-import SettingItem from './SettingItem.vue';
-import SettingSection from './SettingSection.vue';
-import SettingsSubpanel from './SettingsSubpanel.vue';
-import { uaSelectOptions } from './uaPresets';
+import { useMessage } from "naive-ui";
+import { storeToRefs } from "pinia";
+import { computed, ref, onMounted } from "vue";
+import { BUILTIN_USER_AGENT } from "@/composables/useAppConfig";
+import { browserProbeClearData } from "@/composables/useBrowserProbe";
+import { isTransportAvailable } from "@/composables/useTransport";
+import { useAppConfigStore, usePreferencesStore } from "@/stores";
+import SettingItem from "./SettingItem.vue";
+import SettingSection from "./SettingSection.vue";
+import SettingsSubpanel from "./SettingsSubpanel.vue";
+import { uaSelectOptions } from "./uaPresets";
 
 const message = useMessage();
 const _appCfg = useAppConfigStore();
@@ -20,31 +20,31 @@ const searchCfg = computed(() => prefsStore.search);
 
 // DoH 服务器预设（分国内 / 国际分组）
 const DOH_OPTIONS = [
-  { label: '不使用（系统 DNS）', value: 'none' },
+  { label: "不使用（系统 DNS）", value: "none" },
   {
-    type: 'group' as const,
-    label: '── 国内公共 DNS ──',
-    key: 'cn',
+    type: "group" as const,
+    label: "── 国内公共 DNS ──",
+    key: "cn",
     children: [
-      { label: '阿里云 DNS（223.5.5.5）', value: 'alidns' },
-      { label: 'DNSPod 腾讯（119.29.29.29）', value: 'dnspod' },
-      { label: '360 安全 DNS（101.226.4.6）', value: '360dns' },
-      { label: 'OneDNS 点一（117.50.10.10）', value: 'onedns' },
+      { label: "阿里云 DNS（223.5.5.5）", value: "alidns" },
+      { label: "DNSPod 腾讯（119.29.29.29）", value: "dnspod" },
+      { label: "360 安全 DNS（101.226.4.6）", value: "360dns" },
+      { label: "OneDNS 点一（117.50.10.10）", value: "onedns" },
     ],
   },
   {
-    type: 'group' as const,
-    label: '── 国际公共 DNS ──',
-    key: 'intl',
+    type: "group" as const,
+    label: "── 国际公共 DNS ──",
+    key: "intl",
     children: [
-      { label: 'Cloudflare（1.1.1.1）', value: 'cloudflare' },
-      { label: 'Google（8.8.8.8）', value: 'google' },
+      { label: "Cloudflare（1.1.1.1）", value: "cloudflare" },
+      { label: "Google（8.8.8.8）", value: "google" },
     ],
   },
 ];
 
-const uaInput = ref('');
-const probeUaInput = ref('');
+const uaInput = ref("");
+const probeUaInput = ref("");
 const selectedPresetUa = ref<string | null>(null);
 /** 是否已连接到后端 */
 const transportReady = ref(false);
@@ -52,7 +52,7 @@ const transportReady = ref(false);
 async function handleSet(key: string, value: string) {
   try {
     await setConfig(key, value);
-    message.success('已保存');
+    message.success("已保存");
   } catch (e: unknown) {
     message.error(`保存失败: ${e}`);
   }
@@ -61,13 +61,13 @@ async function handleSet(key: string, value: string) {
 async function handleReset(key: string) {
   try {
     await resetConfig(key);
-    if (key === 'http_user_agent') {
+    if (key === "http_user_agent") {
       uaInput.value = config.value.http_user_agent;
     }
-    if (key === 'browser_probe_user_agent') {
+    if (key === "browser_probe_user_agent") {
       probeUaInput.value = config.value.browser_probe_user_agent;
     }
-    message.success('已重置为默认值');
+    message.success("已重置为默认值");
   } catch (e: unknown) {
     message.error(`重置失败: ${e}`);
   }
@@ -83,17 +83,17 @@ function applyPreset(val: string | null) {
 }
 
 function saveUa() {
-  handleSet('http_user_agent', uaInput.value.trim() || BUILTIN_USER_AGENT);
+  handleSet("http_user_agent", uaInput.value.trim() || BUILTIN_USER_AGENT);
 }
 
 function saveProbeUa() {
-  handleSet('browser_probe_user_agent', probeUaInput.value.trim());
+  handleSet("browser_probe_user_agent", probeUaInput.value.trim());
 }
 
 async function clearBrowserProbeData() {
   try {
     await browserProbeClearData();
-    message.success('已清空浏览器探测数据');
+    message.success("已清空浏览器探测数据");
   } catch (e: unknown) {
     message.error(`清空失败: ${e}`);
   }
@@ -109,7 +109,7 @@ onMounted(async () => {
     uaInput.value = config.value.http_user_agent;
     probeUaInput.value = config.value.browser_probe_user_agent;
   } catch (e) {
-    console.error('加载配置失败', e);
+    console.error("加载配置失败", e);
   }
 });
 </script>
@@ -188,8 +188,8 @@ onMounted(async () => {
       >
         <template #summary>
           <div class="panel-summary">
-            <div>启用：{{ config.browser_probe_enabled ? '是' : '否' }}</div>
-            <div>探测 UA：{{ config.browser_probe_user_agent || '跟随 HTTP UA' }}</div>
+            <div>启用：{{ config.browser_probe_enabled ? "是" : "否" }}</div>
+            <div>探测 UA：{{ config.browser_probe_user_agent || "跟随 HTTP UA" }}</div>
             <div>默认超时：{{ config.browser_probe_timeout_secs || 0 }} 秒</div>
           </div>
         </template>
@@ -490,15 +490,15 @@ onMounted(async () => {
           <div class="panel-summary">
             <div>
               模式：{{
-                config.proxy_mode === 'system'
-                  ? '系统代理'
-                  : config.proxy_mode === 'none'
-                    ? '无代理'
+                config.proxy_mode === "system"
+                  ? "系统代理"
+                  : config.proxy_mode === "none"
+                    ? "无代理"
                     : `自定义（${config.proxy_type.toUpperCase()}）`
               }}
             </div>
             <div v-if="config.proxy_mode === 'custom'">
-              地址：{{ config.proxy_host || '未设置' }}:{{ config.proxy_port || '-' }}
+              地址：{{ config.proxy_host || "未设置" }}:{{ config.proxy_port || "-" }}
             </div>
           </div>
         </template>

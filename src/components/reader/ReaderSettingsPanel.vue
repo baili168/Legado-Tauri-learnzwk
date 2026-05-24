@@ -1,23 +1,23 @@
 <script setup lang="ts">
-import { ChevronLeft } from 'lucide-vue-next';
-import { toRef } from 'vue';
-import { isMobile } from '@/composables/useEnv';
-import ReaderSettingsCustomFontPage from '@/features/reader/settings/components/ReaderSettingsCustomFontPage.vue';
-import ReaderSettingsFontPage from '@/features/reader/settings/components/ReaderSettingsFontPage.vue';
-import ReaderSettingsMorePage from '@/features/reader/settings/components/ReaderSettingsMorePage.vue';
-import ReaderSettingsPagePaddingPage from '@/features/reader/settings/components/ReaderSettingsPagePaddingPage.vue';
-import ReaderSettingsShortcutsPage from '@/features/reader/settings/components/ReaderSettingsShortcutsPage.vue';
-import ReaderSettingsSpacingPage from '@/features/reader/settings/components/ReaderSettingsSpacingPage.vue';
-import ReaderSettingsTypographyPage from '@/features/reader/settings/components/ReaderSettingsTypographyPage.vue';
-import ReaderSettingsUploadedFontsPage from '@/features/reader/settings/components/ReaderSettingsUploadedFontsPage.vue';
-import { useReaderSettingsPanelModel } from '@/features/reader/settings/useReaderSettingsPanelModel';
+import { ChevronLeft } from "lucide-vue-next";
+import { toRef } from "vue";
+import { isMobile } from "@/composables/useEnv";
+import ReaderSettingsCustomFontPage from "@/features/reader/settings/components/ReaderSettingsCustomFontPage.vue";
+import ReaderSettingsFontPage from "@/features/reader/settings/components/ReaderSettingsFontPage.vue";
+import ReaderSettingsMorePage from "@/features/reader/settings/components/ReaderSettingsMorePage.vue";
+import ReaderSettingsPagePaddingPage from "@/features/reader/settings/components/ReaderSettingsPagePaddingPage.vue";
+import ReaderSettingsShortcutsPage from "@/features/reader/settings/components/ReaderSettingsShortcutsPage.vue";
+import ReaderSettingsSpacingPage from "@/features/reader/settings/components/ReaderSettingsSpacingPage.vue";
+import ReaderSettingsTypographyPage from "@/features/reader/settings/components/ReaderSettingsTypographyPage.vue";
+import ReaderSettingsUploadedFontsPage from "@/features/reader/settings/components/ReaderSettingsUploadedFontsPage.vue";
+import { useReaderSettingsPanelModel } from "@/features/reader/settings/useReaderSettingsPanelModel";
 
 const props = defineProps<{
   sourceType?: string;
 }>();
 
 const emit = defineEmits<{
-  (e: 'dump-pagination-layout'): void;
+  (e: "dump-pagination-layout"): void;
 }>();
 
 const {
@@ -79,8 +79,8 @@ const {
   deleteUserFont,
   renameUserFont,
 } = useReaderSettingsPanelModel({
-  sourceType: toRef(props, 'sourceType'),
-  onDumpPaginationLayout: () => emit('dump-pagination-layout'),
+  sourceType: toRef(props, "sourceType"),
+  onDumpPaginationLayout: () => emit("dump-pagination-layout"),
 });
 
 defineExpose({ isNight, toggleDayNight, hideTapZoneDebugPreview });
@@ -247,7 +247,7 @@ defineExpose({ isNight, toggleDayNight, hideTapZoneDebugPreview });
 
         <!-- 翻页 -->
         <div class="reader-settings__row">
-          <span class="reader-settings__label">{{ isComic ? '漫画翻页' : '翻页' }}</span>
+          <span class="reader-settings__label">{{ isComic ? "漫画翻页" : "翻页" }}</span>
           <div class="reader-settings__flip-mode-block">
             <div class="reader-settings__pill-group">
               <button
@@ -844,7 +844,7 @@ defineExpose({ isNight, toggleDayNight, hideTapZoneDebugPreview });
   flex-shrink: 0;
 }
 
-.reader-settings__color-swatch input[type='color'] {
+.reader-settings__color-swatch input[type="color"] {
   position: absolute;
   inset: 0;
   opacity: 0;

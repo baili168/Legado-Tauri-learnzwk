@@ -1,24 +1,24 @@
 <script setup lang="ts">
-import { useMessage } from 'naive-ui';
-import { ref, computed, onMounted, watch } from 'vue';
-import type { BookItem } from '@/stores';
-import { useScriptBridgeStore } from '@/stores';
-import type { BookSourceMeta } from '../../composables/useBookSource';
+import { useMessage } from "naive-ui";
+import { ref, computed, onMounted, watch } from "vue";
+import type { BookItem } from "@/stores";
+import { useScriptBridgeStore } from "@/stores";
+import type { BookSourceMeta } from "../../composables/useBookSource";
 import {
   isHtmlExploreResult,
   isUrlExploreResult,
   getUrlFromExploreResult,
-} from '../../composables/useExploreBridge';
+} from "../../composables/useExploreBridge";
 import {
   getCachedExploreCategories,
   setCachedExploreCategories,
   getCachedExploreBooks,
   setCachedExploreBooks,
-} from '../../composables/useExploreCategoryCache';
-import AppSkeleton from '../base/AppSkeleton.vue';
-import BookCard from './BookCard.vue';
-import ExploreHtmlRenderer from './ExploreHtmlRenderer.vue';
-import ExploreUrlRenderer from './ExploreUrlRenderer.vue';
+} from "../../composables/useExploreCategoryCache";
+import AppSkeleton from "../base/AppSkeleton.vue";
+import BookCard from "./BookCard.vue";
+import ExploreHtmlRenderer from "./ExploreHtmlRenderer.vue";
+import ExploreUrlRenderer from "./ExploreUrlRenderer.vue";
 
 const props = defineProps<{
   source: BookSourceMeta;
@@ -26,16 +26,16 @@ const props = defineProps<{
   prefetch?: boolean;
   showCovers?: boolean;
   /** 显示模式：card=卡片网格，cover=封面书架，list=列表单列 */
-  displayMode?: 'card' | 'cover' | 'list';
+  displayMode?: "card" | "cover" | "list";
   /** 仅当版本变化时才触发重载 */
   reloadVersion?: number;
 }>();
 
 const emit = defineEmits<{
-  (e: 'select', book: BookItem, fileName: string): void;
-  (e: 'open-book', bookUrl: string): void;
-  (e: 'search', keyword: string): void;
-  (e: 'refreshing', val: boolean): void;
+  (e: "select", book: BookItem, fileName: string): void;
+  (e: "open-book", bookUrl: string): void;
+  (e: "search", keyword: string): void;
+  (e: "refreshing", val: boolean): void;
 }>();
 
 const message = useMessage();
@@ -47,7 +47,7 @@ const { runExplore, clearExploreCache } = useScriptBridgeStore();
 // ── 分类 ──────────────────────────────────────────────────────────────────
 const categories = ref<string[]>([]);
 const catLoading = ref(false); // 有缓存时不显示骨架屏
-const catError = ref('');
+const catError = ref("");
 
 /** 比较两个字符串数组是否内容相同（顺序敏感） */
 function stringArraysEqual(a: string[], b: string[]): boolean {
@@ -63,10 +63,10 @@ function bookListsEqual(a: BookItem[], b: BookItem[]): boolean {
 let forceRefreshBooksFlag = false;
 
 // ── 当前选中分类的书籍 ──────────────────────────────────────────────────
-const activeCategory = ref('');
+const activeCategory = ref("");
 const books = ref<BookItem[]>([]);
 const booksLoading = ref(false);
-const booksError = ref('');
+const booksError = ref("");
 /** HTML 交互页内容（当 explore 返回 {type:'html'} 时使用） */
 const htmlContent = ref<string | null>(null);
 /** URL 网页内容（当 explore 返回 URL 字符串或 {type:'url'} 时使用，适用于网页发现源） */
@@ -102,7 +102,7 @@ function goToPage(page: number) {
 
 async function loadCategories(restoreCategory?: string, skipBooks = false) {
   const requestToken = ++categoryRequestToken;
-  catError.value = '';
+  catError.value = "";
 
   // ── stale-while-revalidate ───────────────────────────────────
   // 1. 立刻用缓存（无骨架屏）；2. 后台异步刷新；3. 仅有变化才重渲染
@@ -115,7 +115,7 @@ async function loadCategories(restoreCategory?: string, skipBooks = false) {
     const isCachedSinglePage = cached.length === 0;
     if (!skipBooks && !booksEverLoaded.value) {
       if (isCachedSinglePage) {
-        void loadBooks('');
+        void loadBooks("");
       } else {
         const target =
           restoreCategory && cached.includes(restoreCategory) ? restoreCategory : cached[0];
@@ -125,14 +125,14 @@ async function loadCategories(restoreCategory?: string, skipBooks = false) {
     // 后台刷新（静默，失败不报错）
     void (async () => {
       try {
-        const raw = await runExplore(props.source.fileName, 'GETALL');
+        const raw = await runExplore(props.source.fileName, "GETALL");
         if (requestToken !== categoryRequestToken) {
           return;
         }
         if (!Array.isArray(raw)) {
           return;
         }
-        const fresh = raw.filter((v): v is string => typeof v === 'string');
+        const fresh = raw.filter((v): v is string => typeof v === "string");
         // 仅有变化才更新缓存 + 重渲染，内容与缓存一致时无需任何操作
         if (!stringArraysEqual(categories.value, fresh)) {
           categories.value = fresh;
@@ -152,20 +152,20 @@ async function loadCategories(restoreCategory?: string, skipBooks = false) {
   // 无缓存：正常显示骨架屏加载
   catLoading.value = true;
   try {
-    const raw = await runExplore(props.source.fileName, 'GETALL');
+    const raw = await runExplore(props.source.fileName, "GETALL");
     if (requestToken !== categoryRequestToken) {
       return;
     }
     if (Array.isArray(raw)) {
-      const cats = raw.filter((v): v is string => typeof v === 'string');
+      const cats = raw.filter((v): v is string => typeof v === "string");
       // [] 或 [''] 表示单页源，隐藏分类标签栏，直接加载内容
-      const isSinglePage = cats.length === 0 || (cats.length === 1 && cats[0] === '');
+      const isSinglePage = cats.length === 0 || (cats.length === 1 && cats[0] === "");
       categories.value = isSinglePage ? [] : cats;
       // 首次获取到分类后立即缓存（单页源缓存空数组以便下次跳过骨架屏）
       setCachedExploreCategories(props.source.fileName, categories.value);
       if (!skipBooks) {
         if (isSinglePage) {
-          await loadBooks('');
+          await loadBooks("");
         } else if (cats.length) {
           const target =
             restoreCategory && cats.includes(restoreCategory) ? restoreCategory : cats[0];
@@ -174,10 +174,10 @@ async function loadCategories(restoreCategory?: string, skipBooks = false) {
       }
     } else if (isUrlExploreResult(raw) || isHtmlExploreResult(raw)) {
       // 网页发现源：GETALL 直接返回内容，使用单一"发现"分类
-      categories.value = ['发现'];
-      setCachedExploreCategories(props.source.fileName, ['发现']);
+      categories.value = ["发现"];
+      setCachedExploreCategories(props.source.fileName, ["发现"]);
       if (!skipBooks) {
-        activeCategory.value = '发现';
+        activeCategory.value = "发现";
         booksEverLoaded.value = true;
         if (isUrlExploreResult(raw)) {
           urlContent.value = getUrlFromExploreResult(raw);
@@ -204,7 +204,7 @@ async function loadBooks(category: string, page = 1) {
   const requestToken = ++booksRequestToken;
   activeCategory.value = category;
   currentPage.value = page;
-  booksError.value = '';
+  booksError.value = "";
   booksEverLoaded.value = true;
 
   // ── 第 1 页：stale-while-revalidate 持久化缓存 ──────────────────────────
@@ -331,20 +331,20 @@ const refreshing = ref(false);
 /** 刷新：清空缓存，重新加载分类并尽量恢复原选中分类 */
 async function handleRefresh() {
   refreshing.value = true;
-  emit('refreshing', true);
+  emit("refreshing", true);
   const previousCategory = activeCategory.value;
   try {
     await clearExploreCache(props.source.fileName);
     // 标记跳过持久化书籍缓存，确保本次加载强制走网络
     forceRefreshBooksFlag = true;
     await loadCategories(previousCategory);
-    message.success('刷新成功');
+    message.success("刷新成功");
   } catch (e: unknown) {
     forceRefreshBooksFlag = false; // 异常时重置
     message.error(`刷新失败: ${e instanceof Error ? e.message : String(e)}`);
   } finally {
     refreshing.value = false;
-    emit('refreshing', false);
+    emit("refreshing", false);
   }
 }
 

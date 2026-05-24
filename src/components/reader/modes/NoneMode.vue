@@ -11,9 +11,9 @@
  *   - 点击中间 40% → 切换菜单
  *   - 滑动距离 > 30% 视口宽 或 速度 > 0.3 px/ms → 翻页（无过渡）
  */
-import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue';
-import type { ReaderTypography } from '../types';
-import { usePagination } from '../composables/usePagination';
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from "vue";
+import type { ReaderTypography } from "../types";
+import { usePagination } from "../composables/usePagination";
 
 const props = defineProps<{
   content: string;
@@ -30,10 +30,10 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'tap', zone: 'left' | 'center' | 'right'): void;
-  (e: 'prev-chapter'): void;
-  (e: 'next-chapter'): void;
-  (e: 'progress', ratio: number): void;
+  (e: "tap", zone: "left" | "center" | "right"): void;
+  (e: "prev-chapter"): void;
+  (e: "next-chapter"): void;
+  (e: "progress", ratio: number): void;
 }>();
 
 /* ============================================================
@@ -44,13 +44,13 @@ const { pages, currentPage, totalPages, paginate, nextPage, prevPage, goToPage }
 const containerRef = ref<HTMLElement | null>(null);
 
 // 仅在内容变化时应用 startFromEnd，避免 resize/排版调整时误跳末页
-let pendingInitialPage: 'first' | 'last' = props.startFromEnd ? 'last' : 'first';
+let pendingInitialPage: "first" | "last" = props.startFromEnd ? "last" : "first";
 
 // 内容变化时根据 startFromEnd 重新设置初始页（修复切换上一章时总是显示第一页的问题）
 watch(
   () => props.content,
   () => {
-    pendingInitialPage = props.startFromEnd ? 'last' : 'first';
+    pendingInitialPage = props.startFromEnd ? "last" : "first";
   },
 );
 
@@ -64,8 +64,8 @@ async function doPaginate() {
     return;
   }
   const ip = pendingInitialPage;
-  pendingInitialPage = 'first';
-  const prefix = props.chapterTitle ? makeTitleHtml(props.chapterTitle) : '';
+  pendingInitialPage = "first";
+  const prefix = props.chapterTitle ? makeTitleHtml(props.chapterTitle) : "";
   await paginate(props.content, el, props.typography, props.padding, ip, prefix);
 }
 
@@ -92,7 +92,7 @@ onUnmounted(() => resizeOb?.disconnect());
 /* ============================================================
    页面内容
    ============================================================ */
-const currentPageHTML = computed(() => pages.value[currentPage.value] ?? '');
+const currentPageHTML = computed(() => pages.value[currentPage.value] ?? "");
 const pageInfo = computed(() => `${currentPage.value + 1}/${totalPages.value}`);
 
 /* ============================================================
@@ -107,13 +107,13 @@ const VELOCITY_THRESHOLD = 0.3;
 const DISTANCE_RATIO = 0.3;
 
 /* ── 边界提示 ── */
-const boundaryMsg = ref('');
+const boundaryMsg = ref("");
 let boundaryTimer = 0;
 function showBoundary(msg: string) {
   boundaryMsg.value = msg;
   clearTimeout(boundaryTimer);
   boundaryTimer = window.setTimeout(() => {
-    boundaryMsg.value = '';
+    boundaryMsg.value = "";
   }, 1500);
 }
 
@@ -150,17 +150,17 @@ function onPointerUp(e: PointerEvent) {
     if (dx < 0) {
       if (!nextPage()) {
         if (props.hasNext) {
-          emit('next-chapter');
+          emit("next-chapter");
         } else {
-          showBoundary('已经到最后一页了');
+          showBoundary("已经到最后一页了");
         }
       }
     } else {
       if (!prevPage()) {
         if (props.hasPrev) {
-          emit('prev-chapter');
+          emit("prev-chapter");
         } else {
-          showBoundary('已经到最前了');
+          showBoundary("已经到最前了");
         }
       }
     }
@@ -185,28 +185,28 @@ function onClick(e: MouseEvent) {
   if (relX < leftRatio) {
     if (!prevPage()) {
       if (props.hasPrev) {
-        emit('prev-chapter');
+        emit("prev-chapter");
       } else {
-        showBoundary('已经到最前了');
+        showBoundary("已经到最前了");
       }
     }
   } else if (relX > rightRatio) {
     if (!nextPage()) {
       if (props.hasNext) {
-        emit('next-chapter');
+        emit("next-chapter");
       } else {
-        showBoundary('已经到最后一页了');
+        showBoundary("已经到最后一页了");
       }
     }
   } else {
-    emit('tap', 'center');
+    emit("tap", "center");
   }
 }
 
 // 进度上报
 watch(currentPage, (p) => {
   const ratio = totalPages.value <= 1 ? 1 : p / (totalPages.value - 1);
-  emit('progress', Math.min(1, Math.max(0, ratio)));
+  emit("progress", Math.min(1, Math.max(0, ratio)));
 });
 
 defineExpose({

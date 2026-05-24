@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { DropdownOption } from 'naive-ui';
+import type { DropdownOption } from "naive-ui";
 /**
  * MobileToolbarMenu — 移动端工具栏三点菜单
  *
@@ -11,10 +11,10 @@ import type { DropdownOption } from 'naive-ui';
  *     <n-button .../>
  *   </MobileToolbarMenu>
  */
-import { MoreVertical } from 'lucide-vue-next';
-import { ref } from 'vue';
-import AppListItem from '../base/AppListItem.vue';
-import AppSheet from '../base/AppSheet.vue';
+import { MoreVertical } from "lucide-vue-next";
+import { ref } from "vue";
+import AppListItem from "../base/AppListItem.vue";
+import AppSheet from "../base/AppSheet.vue";
 
 export type MenuOption = DropdownOption;
 
@@ -23,14 +23,14 @@ defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'select', key: string): void;
+  (e: "select", key: string): void;
 }>();
 
 const sheetOpen = ref(false);
 
 function onSelect(key: string) {
   sheetOpen.value = false;
-  emit('select', key);
+  emit("select", key);
 }
 </script>
 

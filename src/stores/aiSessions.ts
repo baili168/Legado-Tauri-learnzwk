@@ -1,6 +1,6 @@
-import { defineStore } from 'pinia';
-import { computed, ref } from 'vue';
-import type { AgentActivity, TestResult } from '@/composables/useAiAgent';
+import { defineStore } from "pinia";
+import { computed, ref } from "vue";
+import type { AgentActivity, TestResult } from "@/composables/useAiAgent";
 import {
   ensureFrontendNamespaceLoaded,
   getFrontendStorageItem,
@@ -8,7 +8,7 @@ import {
   legacyLocalStorageRemove,
   onFrontendStorageChange,
   setFrontendStorageItem,
-} from '@/composables/useFrontendStorage';
+} from "@/composables/useFrontendStorage";
 
 // ── 数据类型（继承自 useAiSessions）─────────────────────────────────────
 
@@ -25,7 +25,7 @@ export interface AiSession {
   name: string;
   createdAt: number;
   updatedAt: number;
-  mode: 'new' | 'modify';
+  mode: "new" | "modify";
   baseSourceFileName?: string;
   baseSourceCode?: string;
   currentFileName: string;
@@ -34,15 +34,15 @@ export interface AiSession {
   testResults: TestResult[];
   conversationHistory: unknown[];
   drafts: AiDraft[];
-  status: 'idle' | 'tested_ok' | 'tested_fail' | 'saved';
+  status: "idle" | "tested_ok" | "tested_fail" | "saved";
 }
 
 // ── 存储键 ────────────────────────────────────────────────────────────────
-const STORAGE_NAMESPACE = 'ai.sessions';
-const SESSIONS_KEY = 'sessions';
-const CURRENT_SESSION_KEY = 'currentId';
-const LEGACY_SESSIONS_KEY = 'legado_ai_sessions_v2';
-const LEGACY_CURRENT_SESSION_KEY = 'legado_ai_current_session_v2';
+const STORAGE_NAMESPACE = "ai.sessions";
+const SESSIONS_KEY = "sessions";
+const CURRENT_SESSION_KEY = "currentId";
+const LEGACY_SESSIONS_KEY = "legado_ai_sessions_v2";
+const LEGACY_CURRENT_SESSION_KEY = "legado_ai_current_session_v2";
 const MAX_SESSIONS = 20;
 const MAX_ACTIVITIES_PER_SESSION = 200;
 const MAX_DRAFTS_PER_SESSION = 10;
@@ -77,15 +77,15 @@ function persistAllSessions(list: AiSession[]): void {
   }
 }
 
-export const useAiSessionsStore = defineStore('aiSessions', () => {
+export const useAiSessionsStore = defineStore("aiSessions", () => {
   const sessions = ref<AiSession[]>(loadAllSessions());
   const currentSessionId = ref<string>(
-    getFrontendStorageItem(STORAGE_NAMESPACE, CURRENT_SESSION_KEY) ?? '',
+    getFrontendStorageItem(STORAGE_NAMESPACE, CURRENT_SESSION_KEY) ?? "",
   );
 
   // 校验 currentId 有效性
   if (currentSessionId.value && !sessions.value.find((s) => s.id === currentSessionId.value)) {
-    currentSessionId.value = sessions.value[0]?.id ?? '';
+    currentSessionId.value = sessions.value[0]?.id ?? "";
   }
 
   const currentSession = computed<AiSession | null>(
@@ -108,7 +108,7 @@ export const useAiSessionsStore = defineStore('aiSessions', () => {
       return Object.keys(migrated).length ? migrated : null;
     }).then(() => {
       sessions.value = loadAllSessions();
-      currentSessionId.value = getFrontendStorageItem(STORAGE_NAMESPACE, CURRENT_SESSION_KEY) ?? '';
+      currentSessionId.value = getFrontendStorageItem(STORAGE_NAMESPACE, CURRENT_SESSION_KEY) ?? "";
     });
 
     onFrontendStorageChange(({ namespace }) => {
@@ -116,31 +116,31 @@ export const useAiSessionsStore = defineStore('aiSessions', () => {
         return;
       }
       sessions.value = loadAllSessions();
-      currentSessionId.value = getFrontendStorageItem(STORAGE_NAMESPACE, CURRENT_SESSION_KEY) ?? '';
+      currentSessionId.value = getFrontendStorageItem(STORAGE_NAMESPACE, CURRENT_SESSION_KEY) ?? "";
     });
   }
 
   function createSession(
-    mode: 'new' | 'modify' = 'new',
+    mode: "new" | "modify" = "new",
     base?: { fileName: string; code: string },
   ): AiSession {
     const now = Date.now();
-    const baseName = base?.fileName.replace(/\.js$/, '') ?? '';
+    const baseName = base?.fileName.replace(/\.js$/, "") ?? "";
     const session: AiSession = {
       id: generateId(),
-      name: mode === 'modify' && baseName ? `修改《${baseName}》` : '新建书源草稿',
+      name: mode === "modify" && baseName ? `修改《${baseName}》` : "新建书源草稿",
       createdAt: now,
       updatedAt: now,
       mode,
       baseSourceFileName: base?.fileName,
       baseSourceCode: base?.code,
-      currentFileName: '',
-      currentSourceCode: '',
+      currentFileName: "",
+      currentSourceCode: "",
       activities: [],
       testResults: [],
       conversationHistory: [],
       drafts: [],
-      status: 'idle',
+      status: "idle",
     };
     sessions.value.unshift(session);
     if (sessions.value.length > MAX_SESSIONS) {
@@ -156,7 +156,7 @@ export const useAiSessionsStore = defineStore('aiSessions', () => {
     setFrontendStorageItem(STORAGE_NAMESPACE, CURRENT_SESSION_KEY, id);
   }
 
-  function updateSession(id: string, patch: Partial<Omit<AiSession, 'id' | 'createdAt'>>): void {
+  function updateSession(id: string, patch: Partial<Omit<AiSession, "id" | "createdAt">>): void {
     const idx = sessions.value.findIndex((s) => s.id === id);
     if (idx === -1) {
       return;
@@ -172,7 +172,7 @@ export const useAiSessionsStore = defineStore('aiSessions', () => {
   function deleteSession(id: string): void {
     sessions.value = sessions.value.filter((s) => s.id !== id);
     if (currentSessionId.value === id) {
-      const next = sessions.value[0]?.id ?? '';
+      const next = sessions.value[0]?.id ?? "";
       currentSessionId.value = next;
       setFrontendStorageItem(STORAGE_NAMESPACE, CURRENT_SESSION_KEY, next);
     }
@@ -200,9 +200,9 @@ export const useAiSessionsStore = defineStore('aiSessions', () => {
     };
     const newDrafts = [...session.drafts, snapshot].slice(-MAX_DRAFTS_PER_SESSION);
 
-    const defaultNames = ['新建书源草稿'];
-    const shouldRename = defaultNames.includes(session.name) || session.name.startsWith('修改《');
-    const newName = shouldRename && fileName ? fileName.replace(/\.js$/, '') : session.name;
+    const defaultNames = ["新建书源草稿"];
+    const shouldRename = defaultNames.includes(session.name) || session.name.startsWith("修改《");
+    const newName = shouldRename && fileName ? fileName.replace(/\.js$/, "") : session.name;
 
     sessions.value[idx] = {
       ...session,
@@ -211,7 +211,7 @@ export const useAiSessionsStore = defineStore('aiSessions', () => {
       testResults: [...testResults],
       drafts: newDrafts,
       name: newName,
-      status: testResults.every((r) => r.status === 'ok') ? 'tested_ok' : 'tested_fail',
+      status: testResults.every((r) => r.status === "ok") ? "tested_ok" : "tested_fail",
       updatedAt: Date.now(),
     };
     persistAllSessions(sessions.value);

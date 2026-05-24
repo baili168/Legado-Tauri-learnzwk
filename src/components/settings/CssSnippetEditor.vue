@@ -1,8 +1,8 @@
 <script setup lang="ts">
-defineOptions({ name: 'CssSnippetEditor' });
+defineOptions({ name: "CssSnippetEditor" });
 
-import { ref, onMounted, onUnmounted, watch } from 'vue';
-import { useMessage } from 'naive-ui';
+import { ref, onMounted, onUnmounted, watch } from "vue";
+import { useMessage } from "naive-ui";
 
 interface CssSnippet {
   id: string;
@@ -11,15 +11,15 @@ interface CssSnippet {
   enabled: boolean;
 }
 
-const STORAGE_KEY = 'legado-user-css-snippets';
+const STORAGE_KEY = "legado-user-css-snippets";
 const message = useMessage();
 
 const snippets = ref<CssSnippet[]>([]);
 const showAddDialog = ref(false);
-const newSnippetName = ref('');
+const newSnippetName = ref("");
 
 function generateId(): string {
-  return 'css-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+  return "css-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6);
 }
 
 function loadSnippets(): void {
@@ -42,7 +42,7 @@ function saveSnippets(): void {
 function injectStyle(snippet: CssSnippet): void {
   const styleId = `legado-user-snippet-${snippet.id}`;
   removeStyle(snippet.id);
-  const styleEl = document.createElement('style');
+  const styleEl = document.createElement("style");
   styleEl.id = styleId;
   styleEl.dataset.snippetId = snippet.id;
   styleEl.textContent = snippet.css;
@@ -70,18 +70,18 @@ function toggleSnippet(snippet: CssSnippet, enabled: boolean): void {
 function addSnippet(): void {
   const name = newSnippetName.value.trim();
   if (!name) {
-    message.warning('请输入片段名称');
+    message.warning("请输入片段名称");
     return;
   }
   const snippet: CssSnippet = {
     id: generateId(),
     name,
-    css: '',
+    css: "",
     enabled: false,
   };
   snippets.value.push(snippet);
   saveSnippets();
-  newSnippetName.value = '';
+  newSnippetName.value = "";
   showAddDialog.value = false;
 }
 
@@ -130,33 +130,17 @@ onUnmounted(() => {
 });
 
 function highlightCSS(css: string): string {
-  const escaped = css
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  const escaped = css.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
   return escaped
-    .replace(
-      /([a-zA-Z-]+)(?=\s*:)/g,
-      '<span class="css-prop">$1</span>',
-    )
+    .replace(/([a-zA-Z-]+)(?=\s*:)/g, '<span class="css-prop">$1</span>')
     .replace(
       /(:\s*)([^;{}]+?)(?=\s*[;}])/g,
-      (_, colon, value) =>
-        colon + '<span class="css-val">' + value + '</span>',
+      (_, colon, value) => colon + '<span class="css-val">' + value + "</span>",
     )
-    .replace(
-      /(\/\/[^\n]*)/g,
-      '<span class="css-comment">$1</span>',
-    )
-    .replace(
-      /(\/\*[\s\S]*?\*\/)/g,
-      '<span class="css-comment">$1</span>',
-    )
-    .replace(
-      /([.#@][a-zA-Z0-9_-]+)/g,
-      '<span class="css-selector">$1</span>',
-    );
+    .replace(/(\/\/[^\n]*)/g, '<span class="css-comment">$1</span>')
+    .replace(/(\/\*[\s\S]*?\*\/)/g, '<span class="css-comment">$1</span>')
+    .replace(/([.#@][a-zA-Z0-9_-]+)/g, '<span class="css-selector">$1</span>');
 }
 
 const snippetTextareas = ref<Record<string, HTMLTextAreaElement | null>>({});
@@ -166,9 +150,7 @@ const snippetTextareas = ref<Record<string, HTMLTextAreaElement | null>>({});
   <div class="css-snippet-editor">
     <div class="css-snippet-header">
       <h3 class="css-snippet-title">CSS 片段</h3>
-      <n-button size="small" type="primary" @click="showAddDialog = true">
-        添加片段
-      </n-button>
+      <n-button size="small" type="primary" @click="showAddDialog = true"> 添加片段 </n-button>
     </div>
 
     <div v-if="snippets.length === 0" class="css-snippet-empty">
@@ -190,12 +172,7 @@ const snippetTextareas = ref<Record<string, HTMLTextAreaElement | null>>({});
             size="small"
             @update:value="(v: boolean) => toggleSnippet(snippet, v)"
           />
-          <n-button
-            size="tiny"
-            type="error"
-            quaternary
-            @click="deleteSnippet(snippet.id)"
-          >
+          <n-button size="tiny" type="error" quaternary @click="deleteSnippet(snippet.id)">
             删除
           </n-button>
         </div>
@@ -203,25 +180,30 @@ const snippetTextareas = ref<Record<string, HTMLTextAreaElement | null>>({});
 
       <div class="css-snippet-editor-area">
         <div class="css-snippet-code-bg">
-          <div
-            class="css-snippet-highlight"
-            v-html="highlightCSS(snippet.css)"
-          />
+          <div class="css-snippet-highlight" v-html="highlightCSS(snippet.css)" />
         </div>
         <textarea
-          :ref="(el) => { if (el) snippetTextareas[snippet.id] = el as HTMLTextAreaElement }"
+          :ref="
+            (el) => {
+              if (el) snippetTextareas[snippet.id] = el as HTMLTextAreaElement;
+            }
+          "
           v-model="snippet.css"
           class="css-snippet-textarea"
           spellcheck="false"
           @input="onCssInputChange(snippet)"
-          @scroll="(e: Event) => {
-            const target = e.target as HTMLTextAreaElement;
-            const highlight = target.previousElementSibling?.querySelector('.css-snippet-highlight') as HTMLElement | null;
-            if (highlight) {
-              highlight.scrollTop = target.scrollTop;
-              highlight.scrollLeft = target.scrollLeft;
+          @scroll="
+            (e: Event) => {
+              const target = e.target as HTMLTextAreaElement;
+              const highlight = target.previousElementSibling?.querySelector(
+                '.css-snippet-highlight',
+              ) as HTMLElement | null;
+              if (highlight) {
+                highlight.scrollTop = target.scrollTop;
+                highlight.scrollLeft = target.scrollLeft;
+              }
             }
-          }"
+          "
         />
       </div>
     </div>
@@ -231,14 +213,14 @@ const snippetTextareas = ref<Record<string, HTMLTextAreaElement | null>>({});
       preset="card"
       title="添加 CSS 片段"
       :mask-closable="true"
-      @update:show="(v: boolean) => { if (!v) showAddDialog = false; }"
+      @update:show="
+        (v: boolean) => {
+          if (!v) showAddDialog = false;
+        }
+      "
       :style="{ width: '400px', maxWidth: 'calc(100vw - 32px)' }"
     >
-      <n-input
-        v-model:value="newSnippetName"
-        placeholder="片段名称"
-        @keydown.enter="addSnippet"
-      />
+      <n-input v-model:value="newSnippetName" placeholder="片段名称" @keydown.enter="addSnippet" />
       <template #footer>
         <div class="css-snippet-modal-footer">
           <n-button @click="showAddDialog = false">取消</n-button>
@@ -315,7 +297,7 @@ const snippetTextareas = ref<Record<string, HTMLTextAreaElement | null>>({});
   pointer-events: none;
   background: #1e1e2e;
   border-radius: var(--radius-sm);
-  font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', 'Consolas', monospace;
+  font-family: "Cascadia Code", "Fira Code", "JetBrains Mono", "Consolas", monospace;
   font-size: var(--fs-12);
   line-height: var(--lh-normal);
 }
@@ -338,7 +320,7 @@ const snippetTextareas = ref<Record<string, HTMLTextAreaElement | null>>({});
   background: transparent;
   color: transparent;
   caret-color: #f5e0dc;
-  font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', 'Consolas', monospace;
+  font-family: "Cascadia Code", "Fira Code", "JetBrains Mono", "Consolas", monospace;
   font-size: var(--fs-12);
   line-height: var(--lh-normal);
   resize: vertical;

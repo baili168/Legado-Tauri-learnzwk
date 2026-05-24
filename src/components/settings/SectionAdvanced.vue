@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import { useMessage } from 'naive-ui';
-import { storeToRefs } from 'pinia';
-import { ref, onMounted } from 'vue';
-import { hasNativeTransport, isTauri } from '@/composables/useEnv';
-import { invokeWithTimeout } from '@/composables/useInvoke';
+import { useMessage } from "naive-ui";
+import { storeToRefs } from "pinia";
+import { ref, onMounted } from "vue";
+import { hasNativeTransport, isTauri } from "@/composables/useEnv";
+import { invokeWithTimeout } from "@/composables/useInvoke";
 import {
   isTransportAvailable,
   getCustomWsUrl,
   setCustomWsUrl,
   clearCustomWsUrl,
   resetWsProbe,
-} from '@/composables/useTransport';
-import { useAppConfigStore } from '@/stores';
-import SettingItem from './SettingItem.vue';
-import SettingSection from './SettingSection.vue';
+} from "@/composables/useTransport";
+import { useAppConfigStore } from "@/stores";
+import SettingItem from "./SettingItem.vue";
+import SettingSection from "./SettingSection.vue";
 
 const message = useMessage();
 const _appCfg = useAppConfigStore();
@@ -24,13 +24,13 @@ const webServerPortInput = ref<number | null>(null);
 const localIps = ref<string[]>([]);
 const transportReady = ref(hasNativeTransport);
 const customWsUrl = ref(getCustomWsUrl());
-const wsUrlInput = ref('');
+const wsUrlInput = ref("");
 const wsConnecting = ref(false);
 const webServerDistRestarting = ref(false);
 
 onMounted(async () => {
   transportReady.value = await isTransportAvailable();
-  wsUrlInput.value = customWsUrl.value || `ws://${window.location.hostname || 'localhost'}:7688/ws`;
+  wsUrlInput.value = customWsUrl.value || `ws://${window.location.hostname || "localhost"}:7688/ws`;
 
   if (!transportReady.value) {
     return;
@@ -42,7 +42,7 @@ onMounted(async () => {
 
     try {
       const status = await invokeWithTimeout<{ running: boolean; port: number }>(
-        'web_server_status',
+        "web_server_status",
         undefined,
         3_000,
       );
@@ -54,22 +54,22 @@ onMounted(async () => {
     }
 
     try {
-      localIps.value = await invokeWithTimeout<string[]>('get_local_ips', undefined, 5_000);
-      if (localIps.value.length === 0 || !localIps.value[0].startsWith('127.')) {
-        localIps.value.unshift('127.0.0.1');
+      localIps.value = await invokeWithTimeout<string[]>("get_local_ips", undefined, 5_000);
+      if (localIps.value.length === 0 || !localIps.value[0].startsWith("127.")) {
+        localIps.value.unshift("127.0.0.1");
       }
     } catch {
       // IP 获取失败不影响其他功能
     }
   } catch (e) {
-    console.error('加载服务模式设置失败', e);
+    console.error("加载服务模式设置失败", e);
   }
 });
 
 async function saveWsUrl() {
   const url = wsUrlInput.value.trim();
   if (!url) {
-    message.error('地址不能为空');
+    message.error("地址不能为空");
     return;
   }
   wsConnecting.value = true;
@@ -78,11 +78,11 @@ async function saveWsUrl() {
     customWsUrl.value = url;
     const ok = await isTransportAvailable();
     if (ok) {
-      message.success('连接成功，正在刷新…');
+      message.success("连接成功，正在刷新…");
       setTimeout(() => window.location.reload(), 600);
     } else {
       resetWsProbe();
-      message.error('连接失败，请检查地址后重试');
+      message.error("连接失败，请检查地址后重试");
     }
   } finally {
     wsConnecting.value = false;
@@ -91,20 +91,20 @@ async function saveWsUrl() {
 
 function handleClearWsUrl() {
   clearCustomWsUrl();
-  customWsUrl.value = '';
-  wsUrlInput.value = `ws://${window.location.hostname || 'localhost'}:7688/ws`;
-  message.success('已清除，将使用自动探测地址');
+  customWsUrl.value = "";
+  wsUrlInput.value = `ws://${window.location.hostname || "localhost"}:7688/ws`;
+  message.success("已清除，将使用自动探测地址");
 }
 
 async function handleWebServerToggle(enabled: boolean) {
   try {
-    await setConfig('web_server_enabled', String(enabled));
+    await setConfig("web_server_enabled", String(enabled));
     if (enabled) {
-      const port = await invokeWithTimeout<number>('web_server_start', undefined, 5_000);
+      const port = await invokeWithTimeout<number>("web_server_start", undefined, 5_000);
       message.success(`Web 服务器已启动，端口: ${port}`);
     } else {
-      await invokeWithTimeout('web_server_stop', undefined, 3_000);
-      message.success('Web 服务器已停止');
+      await invokeWithTimeout("web_server_stop", undefined, 3_000);
+      message.success("Web 服务器已停止");
     }
   } catch (e: unknown) {
     message.error(`操作失败: ${e}`);
@@ -116,16 +116,16 @@ async function pickDistDir() {
   const wasEnabled = config.value.web_server_enabled;
   webServerDistRestarting.value = true;
   try {
-    const selected = await invokeWithTimeout<string>('web_server_pick_dist_dir', undefined, 30_000);
+    const selected = await invokeWithTimeout<string>("web_server_pick_dist_dir", undefined, 30_000);
     if (!selected) {
       return;
     }
-    await setConfig('web_server_dist_path', selected);
+    await setConfig("web_server_dist_path", selected);
     if (wasEnabled) {
       const port = await restartWebServer();
       message.success(`前端目录已保存并重启，端口: ${port}`);
     } else {
-      message.success('前端目录已保存');
+      message.success("前端目录已保存");
     }
   } catch (e: unknown) {
     message.error(`选择目录失败: ${e}`);
@@ -138,12 +138,12 @@ async function clearDistDir() {
   const wasEnabled = config.value.web_server_enabled;
   webServerDistRestarting.value = true;
   try {
-    await setConfig('web_server_dist_path', '');
+    await setConfig("web_server_dist_path", "");
     if (wasEnabled) {
       const port = await restartWebServer();
       message.success(`前端目录已清除并切回内置资源，端口: ${port}`);
     } else {
-      message.success('前端目录已清除');
+      message.success("前端目录已清除");
     }
   } catch (e: unknown) {
     message.error(`清除失败: ${e}`);
@@ -153,7 +153,7 @@ async function clearDistDir() {
 }
 
 async function restartWebServer() {
-  return await invokeWithTimeout<number>('web_server_start', undefined, 5_000);
+  return await invokeWithTimeout<number>("web_server_start", undefined, 5_000);
 }
 
 async function openInBrowser() {
@@ -163,37 +163,37 @@ async function openInBrowser() {
 
 async function openUrl(url: string) {
   try {
-    const { openUrl: tauriOpenUrl } = await import('@tauri-apps/plugin-opener');
+    const { openUrl: tauriOpenUrl } = await import("@tauri-apps/plugin-opener");
     await tauriOpenUrl(url);
   } catch {
-    window.open(url, '_blank', 'noopener,noreferrer');
+    window.open(url, "_blank", "noopener,noreferrer");
   }
 }
 
 async function copyToClipboard(text: string) {
   try {
     await navigator.clipboard.writeText(text);
-    message.success('已复制');
+    message.success("已复制");
   } catch {
-    message.error('复制失败');
+    message.error("复制失败");
   }
 }
 
 async function saveWebServerPort() {
   const port = webServerPortInput.value;
   if (port === null || !Number.isInteger(port) || port < 1 || port > 65535) {
-    message.error('端口号必须为 1 ~ 65535 的整数');
+    message.error("端口号必须为 1 ~ 65535 的整数");
     return;
   }
   try {
-    await setConfig('web_server_port', String(port));
+    await setConfig("web_server_port", String(port));
     if (config.value.web_server_enabled) {
-      await invokeWithTimeout('web_server_stop', undefined, 3_000);
+      await invokeWithTimeout("web_server_stop", undefined, 3_000);
       await new Promise((resolve) => setTimeout(resolve, 400));
-      const newPort = await invokeWithTimeout<number>('web_server_start', undefined, 5_000);
+      const newPort = await invokeWithTimeout<number>("web_server_start", undefined, 5_000);
       message.success(`端口已更新并重启，新端口: ${newPort}`);
     } else {
-      message.success('端口已保存');
+      message.success("端口已保存");
     }
   } catch (e: unknown) {
     message.error(`保存失败: ${e}`);
@@ -232,7 +232,7 @@ async function saveWebServerPort() {
             清除
           </n-button>
         </div>
-        <div class="service-hint">当前：{{ customWsUrl || '自动探测（未配置）' }}</div>
+        <div class="service-hint">当前：{{ customWsUrl || "自动探测（未配置）" }}</div>
       </div>
     </SettingItem>
   </SettingSection>

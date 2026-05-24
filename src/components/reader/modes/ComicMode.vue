@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { eventListen } from '@/composables/useEventBus';
-import { toFileSrcSync } from '@/composables/useFileSrc';
+import { eventListen } from "@/composables/useEventBus";
+import { toFileSrcSync } from "@/composables/useFileSrc";
 /**
  * ComicMode — 漫画阅读模式（纯竖向滚动，显示图片列表）
  *
@@ -11,10 +11,11 @@ import { toFileSrcSync } from '@/composables/useFileSrc';
  * - 缓存模式（默认）：前端拿到全部 URL 后立即开始阅读；Rust 后端后台顺序缓存并按页通知前端切换到本地文件
  * - 直读模式：前端直接使用图片 URL，浏览器自动加载
  */
-import { storeToRefs } from 'pinia';
-import { ref, watch, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
-import { useAppConfigStore } from '@/stores';
-import { comicDownloadImages, comicGetPageSizes } from '../../../composables/useBookSource';
+import { storeToRefs } from "pinia";
+import { ref, watch, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
+import { useAppConfigStore } from "@/stores";
+import { comicDownloadImages, comicGetPageSizes } from "../../../composables/useBookSource";
+import { useComicMemoryCache } from "../composables/useComicMemoryCache";
 
 const props = defineProps<{
   content: string;
@@ -39,14 +40,14 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'tap', zone: 'left' | 'center' | 'right'): void;
-  (e: 'progress', ratio: number): void;
-  (e: 'prevChapter'): void;
-  (e: 'nextChapter'): void;
+  (e: "tap", zone: "left" | "center" | "right"): void;
+  (e: "progress", ratio: number): void;
+  (e: "prevChapter"): void;
+  (e: "nextChapter"): void;
   /** 用户向上滚动进入上一章区域（无缝向前翻章） */
-  (e: 'prevChapterEntered'): void;
+  (e: "prevChapterEntered"): void;
   /** 用户向下滚动进入下一章区域，携带当前章节内容区高度（用于无缝滚动位置补偿） */
-  (e: 'nextChapterEntered', sectionHeight: number): void;
+  (e: "nextChapterEntered", sectionHeight: number): void;
 }>();
 
 interface ComicPage {
@@ -76,13 +77,16 @@ interface ComicPageFailedPayload {
 
 const _appCfg = useAppConfigStore();
 const { comicCacheEnabled } = storeToRefs(_appCfg);
+const { cacheImage, getImage, clearChapter, getCacheSize } = useComicMemoryCache();
 const containerRef = ref<HTMLDivElement | null>(null);
 const pages = ref<ComicPage[]>([]);
+const zoomedIndex = ref(-1);
+const zoomLevel = ref(1);
 /** 每页原始像素尺寸（来自 Rust 后端 _sizes.json 缓存），用于在图片加载前即设定正确 aspect-ratio */
 const pageSizes = ref<Array<[number, number] | null>>([]);
 const visibleImages = ref<Set<number>>(new Set());
 const loading = ref(false);
-const error = ref('');
+const error = ref("");
 let loadVersion = 0;
 let unlistenComicPageCached: (() => void) | null = null;
 let unlistenComicPageFailed: (() => void) | null = null;
@@ -95,6 +99,7 @@ const nextSectionRef = ref<HTMLDivElement | null>(null);
 const nextChapterSentinelRef = ref<HTMLDivElement | null>(null);
 const prevPages = ref<ComicPage[]>([]);
 const nextPages = ref<ComicPage[]>([]);
+const previousChapterUrl = ref(props.chapterUrl);
 
 // ── 无缝切章 ────────────────────────────────────────────────────────
 let seamlessSwapAnchorOffset: number | null = null;
@@ -111,7 +116,7 @@ let nextBoundaryFallbackFired = false;
 function prepareSeamlessSwap(prevSectionHeight: number) {
   const el = containerRef.value;
   const nextTop = nextSectionRef.value?.offsetTop ?? nextChapterSentinelRef.value?.offsetTop;
-  if (el && typeof nextTop === 'number') {
+  if (el && typeof nextTop === "number") {
     seamlessSwapAnchorOffset = el.scrollTop - nextTop;
     seamlessSwapFallbackOffset = -1;
     return;
@@ -146,16 +151,16 @@ function setupSentinel() {
           const rootEl = containerRef.value;
           const nextTop =
             nextSectionRef.value?.offsetTop ?? nextChapterSentinelRef.value?.offsetTop;
-          if (rootEl && typeof nextTop === 'number' && rootEl.scrollTop < nextTop - 1) {
+          if (rootEl && typeof nextTop === "number" && rootEl.scrollTop < nextTop - 1) {
             return;
           }
           teardownSentinel();
           const sectionH = currentSectionRef.value?.offsetHeight ?? 0;
-          emit('nextChapterEntered', sectionH);
+          emit("nextChapterEntered", sectionH);
         }
       }
     },
-    { root, rootMargin: '0px 0px -40% 0px' },
+    { root, rootMargin: "0px 0px -20% 0px" },
   );
   sentinelObserver.observe(el);
 }
@@ -168,11 +173,11 @@ let loadComplete: Promise<void> = Promise.resolve();
 function parseImageUrls(raw: string): string[] {
   const trimmed = raw.trim();
   // 尝试 JSON 数组
-  if (trimmed.startsWith('[')) {
+  if (trimmed.startsWith("[")) {
     try {
       const arr = JSON.parse(trimmed);
       if (Array.isArray(arr)) {
-        return arr.filter((u: unknown) => typeof u === 'string' && u.length > 0);
+        return arr.filter((u: unknown) => typeof u === "string" && u.length > 0);
       }
     } catch {
       /* fallback */
@@ -180,17 +185,17 @@ function parseImageUrls(raw: string): string[] {
   }
   // 换行分隔
   return trimmed
-    .split('\n')
+    .split("\n")
     .map((s) => s.trim())
-    .filter((s) => s.length > 0 && s.startsWith('http'));
+    .filter((s) => s.length > 0 && s.startsWith("http"));
 }
 
 function isDirectSrc(src: string): boolean {
   return (
     /^(https?:)?\/\//i.test(src) ||
-    src.startsWith('data:') ||
-    src.startsWith('blob:') ||
-    src.startsWith('asset:')
+    src.startsWith("data:") ||
+    src.startsWith("blob:") ||
+    src.startsWith("asset:")
   );
 }
 
@@ -211,11 +216,19 @@ function createPages(urls: string[]): ComicPage[] {
 }
 
 function resetPages(urls: string[]) {
-  // 换章时清除旧观察，避免已从 DOM 移除的元素持续占用 observer 内存
   observer?.disconnect();
   visibleImages.value = new Set();
   pageSizes.value = [];
   pages.value = createPages(urls);
+
+  for (let i = 0; i < urls.length; i++) {
+    const key = `${props.chapterUrl}:${i}`;
+    const cachedImg = getImage(key);
+    if (cachedImg) {
+      pages.value[i].loaded = true;
+      pages.value[i].failed = false;
+    }
+  }
 }
 
 function applyResolvedSources(sources: string[]) {
@@ -224,8 +237,7 @@ function applyResolvedSources(sources: string[]) {
     if (!page) {
       continue;
     }
-    // 空字符串表示该页需要解码，Rust 暂不提供原始 URL，等待 comic:page-cached 事件
-    if (source === '') {
+    if (source === "") {
       page.pending = true;
       continue;
     }
@@ -233,7 +245,10 @@ function applyResolvedSources(sources: string[]) {
     page.cachedSrc = renderable === page.remoteUrl ? null : renderable;
     if (page.src !== renderable) {
       page.src = renderable;
-      page.loaded = false;
+      const key = `${props.chapterUrl}:${idx}`;
+      if (!getImage(key)) {
+        page.loaded = false;
+      }
       page.failed = false;
     }
   }
@@ -268,7 +283,7 @@ function applyCachedPage(pageIndex: number, localPath: string) {
 async function loadImages() {
   const currentVersion = ++loadVersion;
   const urls = parseImageUrls(props.content);
-  error.value = '';
+  error.value = "";
 
   // 创建新的 loadComplete Promise，供 restoreToScrollRatio 等待
   loadResolve?.();
@@ -353,6 +368,11 @@ watch(
     atTop.value = true;
     atBottom.value = false;
 
+    if (previousChapterUrl.value && previousChapterUrl.value !== props.chapterUrl) {
+      clearChapter(previousChapterUrl.value);
+    }
+    previousChapterUrl.value = props.chapterUrl;
+
     await loadImages();
 
     const el = containerRef.value;
@@ -394,6 +414,8 @@ watch(
       const el = containerRef.value;
       const savedTop = el?.scrollTop ?? 0;
       await nextTick();
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       const prevH = prevSectionRef.value?.offsetHeight ?? 0;
       if (prevH > 0 && el) {
         el.scrollTop = savedTop + prevH;
@@ -411,7 +433,15 @@ watch(
     nextBoundaryFallbackFired = false;
     teardownSentinel();
     if (val) {
+      const el = containerRef.value;
+      const savedTop = el?.scrollTop ?? 0;
       await nextTick();
+      if (el && Math.abs(el.scrollTop - savedTop) > 10) {
+        el.scrollTop = savedTop;
+      }
+      for (let i = 0; i < Math.min(5, nextPages.value.length); i++) {
+        new Image().src = nextPages.value[i].src;
+      }
       setupSentinel();
     }
   },
@@ -425,6 +455,8 @@ function onScroll() {
   if (!el) {
     return;
   }
+  zoomedIndex.value = -1;
+  zoomLevel.value = 1;
   const { scrollTop, scrollHeight, clientHeight } = el;
   const prevH = prevSectionRef.value?.offsetHeight ?? 0;
   const nextTop = nextSectionRef.value?.offsetTop ?? Number.POSITIVE_INFINITY;
@@ -435,7 +467,7 @@ function onScroll() {
   const adjustedScrollTop = Math.max(0, scrollTop - prevH);
   const ratio =
     currentSectionH <= clientHeight ? 1 : adjustedScrollTop / (currentSectionH - clientHeight);
-  emit('progress', Math.min(1, Math.max(0, ratio)));
+  emit("progress", Math.min(1, Math.max(0, ratio)));
 
   const prevAtTop = atTop.value;
   const prevAtBottom = atBottom.value;
@@ -453,7 +485,7 @@ function onScroll() {
   if (!prevChapterEnteredFired && prevH > 0 && hasPrevChapterContent.value) {
     if (scrollTop <= prevH * 0.6) {
       prevChapterEnteredFired = true;
-      emit('prevChapterEntered');
+      emit("prevChapterEntered");
     }
   }
 
@@ -464,7 +496,17 @@ function onScroll() {
     scrollTop >= nextTop - 1
   ) {
     nextBoundaryFallbackFired = true;
-    emit('nextChapterEntered', currentSectionRef.value?.offsetHeight ?? 0);
+    emit("nextChapterEntered", currentSectionRef.value?.offsetHeight ?? 0);
+  }
+
+  if (
+    !nextBoundaryFallbackFired &&
+    hasNextChapterContent.value &&
+    scrollTop + clientHeight >= scrollHeight - 200
+  ) {
+    nextBoundaryFallbackFired = true;
+    teardownSentinel();
+    emit("nextChapterEntered", currentSectionRef.value?.offsetHeight ?? 0);
   }
 
   if (
@@ -475,7 +517,7 @@ function onScroll() {
     atTop.value
   ) {
     prevBoundaryFallbackFired = true;
-    emit('prevChapterEntered');
+    emit("prevChapterEntered");
   }
 
   if (
@@ -486,13 +528,32 @@ function onScroll() {
     atBottom.value
   ) {
     nextBoundaryFallbackFired = true;
-    emit('nextChapterEntered', currentSectionRef.value?.offsetHeight ?? 0);
+    emit("nextChapterEntered", currentSectionRef.value?.offsetHeight ?? 0);
   }
 }
 
 /* ── 触控区域 ── */
-function onTapContainer() {
-  emit('tap', 'center');
+function onTapContainer(event: MouseEvent) {
+  const el = containerRef.value;
+  if (el) {
+    const rect = el.getBoundingClientRect();
+    if (event.clientX - rect.left < 20) {
+      emit("tap", "left");
+      return;
+    }
+  }
+  emit("tap", "center");
+}
+
+/* ── 双击缩放 ── */
+function handleDoubleClick(_event: MouseEvent, idx: number) {
+  if (zoomedIndex.value === idx) {
+    zoomedIndex.value = -1;
+    zoomLevel.value = 1;
+    return;
+  }
+  zoomedIndex.value = idx;
+  zoomLevel.value = 2;
 }
 
 onBeforeUnmount(() => {
@@ -500,6 +561,9 @@ onBeforeUnmount(() => {
 });
 
 /* ── 图片懒加载观察器 ── */
+const lowPerformance = typeof navigator !== "undefined" && navigator.hardwareConcurrency < 4;
+const observerRootMargin = computed(() => (lowPerformance ? "300px 0px" : "600px 0px"));
+
 function setupObserver() {
   observer = new IntersectionObserver(
     (entries) => {
@@ -512,7 +576,7 @@ function setupObserver() {
         }
       }
     },
-    { root: containerRef.value, rootMargin: '200px 0px' },
+    { root: containerRef.value, rootMargin: observerRootMargin.value },
   );
 }
 
@@ -548,6 +612,7 @@ function onImageLoad(idx: number, event: Event) {
   updatePageNaturalSize(idx, event.target as HTMLImageElement);
   page.loaded = true;
   page.failed = false;
+  cacheImage(`${props.chapterUrl}:${idx}`, event.target as HTMLImageElement);
   scheduleRestoreCorrection();
 }
 
@@ -573,12 +638,12 @@ onMounted(async () => {
   // 关键修复：Vue 3 的 :ref 回调在 onMounted 之前执行，彼时 observer 尚为 null，
   // 导致初次渲染的页面元素全部未被注册。在 observer 创建后立即补扫 DOM，
   // 确保直读模式（同步完成）和所有图片已缓存（立即 resolve）等场景均能正确显示图片。
-  containerRef.value?.querySelectorAll<HTMLElement>('.comic-mode__page').forEach((el, i) => {
+  containerRef.value?.querySelectorAll<HTMLElement>(".comic-mode__page").forEach((el, i) => {
     el.dataset.idx = String(i);
     observer?.observe(el);
   });
   unlistenComicPageCached = await eventListen<ComicPageCachedPayload>(
-    'comic:page-cached',
+    "comic:page-cached",
     (event) => {
       const { payload } = event;
       if (payload.file_name !== props.fileName || payload.chapter_url !== props.chapterUrl) {
@@ -589,7 +654,7 @@ onMounted(async () => {
   );
 
   unlistenComicPageFailed = await eventListen<ComicPageFailedPayload>(
-    'comic:page-failed',
+    "comic:page-failed",
     (event) => {
       const { payload } = event;
       if (payload.file_name !== props.fileName || payload.chapter_url !== props.chapterUrl) {
@@ -635,7 +700,7 @@ function goToPage(idx: number) {
   if (!container) {
     return;
   }
-  const pageEls = container.querySelectorAll<HTMLElement>('.comic-mode__page');
+  const pageEls = container.querySelectorAll<HTMLElement>(".comic-mode__page");
   const target = pageEls[idx];
   if (target) {
     container.scrollTop = target.offsetTop;
@@ -685,8 +750,8 @@ function getReadingScrollRatio(): number {
   return getSectionRatio(currentSectionRef.value);
 }
 
-function getAdjacentScrollRatio(side: 'prev' | 'next'): number {
-  return side === 'prev'
+function getAdjacentScrollRatio(side: "prev" | "next"): number {
+  return side === "prev"
     ? getSectionRatio(prevSectionRef.value)
     : getSectionRatio(nextSectionRef.value);
 }
@@ -696,7 +761,7 @@ function getPageIndexWithin(section: HTMLElement | null): number {
   if (!container || !section) {
     return 0;
   }
-  const pageEls = section.querySelectorAll<HTMLElement>('.comic-mode__page');
+  const pageEls = section.querySelectorAll<HTMLElement>(".comic-mode__page");
   if (pageEls.length === 0) {
     return 0;
   }
@@ -724,8 +789,8 @@ function getReadingPageIndex(): number {
   return currentPage.value;
 }
 
-function getAdjacentPageIndex(side: 'prev' | 'next'): number {
-  return side === 'prev'
+function getAdjacentPageIndex(side: "prev" | "next"): number {
+  return side === "prev"
     ? getPageIndexWithin(prevSectionRef.value)
     : getPageIndexWithin(nextSectionRef.value);
 }
@@ -909,7 +974,7 @@ defineExpose({
         <!-- 章节分隔线（上一章 → 当前章） -->
         <div class="comic-mode__chapter-sep">
           <div class="comic-mode__chapter-sep-line" />
-          <p class="comic-mode__chapter-sep-title">{{ prevChapterTitle || '上一章' }}结束</p>
+          <p class="comic-mode__chapter-sep-title">{{ prevChapterTitle || "上一章" }}结束</p>
         </div>
       </template>
 
@@ -921,6 +986,7 @@ defineExpose({
           :ref="(el) => observeImg(el as Element, idx)"
           class="comic-mode__page"
           :style="pageStyle(idx)"
+          @dblclick="handleDoubleClick($event, idx)"
         >
           <template v-if="shouldShow(idx)">
             <!-- 书源需要解码时显示占位，等待 Rust 处理完成 -->
@@ -935,6 +1001,7 @@ defineExpose({
                 :src="page.src"
                 :alt="`第 ${idx + 1} 页`"
                 :class="['comic-mode__img', { 'comic-mode__img--ready': page.loaded }]"
+                :style="zoomedIndex === idx ? { transform: 'scale(2)', transformOrigin: 'top center' } : {}"
                 loading="lazy"
                 @load="onImageLoad(idx, $event)"
                 @error="onImageError(idx)"
@@ -955,7 +1022,7 @@ defineExpose({
                     重新加载
                   </n-button>
                 </template>
-                <span v-else>{{ page.failed ? '图片加载失败' : `第 ${idx + 1} 页加载中...` }}</span>
+                <span v-else>{{ page.failed ? "图片加载失败" : `第 ${idx + 1} 页加载中...` }}</span>
               </div>
             </template>
           </template>
@@ -976,7 +1043,7 @@ defineExpose({
         <!-- 章节分隔线 + 标题 -->
         <div class="comic-mode__chapter-sep">
           <div class="comic-mode__chapter-sep-line" />
-          <p class="comic-mode__chapter-sep-title">{{ nextChapterTitle || '下一章' }}</p>
+          <p class="comic-mode__chapter-sep-title">{{ nextChapterTitle || "下一章" }}</p>
         </div>
         <!-- 哨兵元素：进入视口时触发章节切换 -->
         <div ref="nextChapterSentinelRef" class="comic-mode__sentinel" aria-hidden="true" />

@@ -6,13 +6,13 @@
  * 在浏览器中自动通过 WebSocket 通信。
  */
 
-import { transportInvoke } from './useTransport';
+import { transportInvoke } from "./useTransport";
 
 /** invoke 超时错误 */
 export class InvokeTimeoutError extends Error {
   constructor(command: string, timeoutMs: number) {
     super(`调用 ${command} 超时（${Math.round(timeoutMs / 1000)}s）`);
-    this.name = 'InvokeTimeoutError';
+    this.name = "InvokeTimeoutError";
   }
 }
 
@@ -20,7 +20,7 @@ export class InvokeTimeoutError extends Error {
 export class InvokeUnavailableError extends Error {
   constructor(command: string) {
     super(`当前环境不支持 ${command}，请在 Tauri 桌面端或连接 WebSocket 服务后使用`);
-    this.name = 'InvokeUnavailableError';
+    this.name = "InvokeUnavailableError";
   }
 }
 

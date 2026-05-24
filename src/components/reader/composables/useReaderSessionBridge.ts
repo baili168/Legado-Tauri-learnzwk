@@ -1,18 +1,18 @@
 /**
  * 将当前阅读器状态同步给前端插件运行时，章节与位置统一由进度解析器提供。
  */
-import { watch, type ComputedRef, type Ref } from 'vue';
+import { watch, type ComputedRef, type Ref } from "vue";
 import type {
   ReaderSessionSnapshot,
   ReaderSessionAppearanceState,
-} from '../../../composables/useFrontendPlugins';
-import type { ReaderBookInfo } from '../types';
-import type { ReaderProgressTarget } from './useReaderPosition';
+} from "../../../composables/useFrontendPlugins";
+import type { ReaderBookInfo } from "../types";
+import type { ReaderProgressTarget } from "./useReaderPosition";
 
 type ValueSource<T> = Ref<T> | ComputedRef<T>;
 
 interface ReaderSessionSettingsState {
-  theme: ReaderSessionAppearanceState['theme'];
+  theme: ReaderSessionAppearanceState["theme"];
   themePresetId: string;
   backgroundImage: string;
   backgroundPresetId: string;
@@ -55,7 +55,7 @@ export function useReaderSessionBridge(options: UseReaderSessionBridgeOptions) {
     const viewport = getReaderViewportSize();
     return {
       fileName: readSource(options.fileName),
-      sourceType: readSource(options.sourceType) ?? 'novel',
+      sourceType: readSource(options.sourceType) ?? "novel",
       shelfBookId: options.currentShelfId.value ?? undefined,
       bookInfo: readSource(options.bookInfo),
       chapterIndex: target.chapterIndex,

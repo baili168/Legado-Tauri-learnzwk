@@ -2,13 +2,13 @@
  * useLogZonePref — 实时日志区域显示开关
  * 纯前端偏好，持久化到 localStorage，不走 Rust AppConfig。
  */
-import { ref, watch } from 'vue';
+import { ref, watch } from "vue";
 
-const LS_KEY = 'legado-ui-log-zone-enabled';
+const LS_KEY = "legado-ui-log-zone-enabled";
 
 function readLS(): boolean {
   try {
-    return localStorage.getItem(LS_KEY) === 'true';
+    return localStorage.getItem(LS_KEY) === "true";
   } catch {
     return false;
   }

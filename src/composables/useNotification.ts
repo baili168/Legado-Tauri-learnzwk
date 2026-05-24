@@ -1,124 +1,119 @@
-import { ref } from 'vue'
+import { ref } from "vue";
 
-const STORAGE_KEY = 'legado-reading-reminder'
+const STORAGE_KEY = "legado-reading-reminder";
 
 export interface ReminderConfig {
-  enabled: boolean
-  hour: number
-  minute: number
+  enabled: boolean;
+  hour: number;
+  minute: number;
 }
 
 export interface NotificationChannel {
-  channelId: string
-  name: string
+  channelId: string;
+  name: string;
 }
 
-const isNotificationSupported = ref(false)
-const permissionGranted = ref(false)
-const supportsActions = ref(false)
+const isNotificationSupported = ref(false);
+const permissionGranted = ref(false);
+const supportsActions = ref(false);
 
-const channels = ref<NotificationChannel[]>([])
+const channels = ref<NotificationChannel[]>([]);
 
 function detectNotificationSupport() {
-  isNotificationSupported.value =
-    typeof Notification !== 'undefined'
-  permissionGranted.value =
-    isNotificationSupported.value &&
-    Notification.permission === 'granted'
+  isNotificationSupported.value = typeof Notification !== "undefined";
+  permissionGranted.value = isNotificationSupported.value && Notification.permission === "granted";
 }
 
-if (typeof window !== 'undefined') {
-  detectNotificationSupport()
+if (typeof window !== "undefined") {
+  detectNotificationSupport();
 }
 
 async function requestPermission(): Promise<boolean> {
   if (!isNotificationSupported.value) {
-    return false
+    return false;
   }
 
-  if (Notification.permission === 'granted') {
-    permissionGranted.value = true
-    return true
+  if (Notification.permission === "granted") {
+    permissionGranted.value = true;
+    return true;
   }
 
-  if (Notification.permission === 'denied') {
-    return false
+  if (Notification.permission === "denied") {
+    return false;
   }
 
-  const result = await Notification.requestPermission()
-  permissionGranted.value = result === 'granted'
-  return permissionGranted.value
+  const result = await Notification.requestPermission();
+  permissionGranted.value = result === "granted";
+  return permissionGranted.value;
 }
 
 function createChannel(channelId: string, name: string) {
-  const existing = channels.value.find((c) => c.channelId === channelId)
+  const existing = channels.value.find((c) => c.channelId === channelId);
   if (!existing) {
-    channels.value.push({ channelId, name })
+    channels.value.push({ channelId, name });
   }
 }
 
 function sendReminder(title: string, body: string): boolean {
   if (!permissionGranted.value) {
-    return false
+    return false;
   }
 
   try {
     const actions: NotificationAction[] = [
-      { action: 'open', title: '打开' },
-      { action: 'delay', title: '推迟15分钟' },
-    ]
+      { action: "open", title: "打开" },
+      { action: "delay", title: "推迟15分钟" },
+    ];
 
     const options: NotificationOptions = {
-      body: supportsActions.value
-        ? body
-        : `${body}\n\n点击通知打开应用，或关闭通知推迟15分钟`,
+      body: supportsActions.value ? body : `${body}\n\n点击通知打开应用，或关闭通知推迟15分钟`,
       requireInteraction: true,
-    }
+    };
 
     if (supportsActions.value) {
-      options.actions = actions
+      options.actions = actions;
     }
 
-    const notification = new Notification(title, options)
+    const notification = new Notification(title, options);
 
-    notification.addEventListener('click', () => {
-      notification.close()
-      window.focus()
-      dispatchReminderAction('open')
-    })
+    notification.addEventListener("click", () => {
+      notification.close();
+      window.focus();
+      dispatchReminderAction("open");
+    });
 
-    return true
+    return true;
   } catch {
-    return false
+    return false;
   }
 }
 
-const reminderActionHandlers = new Map<string, (action: string) => void>()
+const reminderActionHandlers = new Map<string, (action: string) => void>();
 
 function onReminderAction(handler: (action: string) => void) {
-  const id = Math.random().toString(36).slice(2)
-  reminderActionHandlers.set(id, handler)
+  const id = Math.random().toString(36).slice(2);
+  reminderActionHandlers.set(id, handler);
   return () => {
-    reminderActionHandlers.delete(id)
-  }
+    reminderActionHandlers.delete(id);
+  };
 }
 
 function dispatchReminderAction(action: string) {
   for (const handler of reminderActionHandlers.values()) {
-    handler(action)
+    handler(action);
   }
 }
 
 function loadReminderConfig(): ReminderConfig {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      const parsed = JSON.parse(raw)
+      const parsed = JSON.parse(raw);
       return {
         enabled: parsed.enabled ?? false,
         hour: parsed.hour ?? 20,
         minute: parsed.minute ?? 0,
-      }
+      };
     }
   } catch {
     // ignore parse error
@@ -128,20 +123,20 @@ function loadReminderConfig(): ReminderConfig {
     enabled: false,
     hour: 20,
     minute: 0,
-  }
+  };
 }
 
 function saveReminderConfig(config: ReminderConfig) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(config))
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
 }
 
 function scheduleReminder(hour: number, minute: number, enabled: boolean) {
-  const config: ReminderConfig = { hour, minute, enabled }
-  saveReminderConfig(config)
+  const config: ReminderConfig = { hour, minute, enabled };
+  saveReminderConfig(config);
 }
 
 function getReminderConfig(): ReminderConfig {
-  return loadReminderConfig()
+  return loadReminderConfig();
 }
 
 export function useNotification() {
@@ -156,5 +151,5 @@ export function useNotification() {
     onReminderAction,
     scheduleReminder,
     getReminderConfig,
-  }
+  };
 }

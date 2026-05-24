@@ -3,4 +3,4 @@ export type {
   FrontendReaderSkinRecord,
   FrontendReaderThemeRecord,
   ReaderAppearancePatch,
-} from './types';
+} from "./types";

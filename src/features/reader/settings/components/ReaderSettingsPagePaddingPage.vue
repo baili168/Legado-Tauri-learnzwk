@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ChevronLeft } from 'lucide-vue-next';
-import type { ReaderSettings, ReaderPagePadding } from '@/components/reader/types';
+import { ChevronLeft } from "lucide-vue-next";
+import type { ReaderSettings, ReaderPagePadding } from "@/components/reader/types";
 
 defineProps<{
   settings: ReaderSettings;
@@ -8,7 +8,7 @@ defineProps<{
 
 const emit = defineEmits<{
   back: [];
-  'update-page-padding': [patch: Partial<ReaderPagePadding>];
+  "update-page-padding": [patch: Partial<ReaderPagePadding>];
 }>();
 </script>
 

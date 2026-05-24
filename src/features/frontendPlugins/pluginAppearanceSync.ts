@@ -1,10 +1,10 @@
-import { readonly } from 'vue';
+import { readonly } from "vue";
 import type {
   RuntimeReaderThemeDefinition,
   RuntimeReaderBackgroundDefinition,
   RuntimeReaderSkinDefinition,
-} from './pluginNormalizer';
-import type { RuntimePluginRecord } from './pluginRuntimeTypes';
+} from "./pluginNormalizer";
+import type { RuntimePluginRecord } from "./pluginRuntimeTypes";
 import type {
   FrontendPluginRecord,
   FrontendPluginApi,
@@ -17,9 +17,9 @@ import type {
   ReaderSessionSnapshot,
   ReaderSessionAppearanceState,
   ReaderAppearancePatch,
-} from './pluginTypes';
-import { applyAppearancePatchVars } from './pluginAppearanceUtils';
-import { cloneValue, defaultAppearanceState } from './pluginTextUtils';
+} from "./pluginTypes";
+import { applyAppearancePatchVars } from "./pluginAppearanceUtils";
+import { cloneValue, defaultAppearanceState } from "./pluginTextUtils";
 
 function getAppearanceState(
   currentSession: ReaderSessionSnapshot | null,
@@ -63,18 +63,18 @@ export function buildReaderSkinContext(
 export async function resolveReaderThemePatch(
   record: RuntimePluginRecord,
   theme: RuntimeReaderThemeDefinition,
-  mode: 'preview' | 'resolve',
+  mode: "preview" | "resolve",
   currentSession: ReaderSessionSnapshot | null,
   createPluginApi: (r: RuntimePluginRecord) => FrontendPluginApi,
 ): Promise<ReaderAppearancePatch | undefined> {
   const resolver =
-    mode === 'preview'
+    mode === "preview"
       ? (theme.previewResolver ?? theme.resolveResolver)
       : (theme.resolveResolver ?? theme.previewResolver);
   if (!resolver) {
     return undefined;
   }
-  if (typeof resolver === 'function') {
+  if (typeof resolver === "function") {
     return (
       (await resolver(buildReaderThemeContext(record, currentSession), createPluginApi(record))) ??
       undefined
@@ -86,18 +86,18 @@ export async function resolveReaderThemePatch(
 export async function resolveReaderBackgroundPatch(
   record: RuntimePluginRecord,
   background: RuntimeReaderBackgroundDefinition,
-  mode: 'preview' | 'resolve',
+  mode: "preview" | "resolve",
   currentSession: ReaderSessionSnapshot | null,
   createPluginApi: (r: RuntimePluginRecord) => FrontendPluginApi,
 ): Promise<ReaderAppearancePatch | undefined> {
   const resolver =
-    mode === 'preview'
+    mode === "preview"
       ? (background.previewResolver ?? background.resolveResolver)
       : (background.resolveResolver ?? background.previewResolver);
   if (!resolver) {
     return undefined;
   }
-  if (typeof resolver === 'function') {
+  if (typeof resolver === "function") {
     return (
       (await resolver(
         buildReaderBackgroundContext(record, currentSession),
@@ -111,18 +111,18 @@ export async function resolveReaderBackgroundPatch(
 export async function resolveReaderSkinPatch(
   record: RuntimePluginRecord,
   skin: RuntimeReaderSkinDefinition,
-  mode: 'preview' | 'resolve',
+  mode: "preview" | "resolve",
   currentSession: ReaderSessionSnapshot | null,
   createPluginApi: (r: RuntimePluginRecord) => FrontendPluginApi,
 ): Promise<ReaderAppearancePatch | undefined> {
   const resolver =
-    mode === 'preview'
+    mode === "preview"
       ? (skin.previewResolver ?? skin.resolveResolver)
       : (skin.resolveResolver ?? skin.previewResolver);
   if (!resolver) {
     return undefined;
   }
-  if (typeof resolver === 'function') {
+  if (typeof resolver === "function") {
     return (
       (await resolver(buildReaderSkinContext(record, currentSession), createPluginApi(record))) ??
       undefined
@@ -137,13 +137,13 @@ export async function computePublicThemeState(
   createPluginApi: (r: RuntimePluginRecord) => FrontendPluginApi,
 ): Promise<FrontendReaderThemeRecord[]> {
   const nextThemes: FrontendReaderThemeRecord[] = [];
-  for (const record of runtimePlugins.filter((item) => item.enabled && item.status !== 'error')) {
+  for (const record of runtimePlugins.filter((item) => item.enabled && item.status !== "error")) {
     for (const theme of record.themes) {
       const preview =
         (await resolveReaderThemePatch(
           record,
           theme,
-          'preview',
+          "preview",
           currentSession,
           createPluginApi,
         )) ?? {};
@@ -168,13 +168,13 @@ export async function computePublicBackgroundState(
   createPluginApi: (r: RuntimePluginRecord) => FrontendPluginApi,
 ): Promise<FrontendReaderBackgroundRecord[]> {
   const nextBackgrounds: FrontendReaderBackgroundRecord[] = [];
-  for (const record of runtimePlugins.filter((item) => item.enabled && item.status !== 'error')) {
+  for (const record of runtimePlugins.filter((item) => item.enabled && item.status !== "error")) {
     for (const background of record.backgrounds) {
       const preview =
         (await resolveReaderBackgroundPatch(
           record,
           background,
-          'preview',
+          "preview",
           currentSession,
           createPluginApi,
         )) ?? {};
@@ -199,10 +199,10 @@ export async function computePublicSkinState(
   createPluginApi: (r: RuntimePluginRecord) => FrontendPluginApi,
 ): Promise<FrontendReaderSkinRecord[]> {
   const nextSkins: FrontendReaderSkinRecord[] = [];
-  for (const record of runtimePlugins.filter((item) => item.enabled && item.status !== 'error')) {
+  for (const record of runtimePlugins.filter((item) => item.enabled && item.status !== "error")) {
     for (const skin of record.skins) {
       const preview =
-        (await resolveReaderSkinPatch(record, skin, 'preview', currentSession, createPluginApi)) ??
+        (await resolveReaderSkinPatch(record, skin, "preview", currentSession, createPluginApi)) ??
         {};
       nextSkins.push({
         id: skin.id,
@@ -241,7 +241,7 @@ export async function computeReaderAppearanceVars(
       const patch = await resolveReaderThemePatch(
         record,
         theme,
-        'resolve',
+        "resolve",
         currentSession,
         createPluginApi,
       );
@@ -260,7 +260,7 @@ export async function computeReaderAppearanceVars(
       const patch = await resolveReaderBackgroundPatch(
         record,
         background,
-        'resolve',
+        "resolve",
         currentSession,
         createPluginApi,
       );
@@ -279,7 +279,7 @@ export async function computeReaderAppearanceVars(
       const patch = await resolveReaderSkinPatch(
         record,
         skin,
-        'resolve',
+        "resolve",
         currentSession,
         createPluginApi,
       );

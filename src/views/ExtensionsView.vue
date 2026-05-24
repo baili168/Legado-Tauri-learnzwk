@@ -1,21 +1,21 @@
 <!-- ExtensionsView — 前端插件管理页，负责插件安装、编辑、启停、排序、示例与配置管理。 -->
 <script setup lang="ts">
-import { Search, Code2 } from 'lucide-vue-next';
-import { useMessage, useDialog, type DropdownOption } from 'naive-ui';
-import { storeToRefs } from 'pinia';
-import { ref, computed, onMounted, onUnmounted } from 'vue';
-import JavaScriptHighlightEditor from '@/components/base/JavaScriptHighlightEditor.vue';
-import ExampleCard from '@/components/extensions/ExampleCard.vue';
-import ExtensionCard from '@/components/extensions/ExtensionCard.vue';
-import AppPageHeader from '@/components/layout/AppPageHeader.vue';
-import MobileToolbarMenu from '@/components/layout/MobileToolbarMenu.vue';
-import { eventListen } from '@/composables/useEventBus';
-import { useOverlayBackstack } from '@/composables/useOverlayBackstack';
+import { Search, Code2 } from "lucide-vue-next";
+import { useMessage, useDialog, type DropdownOption } from "naive-ui";
+import { storeToRefs } from "pinia";
+import { ref, computed, onMounted, onUnmounted } from "vue";
+import JavaScriptHighlightEditor from "@/components/base/JavaScriptHighlightEditor.vue";
+import ExampleCard from "@/components/extensions/ExampleCard.vue";
+import ExtensionCard from "@/components/extensions/ExtensionCard.vue";
+import AppPageHeader from "@/components/layout/AppPageHeader.vue";
+import MobileToolbarMenu from "@/components/layout/MobileToolbarMenu.vue";
+import { eventListen } from "@/composables/useEventBus";
+import { useOverlayBackstack } from "@/composables/useOverlayBackstack";
 import {
   useFrontendPluginsStore,
   type PluginSettingValue,
   type ResolvedPluginSettingField,
-} from '@/stores';
+} from "@/stores";
 import {
   type ExtensionMeta,
   listExtensions,
@@ -27,38 +27,38 @@ import {
   openExtensionInVscode,
   toExtSafeFileName,
   newExtensionTemplate,
-} from '../composables/useExtension';
-import { EXAMPLE_SCRIPTS, type ExampleScript } from '../data/extensionExamples';
-import { saveExportFile } from '../utils/exportFile';
+} from "../composables/useExtension";
+import { EXAMPLE_SCRIPTS, type ExampleScript } from "../data/extensionExamples";
+import { saveExportFile } from "../utils/exportFile";
 
 const message = useMessage();
 const dialog = useDialog();
 
-const activeTab = ref<'installed' | 'examples'>('installed');
+const activeTab = ref<"installed" | "examples">("installed");
 const extensions = ref<ExtensionMeta[]>([]);
-const extDir = ref('');
+const extDir = ref("");
 const loading = ref(false);
 const reloadingAll = ref(false);
-const searchQuery = ref('');
-const categoryFilter = ref<string>('');
+const searchQuery = ref("");
+const categoryFilter = ref<string>("");
 
 const showEditor = ref(false);
-const editorTitle = ref('');
-const editorContent = ref('');
-const editorFile = ref('');
+const editorTitle = ref("");
+const editorContent = ref("");
+const editorFile = ref("");
 const editorSaving = ref(false);
 const editorVscodeOpen = ref(false);
 const editorReloaded = ref(false);
 const editorOpenKey = ref(0);
 
 const showPreview = ref(false);
-const previewTitle = ref('');
-const previewSource = ref('');
+const previewTitle = ref("");
+const previewSource = ref("");
 const previewExampleId = ref<string | null>(null);
 const installLoading = ref(false);
 const showSettings = ref(false);
-const settingsTitle = ref('');
-const settingsFileName = ref('');
+const settingsTitle = ref("");
+const settingsFileName = ref("");
 const settingsLoading = ref(false);
 const settingsSaving = ref(false);
 const settingsFields = ref<ResolvedPluginSettingField[]>([]);
@@ -85,7 +85,7 @@ useOverlayBackstack(
 );
 
 const showUrlImport = ref(false);
-const urlImportUrl = ref('');
+const urlImportUrl = ref("");
 const urlImporting = ref(false);
 
 useOverlayBackstack(
@@ -111,30 +111,30 @@ const runtimeByFileName = computed(
 );
 
 const categories = computed(() => {
-  const cats = new Set(extensions.value.map((e) => e.category || '其他'));
-  return [{ label: '全部', value: '' }, ...[...cats].map((c) => ({ label: c, value: c }))];
+  const cats = new Set(extensions.value.map((e) => e.category || "其他"));
+  return [{ label: "全部", value: "" }, ...[...cats].map((c) => ({ label: c, value: c }))];
 });
 
-const examplesSearchQuery = ref('');
-const examplesCategoryFilter = ref('');
+const examplesSearchQuery = ref("");
+const examplesCategoryFilter = ref("");
 
 const exampleCategories = computed(() => {
-  const cats = new Set(EXAMPLE_SCRIPTS.map((e) => e.meta.category || '其他'));
-  return [{ label: '全部', value: '' }, ...[...cats].map((c) => ({ label: c, value: c }))];
+  const cats = new Set(EXAMPLE_SCRIPTS.map((e) => e.meta.category || "其他"));
+  return [{ label: "全部", value: "" }, ...[...cats].map((c) => ({ label: c, value: c }))];
 });
 
 const filteredExamples = computed(() =>
   EXAMPLE_SCRIPTS.filter((ex) => {
     const byCategory =
       !examplesCategoryFilter.value ||
-      (ex.meta.category || '其他') === examplesCategoryFilter.value;
+      (ex.meta.category || "其他") === examplesCategoryFilter.value;
     const q = examplesSearchQuery.value.trim();
     const bySearch =
       !q ||
-      (ex.meta.name ?? '').includes(q) ||
-      (ex.meta.description ?? '').includes(q) ||
-      (ex.meta.author ?? '').includes(q) ||
-      (ex.meta.category ?? '').includes(q);
+      (ex.meta.name ?? "").includes(q) ||
+      (ex.meta.description ?? "").includes(q) ||
+      (ex.meta.author ?? "").includes(q) ||
+      (ex.meta.category ?? "").includes(q);
     return byCategory && bySearch;
   }),
 );
@@ -142,7 +142,7 @@ const filteredExamples = computed(() =>
 const filtered = computed(() =>
   extensions.value.filter((e) => {
     const byCategory =
-      !categoryFilter.value || categoryFilter.value === '' || e.category === categoryFilter.value;
+      !categoryFilter.value || categoryFilter.value === "" || e.category === categoryFilter.value;
     const q = searchQuery.value.trim();
     const bySearch =
       !q ||
@@ -156,11 +156,11 @@ const filtered = computed(() =>
 
 const installedFileNames = computed(() => new Set(extensions.value.map((e) => e.fileName)));
 const installedHeaderMenuOptions: DropdownOption[] = [
-  { label: '新建扩展', key: 'new' },
-  { label: '导入本地', key: 'import-file' },
-  { label: '从 URL 安装', key: 'import-url' },
-  { label: '刷新列表', key: 'refresh' },
-  { label: '全部重载', key: 'reload-all' },
+  { label: "新建扩展", key: "new" },
+  { label: "导入本地", key: "import-file" },
+  { label: "从 URL 安装", key: "import-url" },
+  { label: "刷新列表", key: "refresh" },
+  { label: "全部重载", key: "reload-all" },
 ];
 
 async function loadExtensions() {
@@ -206,15 +206,15 @@ async function onToggle(ext: ExtensionMeta) {
 
 function confirmDelete(ext: ExtensionMeta) {
   dialog.warning({
-    title: '删除扩展',
+    title: "删除扩展",
     content: `确认删除「${ext.name}」？此操作将删除磁盘文件，不可恢复。`,
-    positiveText: '删除',
-    negativeText: '取消',
+    positiveText: "删除",
+    negativeText: "取消",
     onPositiveClick: async () => {
       try {
         await deleteExtension(ext.fileName);
         extensions.value = extensions.value.filter((e) => e.fileName !== ext.fileName);
-        message.success('已删除');
+        message.success("已删除");
       } catch (e: unknown) {
         message.error(`删除失败: ${e instanceof Error ? e.message : String(e)}`);
       }
@@ -233,8 +233,8 @@ async function openEditor(ext?: ExtensionMeta) {
       return;
     }
   } else {
-    editorTitle.value = '新建扩展';
-    editorFile.value = '';
+    editorTitle.value = "新建扩展";
+    editorFile.value = "";
     editorContent.value = newExtensionTemplate();
   }
   editorOpenKey.value += 1;
@@ -244,13 +244,13 @@ async function openEditor(ext?: ExtensionMeta) {
 async function saveEditor() {
   if (!editorFile.value) {
     const m = editorContent.value.match(/\/\/\s*@name\s+(.+)/);
-    const name = m?.[1]?.trim() || '未命名扩展';
+    const name = m?.[1]?.trim() || "未命名扩展";
     editorFile.value = toExtSafeFileName(name);
   }
   editorSaving.value = true;
   try {
     await saveExtension(editorFile.value, editorContent.value);
-    message.success('已保存');
+    message.success("已保存");
     showEditor.value = false;
     await loadExtensions();
   } catch (e: unknown) {
@@ -262,7 +262,7 @@ async function saveEditor() {
 
 async function openEditorInVscode() {
   if (!editorFile.value) {
-    message.warning('请先保存，再用 VS Code 打开');
+    message.warning("请先保存，再用 VS Code 打开");
     return;
   }
   editorVscodeOpen.value = true;
@@ -321,11 +321,11 @@ async function installFromPreview() {
 }
 
 function importFromFile() {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = 'text/javascript,application/javascript,text/plain,.js';
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "text/javascript,application/javascript,text/plain,.js";
   input.multiple = true;
-  input.addEventListener('change', async () => {
+  input.addEventListener("change", async () => {
     if (!input.files?.length) {
       return;
     }
@@ -353,15 +353,15 @@ async function exportExtension(ext: ExtensionMeta) {
     const source = await readExtension(ext.fileName);
     const saved = await saveExportFile({
       defaultName: ext.fileName,
-      mime: 'text/javascript;charset=utf-8',
+      mime: "text/javascript;charset=utf-8",
       text: source,
-      filterName: 'JavaScript',
-      extensions: ['js'],
+      filterName: "JavaScript",
+      extensions: ["js"],
     });
     if (!saved) {
       return;
     }
-    message.success('已导出扩展');
+    message.success("已导出扩展");
   } catch (e: unknown) {
     message.error(`导出失败: ${e instanceof Error ? e.message : String(e)}`);
   }
@@ -380,13 +380,13 @@ async function importFromUrl() {
     }
     const text = await resp.text();
     const nameMatch = text.match(/\/\/\s*@name\s+(.+)/);
-    const name = nameMatch?.[1]?.trim() || 'unknown';
+    const name = nameMatch?.[1]?.trim() || "unknown";
     const fileName = toExtSafeFileName(name);
     await saveExtension(fileName, text);
     await loadExtensions();
     message.success(`已安装「${name}」`);
     showUrlImport.value = false;
-    urlImportUrl.value = '';
+    urlImportUrl.value = "";
   } catch (e: unknown) {
     message.error(`安装失败: ${e instanceof Error ? e.message : String(e)}`);
   } finally {
@@ -396,19 +396,19 @@ async function importFromUrl() {
 
 function handleInstalledHeaderMenuSelect(key: string) {
   switch (key) {
-    case 'new':
+    case "new":
       void openEditor();
       break;
-    case 'import-file':
+    case "import-file":
       importFromFile();
       break;
-    case 'import-url':
+    case "import-url":
       showUrlImport.value = true;
       break;
-    case 'refresh':
+    case "refresh":
       void loadExtensions();
       break;
-    case 'reload-all':
+    case "reload-all":
       void forceReloadExtensions();
       break;
     default:
@@ -428,22 +428,22 @@ async function reloadExtensionItem(fileName: string) {
 
 function getSettingString(key: string): string {
   const value = settingsValues.value[key];
-  return typeof value === 'string' ? value : '';
+  return typeof value === "string" ? value : "";
 }
 
 function getDraftString(key: string): string {
   const value = settingsDraftValues.value[key];
-  return typeof value === 'string' ? value : getSettingString(key);
+  return typeof value === "string" ? value : getSettingString(key);
 }
 
 function getSettingNumber(key: string): number {
   const value = settingsValues.value[key];
-  return typeof value === 'number' ? value : 0;
+  return typeof value === "number" ? value : 0;
 }
 
 function getSettingScalar(key: string): string | number | null {
   const value = settingsValues.value[key];
-  return typeof value === 'string' || typeof value === 'number' ? value : null;
+  return typeof value === "string" || typeof value === "number" ? value : null;
 }
 
 function getSettingBoolean(key: string): boolean {
@@ -453,19 +453,19 @@ function getSettingBoolean(key: string): boolean {
 function getSettingStringArray(key: string): string[] {
   const value = settingsValues.value[key];
   return Array.isArray(value)
-    ? value.filter((item): item is string => typeof item === 'string')
+    ? value.filter((item): item is string => typeof item === "string")
     : [];
 }
 
 function getDraftStringList(key: string): string {
   const draft = settingsDraftValues.value[key];
   if (Array.isArray(draft)) {
-    return (draft as string[]).filter(Boolean).join('\n');
+    return (draft as string[]).filter(Boolean).join("\n");
   }
-  if (typeof draft === 'string') {
+  if (typeof draft === "string") {
     return draft;
   }
-  return getSettingStringArray(key).join('\n');
+  return getSettingStringArray(key).join("\n");
 }
 
 async function loadSettingsDialog(fileName: string) {
@@ -517,7 +517,7 @@ async function resetSettingsDialog() {
     await resetPluginSettings(settingsFileName.value);
     await loadSettingsDialog(settingsFileName.value);
     await loadExtensions();
-    message.success('已恢复插件默认设置');
+    message.success("已恢复插件默认设置");
   } catch (e: unknown) {
     message.error(`恢复失败: ${e instanceof Error ? e.message : String(e)}`);
   } finally {
@@ -539,8 +539,8 @@ function handleInstallPluginEvent(e: Event) {
 
 onMounted(async () => {
   await loadExtensions();
-  window.addEventListener('app:install-plugin', handleInstallPluginEvent);
-  unlistenExt = await eventListen<{ fileName: string }>('extension:changed', async (event) => {
+  window.addEventListener("app:install-plugin", handleInstallPluginEvent);
+  unlistenExt = await eventListen<{ fileName: string }>("extension:changed", async (event) => {
     await loadExtensions();
     if (showEditor.value && editorFile.value === event.payload.fileName) {
       try {
@@ -554,15 +554,15 @@ onMounted(async () => {
       }
     }
   });
-  unlistenViewReload = await eventListen<{ view?: string }>('app:view-reload', async (event) => {
-    if (event.payload?.view === 'extensions') {
+  unlistenViewReload = await eventListen<{ view?: string }>("app:view-reload", async (event) => {
+    if (event.payload?.view === "extensions") {
       await forceReloadExtensions();
     }
   });
 });
 
 onUnmounted(() => {
-  window.removeEventListener('app:install-plugin', handleInstallPluginEvent);
+  window.removeEventListener("app:install-plugin", handleInstallPluginEvent);
   unlistenExt?.();
   unlistenViewReload?.();
 });
@@ -624,11 +624,11 @@ onUnmounted(() => {
             共 {{ filtered.length }} 个扩展，已启用
             {{ filtered.filter((e) => e.enabled).length }} 个，前端运行中
             {{
-              filtered.filter((e) => runtimeByFileName.get(e.fileName)?.status === 'active').length
+              filtered.filter((e) => runtimeByFileName.get(e.fileName)?.status === "active").length
             }}
             个，异常
             {{
-              filtered.filter((e) => runtimeByFileName.get(e.fileName)?.status === 'error').length
+              filtered.filter((e) => runtimeByFileName.get(e.fileName)?.status === "error").length
             }}
             个
           </div>
@@ -857,7 +857,7 @@ onUnmounted(() => {
                     @input="saveSettingsField(field.key, ($event.target as HTMLInputElement).value)"
                   />
                   <span class="plugin-settings__color-text">
-                    {{ getSettingString(field.key) || '#000000' }}
+                    {{ getSettingString(field.key) || "#000000" }}
                   </span>
                 </div>
 
@@ -1025,7 +1025,7 @@ onUnmounted(() => {
 
 .ext-header__dir-path {
   font-size: var(--fs-11);
-  font-family: 'Cascadia Code', 'Consolas', monospace;
+  font-family: "Cascadia Code", "Consolas", monospace;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1160,7 +1160,7 @@ onUnmounted(() => {
 .code-preview__pre {
   margin: 0;
   padding: 16px 18px;
-  font-family: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace;
+  font-family: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
   font-size: 12.5px;
   line-height: 1.65;
   color: #d4d4d4;
@@ -1249,7 +1249,7 @@ onUnmounted(() => {
 .plugin-settings__color-text {
   font-size: var(--fs-12);
   color: var(--color-text-soft);
-  font-family: 'Cascadia Code', 'Consolas', monospace;
+  font-family: "Cascadia Code", "Consolas", monospace;
 }
 
 .plugin-settings__slider-wrap {

@@ -1,4 +1,4 @@
-import { ref, watch } from 'vue';
+import { ref, watch } from "vue";
 
 interface Rgb {
   r: number;
@@ -20,16 +20,16 @@ export interface PresetColor {
 export interface CustomTheme {
   id: string;
   name: string;
-  mode: 'advanced' | 'plugin';
+  mode: "advanced" | "plugin";
   pluginId?: string;
   colors: Record<string, string>;
   createdAt: number;
 }
 
-const STORAGE_MODE_KEY = 'legado-material-you-mode';
-const STORAGE_COLOR_KEY = 'legado-material-you-color';
-const STORAGE_CUSTOM_THEMES_KEY = 'legado-custom-themes';
-const STORAGE_CUSTOM_THEME_ID_KEY = 'legado-material-you-theme-id';
+const STORAGE_MODE_KEY = "legado-material-you-mode";
+const STORAGE_COLOR_KEY = "legado-material-you-color";
+const STORAGE_CUSTOM_THEMES_KEY = "legado-custom-themes";
+const STORAGE_CUSTOM_THEME_ID_KEY = "legado-material-you-theme-id";
 
 const pluginThemes = new Map<string, CustomTheme>();
 
@@ -66,32 +66,32 @@ function _importTheme(json: string): CustomTheme {
   try {
     parsed = JSON.parse(json);
   } catch {
-    throw new Error('无效的主题格式：无法解析 JSON');
+    throw new Error("无效的主题格式：无法解析 JSON");
   }
 
-  if (!parsed || typeof parsed !== 'object') {
-    throw new Error('无效的主题格式：内容必须是对象');
+  if (!parsed || typeof parsed !== "object") {
+    throw new Error("无效的主题格式：内容必须是对象");
   }
 
   const obj = parsed as Record<string, unknown>;
 
-  if (typeof obj.name !== 'string' || !obj.name) {
-    throw new Error('无效的主题格式：缺少 name 字段');
+  if (typeof obj.name !== "string" || !obj.name) {
+    throw new Error("无效的主题格式：缺少 name 字段");
   }
 
-  if (!obj.colors || typeof obj.colors !== 'object') {
-    throw new Error('无效的主题格式：缺少 colors 字段');
+  if (!obj.colors || typeof obj.colors !== "object") {
+    throw new Error("无效的主题格式：缺少 colors 字段");
   }
 
   const colors = obj.colors as Record<string, unknown>;
-  if (typeof colors.primary !== 'string' || !colors.primary) {
-    throw new Error('无效的主题格式：colors 中至少需要 primary 字段');
+  if (typeof colors.primary !== "string" || !colors.primary) {
+    throw new Error("无效的主题格式：colors 中至少需要 primary 字段");
   }
 
   const theme: CustomTheme = {
-    id: 'custom-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+    id: "custom-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6),
     name: obj.name,
-    mode: 'advanced',
+    mode: "advanced",
     colors: colors as Record<string, string>,
     createdAt: Date.now(),
   };
@@ -104,14 +104,14 @@ function _importTheme(json: string): CustomTheme {
 }
 
 const PRESETS: PresetColor[] = [
-  { name: 'Indigo', color: '#4467FF' },
-  { name: 'Rose', color: '#E11D48' },
-  { name: 'Emerald', color: '#059669' },
-  { name: 'Amber', color: '#D97706' },
-  { name: 'Teal', color: '#0D9488' },
-  { name: 'Violet', color: '#7C3AED' },
-  { name: 'Crimson', color: '#DC2626' },
-  { name: 'Slate', color: '#64748B' },
+  { name: "Indigo", color: "#4467FF" },
+  { name: "Rose", color: "#E11D48" },
+  { name: "Emerald", color: "#059669" },
+  { name: "Amber", color: "#D97706" },
+  { name: "Teal", color: "#0D9488" },
+  { name: "Violet", color: "#7C3AED" },
+  { name: "Crimson", color: "#DC2626" },
+  { name: "Slate", color: "#64748B" },
 ];
 
 const LIGHT_TONES: Record<string, number> = {
@@ -151,7 +151,7 @@ const DARK_TONES: Record<string, number> = {
 };
 
 function hexToRgb(hex: string): Rgb {
-  const h = hex.replace('#', '');
+  const h = hex.replace("#", "");
   return {
     r: parseInt(h.substring(0, 2), 16),
     g: parseInt(h.substring(2, 4), 16),
@@ -200,7 +200,7 @@ function hslToHex(h: number, s: number, l: number): string {
     const color = nl - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
     return Math.round(255 * color)
       .toString(16)
-      .padStart(2, '0');
+      .padStart(2, "0");
   };
 
   return `#${f(0)}${f(8)}${f(4)}`;
@@ -211,19 +211,19 @@ function clampTone(tone: number): number {
 }
 
 export function useMaterialYou() {
-  const currentMode = ref<'system' | 'preset' | 'custom'>('preset');
+  const currentMode = ref<"system" | "preset" | "custom">("preset");
   const currentColor = ref<string>(PRESETS[0].color);
   const currentCustomThemeId = ref<string | null>(null);
   const isDark = ref(false);
 
-  const darkMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+  const darkMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
   function updateDarkState() {
     isDark.value = darkMediaQuery.matches;
   }
 
   updateDarkState();
-  darkMediaQuery.addEventListener('change', updateDarkState);
+  darkMediaQuery.addEventListener("change", updateDarkState);
 
   function computeBrightness(hex: string): number {
     const { r, g, b } = hexToRgb(hex);
@@ -300,12 +300,12 @@ export function useMaterialYou() {
   function applyCssVariables(palette: Record<string, string>) {
     const root = document.documentElement;
     for (const [key, value] of Object.entries(palette)) {
-      const cssKey = key.replace(/([A-Z])/g, '-$1').toLowerCase();
+      const cssKey = key.replace(/([A-Z])/g, "-$1").toLowerCase();
       root.style.setProperty(`--md-sys-color-${cssKey}`, value);
     }
   }
 
-  function persist(mode: 'system' | 'preset' | 'custom', color?: string) {
+  function persist(mode: "system" | "preset" | "custom", color?: string) {
     try {
       localStorage.setItem(STORAGE_MODE_KEY, mode);
       if (color) {
@@ -316,14 +316,14 @@ export function useMaterialYou() {
     }
   }
 
-  function applyTheme(mode: 'system' | 'preset' | 'custom', color?: string) {
+  function applyTheme(mode: "system" | "preset" | "custom", color?: string) {
     currentMode.value = mode;
 
     let seedColor: string;
 
-    if (mode === 'system') {
+    if (mode === "system") {
       seedColor = PRESETS[0].color;
-    } else if (mode === 'preset') {
+    } else if (mode === "preset") {
       seedColor = color || currentColor.value;
     } else {
       seedColor = color || currentColor.value;
@@ -334,9 +334,9 @@ export function useMaterialYou() {
     applyCssVariables(palette);
     persist(mode, color);
 
-    if (mode === 'preset' && color) {
+    if (mode === "preset" && color) {
       persist(mode, color);
-    } else if (mode === 'custom' && color) {
+    } else if (mode === "custom" && color) {
       persist(mode, color);
     } else {
       persist(mode);
@@ -382,7 +382,7 @@ export function useMaterialYou() {
     })();
 
     if (activeThemeId === themeId) {
-      applyTheme('preset', PRESETS[0].color);
+      applyTheme("preset", PRESETS[0].color);
       try {
         localStorage.removeItem(STORAGE_CUSTOM_THEME_ID_KEY);
       } catch {}
@@ -393,10 +393,10 @@ export function useMaterialYou() {
   function activateTheme(themeId: string): void {
     const pluginTheme = pluginThemes.get(themeId);
     if (pluginTheme) {
-      currentMode.value = 'custom';
+      currentMode.value = "custom";
       currentCustomThemeId.value = themeId;
       applyCssVariables(pluginTheme.colors);
-      persist('custom');
+      persist("custom");
       try {
         localStorage.setItem(STORAGE_CUSTOM_THEME_ID_KEY, themeId);
       } catch {}
@@ -409,10 +409,10 @@ export function useMaterialYou() {
       throw new Error(`主题未找到: ${themeId}`);
     }
 
-    currentMode.value = 'custom';
+    currentMode.value = "custom";
     currentCustomThemeId.value = themeId;
     applyCssVariables(theme.colors);
-    persist('custom');
+    persist("custom");
     try {
       localStorage.setItem(STORAGE_CUSTOM_THEME_ID_KEY, themeId);
     } catch {}
@@ -434,7 +434,7 @@ export function useMaterialYou() {
     })();
 
     if (activeThemeId === themeId) {
-      applyTheme('preset', PRESETS[0].color);
+      applyTheme("preset", PRESETS[0].color);
       try {
         localStorage.removeItem(STORAGE_CUSTOM_THEME_ID_KEY);
       } catch {}
@@ -453,17 +453,17 @@ export function useMaterialYou() {
   function initFromStorage() {
     try {
       const savedMode = localStorage.getItem(STORAGE_MODE_KEY) as
-        | 'system'
-        | 'preset'
-        | 'custom'
+        | "system"
+        | "preset"
+        | "custom"
         | null;
       const savedColor = localStorage.getItem(STORAGE_COLOR_KEY);
       const savedThemeId = localStorage.getItem(STORAGE_CUSTOM_THEME_ID_KEY);
 
-      if (savedMode === 'custom' && savedThemeId) {
+      if (savedMode === "custom" && savedThemeId) {
         const pluginTheme = pluginThemes.get(savedThemeId);
         if (pluginTheme) {
-          currentMode.value = 'custom';
+          currentMode.value = "custom";
           currentCustomThemeId.value = savedThemeId;
           applyCssVariables(pluginTheme.colors);
           return;
@@ -472,13 +472,13 @@ export function useMaterialYou() {
         const themes = listCustomThemes();
         const theme = themes.find((t) => t.id === savedThemeId);
         if (theme) {
-          currentMode.value = 'custom';
+          currentMode.value = "custom";
           currentCustomThemeId.value = savedThemeId;
           applyCssVariables(theme.colors);
           return;
         }
 
-        applyTheme('preset', PRESETS[0].color);
+        applyTheme("preset", PRESETS[0].color);
         try {
           localStorage.removeItem(STORAGE_CUSTOM_THEME_ID_KEY);
         } catch {}
@@ -492,10 +492,10 @@ export function useMaterialYou() {
         }
         applyTheme(savedMode, savedColor || undefined);
       } else {
-        applyTheme('preset', PRESETS[0].color);
+        applyTheme("preset", PRESETS[0].color);
       }
     } catch {
-      applyTheme('preset', PRESETS[0].color);
+      applyTheme("preset", PRESETS[0].color);
     }
   }
 
@@ -536,4 +536,8 @@ export function useMaterialYou() {
   };
 }
 
-export { _listCustomThemes as listCustomThemes, _saveCustomThemes as saveCustomThemes, _importTheme as importTheme };
+export {
+  _listCustomThemes as listCustomThemes,
+  _saveCustomThemes as saveCustomThemes,
+  _importTheme as importTheme,
+};

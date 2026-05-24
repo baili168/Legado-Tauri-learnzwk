@@ -4,7 +4,7 @@
  * 支持：点击区域判定（上一页/菜单/下一页）、左右滑动、长按
  * 完全独立，不依赖任何外部库
  */
-import { ref, onMounted, onBeforeUnmount, type Ref } from 'vue';
+import { ref, onMounted, onBeforeUnmount, type Ref } from "vue";
 
 export interface GestureCallbacks {
   onTapLeft?: () => void;
@@ -103,9 +103,9 @@ export function useGesture(
     if (!el) {
       return;
     }
-    el.addEventListener('pointerdown', onPointerDown, { passive: true });
-    el.addEventListener('pointermove', onPointerMove, { passive: true });
-    el.addEventListener('pointerup', onPointerUp, { passive: true });
+    el.addEventListener("pointerdown", onPointerDown, { passive: true });
+    el.addEventListener("pointermove", onPointerMove, { passive: true });
+    el.addEventListener("pointerup", onPointerUp, { passive: true });
   });
 
   onBeforeUnmount(() => {
@@ -113,9 +113,9 @@ export function useGesture(
     if (!el) {
       return;
     }
-    el.removeEventListener('pointerdown', onPointerDown);
-    el.removeEventListener('pointermove', onPointerMove);
-    el.removeEventListener('pointerup', onPointerUp);
+    el.removeEventListener("pointerdown", onPointerDown);
+    el.removeEventListener("pointermove", onPointerMove);
+    el.removeEventListener("pointerup", onPointerUp);
   });
 
   return { isSwiping };

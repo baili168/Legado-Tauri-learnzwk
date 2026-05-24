@@ -1,26 +1,26 @@
 .focusable,
 button,
-[role='button'],
-[role='option'],
-[tabindex]:not([tabindex='-1']) {
+[role="button"],
+[role="option"],
+[tabindex]:not([tabindex="-1"]) {
   outline: none;
 }
 
 .focusable:focus-visible,
 button:focus-visible,
-[role='button']:focus-visible,
-[role='option']:focus-visible,
-[tabindex]:not([tabindex='-1']):focus-visible {
+[role="button"]:focus-visible,
+[role="option"]:focus-visible,
+[tabindex]:not([tabindex="-1"]):focus-visible {
   outline: 3px solid var(--color-focus);
   outline-offset: 3px;
 }
 
-.focusable[data-focus-visible='true'] {
+.focusable[data-focus-visible="true"] {
   outline: 3px solid var(--color-focus);
   outline-offset: 3px;
 }
 
-.focusable[data-focus-active='true'] {
+.focusable[data-focus-active="true"] {
   transform: scale(0.98);
 }
 

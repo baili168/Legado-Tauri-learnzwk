@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ReaderPluginHost from '@/components/reader/ReaderPluginHost.vue';
+import ReaderPluginHost from "@/components/reader/ReaderPluginHost.vue";
 
 defineProps<{
   background?: boolean;

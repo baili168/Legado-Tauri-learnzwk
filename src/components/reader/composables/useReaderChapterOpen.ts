@@ -1,15 +1,15 @@
-import { nextTick, type ComputedRef, type Ref } from 'vue';
-import type { ChapterItem } from '@/stores';
-import type { usePagedChapterCache } from './usePagedChapterCache';
-import type { ReadingAnchor, PageMeta } from './usePagination';
+import { nextTick, type ComputedRef, type Ref } from "vue";
+import type { ChapterItem } from "@/stores";
+import type { usePagedChapterCache } from "./usePagedChapterCache";
+import type { ReadingAnchor, PageMeta } from "./usePagination";
 import {
   clampReaderRatio,
   type ReaderPositionMode,
   type ReaderPositionSnapshot,
   type ReaderProgressPayload,
-} from './useReaderPosition';
+} from "./useReaderPosition";
 
-export type ChapterOpenPosition = 'first' | 'last' | 'resume';
+export type ChapterOpenPosition = "first" | "last" | "resume";
 
 export interface OpenChapterOptions {
   position?: ChapterOpenPosition;
@@ -57,14 +57,14 @@ interface UseReaderChapterOpenOptions {
   pendingResumePlaybackTime: Ref<number>;
   openingChapter: Ref<boolean>;
   restoringPosition: Ref<boolean>;
-  navDirection: Ref<'forward' | 'backward'>;
+  navDirection: Ref<"forward" | "backward">;
   currentShelfId: ComputedRef<string | undefined>;
   pagedCache: ReturnType<typeof usePagedChapterCache>;
   scrollModeRef: Ref<ScrollModeApi | null>;
   comicModeRef: Ref<ComicModeApi | null>;
   fetchProcessedChapterText: (
     index: number,
-    finalStage: 'reader.content.beforePaginate' | 'reader.content.beforeRender',
+    finalStage: "reader.content.beforePaginate" | "reader.content.beforeRender",
     forceNetwork?: boolean,
   ) => Promise<string>;
   setPagedPage: (page: number) => void;
@@ -167,18 +167,18 @@ export function useReaderChapterOpen(options: UseReaderChapterOpenOptions) {
     options.pendingRestorePageIndex.value = -1;
     options.pendingRestoreScrollRatio.value = -1;
 
-    if (openOptions.position === 'first') {
+    if (openOptions.position === "first") {
       pageIndex = options.isComicMode.value ? 0 : -1;
       // 新章节从头开始不需要走恢复流程；子组件的 content watcher 会回到顶部。
       scrollRatio = -1;
-    } else if (openOptions.position === 'last') {
-      pageIndex = typeof openOptions.pageIndex === 'number' ? openOptions.pageIndex : -1;
+    } else if (openOptions.position === "last") {
+      pageIndex = typeof openOptions.pageIndex === "number" ? openOptions.pageIndex : -1;
       scrollRatio = 1;
     } else {
-      if (typeof openOptions.pageIndex === 'number') {
+      if (typeof openOptions.pageIndex === "number") {
         pageIndex = openOptions.pageIndex;
       }
-      if (typeof openOptions.pageRatio === 'number') {
+      if (typeof openOptions.pageRatio === "number") {
         scrollRatio = openOptions.pageRatio;
       }
     }
@@ -272,14 +272,14 @@ export function useReaderChapterOpen(options: UseReaderChapterOpenOptions) {
     const nextIndex = index + 1;
     const prevIndex = index - 1;
     const order =
-      options.navDirection.value === 'backward' ? [prevIndex, nextIndex] : [nextIndex, prevIndex];
+      options.navDirection.value === "backward" ? [prevIndex, nextIndex] : [nextIndex, prevIndex];
     const token = ++warmAdjacentToken;
 
     void Promise.allSettled(
       order.map((chapterIndex) =>
         options
-          .fetchProcessedChapterText(chapterIndex, 'reader.content.beforePaginate')
-          .catch(() => ''),
+          .fetchProcessedChapterText(chapterIndex, "reader.content.beforePaginate")
+          .catch(() => ""),
       ),
     ).then(async () => {
       if (token !== warmAdjacentToken || !options.getShow() || !options.isPagedMode.value) {
@@ -296,7 +296,7 @@ export function useReaderChapterOpen(options: UseReaderChapterOpenOptions) {
     }
 
     const token = ++openChapterToken;
-    options.error.value = '';
+    options.error.value = "";
     options.loading.value = false;
 
     const needsBlocking =
@@ -308,7 +308,7 @@ export function useReaderChapterOpen(options: UseReaderChapterOpenOptions) {
     try {
       const text = await options.fetchProcessedChapterText(
         index,
-        'reader.content.beforeRender',
+        "reader.content.beforeRender",
         openOptions.forceNetwork,
       );
       if (token !== openChapterToken) {
@@ -316,9 +316,9 @@ export function useReaderChapterOpen(options: UseReaderChapterOpenOptions) {
       }
 
       const needsStablePagination =
-        openOptions.position === 'last' ||
-        typeof openOptions.pageIndex === 'number' ||
-        typeof openOptions.pageRatio === 'number' ||
+        openOptions.position === "last" ||
+        typeof openOptions.pageIndex === "number" ||
+        typeof openOptions.pageRatio === "number" ||
         openOptions.anchor !== undefined;
       const pages = await options.pagedCache.ensurePages(index, {
         forceNetwork: openOptions.forceNetwork,
@@ -342,13 +342,13 @@ export function useReaderChapterOpen(options: UseReaderChapterOpenOptions) {
           const metas = options.pagedCache.getPageMetas(index);
           targetPage = findPageByAnchorFromMetas(openOptions.anchor, metas, pages.length);
         }
-      } else if (typeof openOptions.pageIndex === 'number') {
+      } else if (typeof openOptions.pageIndex === "number") {
         targetPage = openOptions.pageIndex;
-      } else if (typeof openOptions.pageRatio === 'number' && pages.length > 1) {
+      } else if (typeof openOptions.pageRatio === "number" && pages.length > 1) {
         targetPage = Math.round(
           Math.min(1, Math.max(0, openOptions.pageRatio)) * (pages.length - 1),
         );
-      } else if (openOptions.position === 'last') {
+      } else if (openOptions.position === "last") {
         targetPage = pages.length - 1;
       } else {
         targetPage = 0;
@@ -358,7 +358,7 @@ export function useReaderChapterOpen(options: UseReaderChapterOpenOptions) {
       await options.updateReaderSession(options.buildReaderSessionSnapshot({ content: text }));
 
       const shelfId = options.currentShelfId.value;
-      if (shelfId !== undefined && shelfId !== '') {
+      if (shelfId !== undefined && shelfId !== "") {
         void options
           .updateProgress(shelfId, index, chapter.url, {
             ...options.buildProgressPayload(),
@@ -388,7 +388,7 @@ export function useReaderChapterOpen(options: UseReaderChapterOpenOptions) {
 
     const token = ++openChapterToken;
     const restore = consumeLinearRestore(openOptions);
-    options.error.value = '';
+    options.error.value = "";
     options.pagedLoading.value = false;
     options.loading.value =
       !options.content.value ||
@@ -398,7 +398,7 @@ export function useReaderChapterOpen(options: UseReaderChapterOpenOptions) {
     try {
       if (options.isScrollMode.value) {
         options.activeChapterIndex.value = index;
-        options.content.value = '';
+        options.content.value = "";
         options.currentPageIndex.value = -1;
         options.currentScrollRatio.value =
           restore.scrollRatio >= 0 ? clampReaderRatio(restore.scrollRatio) : 0;
@@ -406,7 +406,7 @@ export function useReaderChapterOpen(options: UseReaderChapterOpenOptions) {
 
       const text = await options.fetchProcessedChapterText(
         index,
-        'reader.content.beforeRender',
+        "reader.content.beforeRender",
         openOptions.forceNetwork,
       );
       if (token !== openChapterToken) {
@@ -432,7 +432,7 @@ export function useReaderChapterOpen(options: UseReaderChapterOpenOptions) {
 
       if (!options.isComicMode.value && !options.isVideoMode.value) {
         void options
-          .fetchProcessedChapterText(index + 1, 'reader.content.beforePaginate')
+          .fetchProcessedChapterText(index + 1, "reader.content.beforePaginate")
           .catch(() => {});
       }
 

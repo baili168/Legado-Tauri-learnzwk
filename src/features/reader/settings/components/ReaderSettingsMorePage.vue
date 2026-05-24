@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ChevronLeft, ChevronRight } from 'lucide-vue-next';
-import type { ReaderSettings, ReaderTypography } from '@/components/reader/types';
+import { ChevronLeft, ChevronRight } from "lucide-vue-next";
+import type { ReaderSettings, ReaderTypography } from "@/components/reader/types";
 
-type MoreTarget = 'tapControls' | 'spacing' | 'pagePadding' | 'typography' | 'shortcuts';
+type MoreTarget = "tapControls" | "spacing" | "pagePadding" | "typography" | "shortcuts";
 
 defineProps<{
   settings: ReaderSettings;
@@ -13,14 +13,14 @@ defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'back'): void;
-  (e: 'reset'): void;
-  (e: 'update-typography', patch: Partial<ReaderTypography>): void;
-  (e: 'set-layout-debug', value: boolean): void;
-  (e: 'set-volume-key-page-turn', value: boolean): void;
-  (e: 'set-hide-top-bar-on-mobile', value: boolean): void;
-  (e: 'dump-pagination-layout'): void;
-  (e: 'navigate', target: MoreTarget): void;
+  (e: "back"): void;
+  (e: "reset"): void;
+  (e: "update-typography", patch: Partial<ReaderTypography>): void;
+  (e: "set-layout-debug", value: boolean): void;
+  (e: "set-volume-key-page-turn", value: boolean): void;
+  (e: "set-hide-top-bar-on-mobile", value: boolean): void;
+  (e: "dump-pagination-layout"): void;
+  (e: "navigate", target: MoreTarget): void;
 }>();
 </script>
 

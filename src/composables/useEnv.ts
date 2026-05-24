@@ -12,51 +12,51 @@
  *   import { isTauri, isMobile, envLabel, platform } from '@/composables/useEnv'
  */
 
-import { ref, computed, type ComputedRef } from 'vue';
+import { ref, computed, type ComputedRef } from "vue";
 
 /** 是否运行在 Tauri 原生壳中 */
-export const isTauri: boolean = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+export const isTauri: boolean = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
 /** 是否运行在鸿蒙原生桥接壳中（非 Tauri，但提供 invoke/listen 桥接） */
-export const isHarmonyNative: boolean = typeof window !== 'undefined' && '__legadoNative' in window;
+export const isHarmonyNative: boolean = typeof window !== "undefined" && "__legadoNative" in window;
 
 /** 是否具备原生传输能力（Tauri IPC 或鸿蒙桥接） */
 export const hasNativeTransport: boolean = isTauri || isHarmonyNative;
 
 /** 自动检测的移动端结果（固定值，不受模式覆盖影响） */
 export const autoIsMobile: boolean =
-  typeof window !== 'undefined' &&
+  typeof window !== "undefined" &&
   (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
-    window.matchMedia('(pointer: coarse)').matches);
+    window.matchMedia("(pointer: coarse)").matches);
 
 /**
  * UA-based 平台检测（作为初始值 / 非 Tauri 环境回退）。
  * 注意检测顺序：Android UA 中包含 "Linux"，必须先检测 Android/iPhone/iPad。
  */
 function detectPlatformFromUA(): string {
-  if (typeof navigator === 'undefined') {
-    return '';
+  if (typeof navigator === "undefined") {
+    return "";
   }
   const ua = navigator.userAgent;
   if (/HarmonyOS|OpenHarmony/i.test(ua)) {
-    return 'HarmonyOS';
+    return "HarmonyOS";
   }
   if (/Android/i.test(ua)) {
-    return 'Android';
+    return "Android";
   }
   if (/iPhone|iPad|iPod/i.test(ua)) {
-    return 'iOS';
+    return "iOS";
   }
   if (/Windows/i.test(ua)) {
-    return 'Windows';
+    return "Windows";
   }
   if (/Mac OS X/i.test(ua)) {
-    return 'macOS';
+    return "macOS";
   }
   if (/Linux/i.test(ua)) {
-    return 'Linux';
+    return "Linux";
   }
-  return '';
+  return "";
 }
 
 /**
@@ -85,20 +85,20 @@ export const platform: ComputedRef<string> = computed(() => _platform.value);
 export async function initPlatformFromRust(): Promise<void> {
   // 映射：将 Rust 返回的小写标识映射为展示用的标准字符串
   const map: Record<string, string> = {
-    windows: 'Windows',
-    macos: 'macOS',
-    linux: 'Linux',
-    android: 'Android',
-    ios: 'iOS',
+    windows: "Windows",
+    macos: "macOS",
+    linux: "Linux",
+    android: "Android",
+    ios: "iOS",
   };
 
   if (isTauri) {
     try {
-      const { invoke } = await import('@tauri-apps/api/core');
-      const raw = await invoke<string>('get_platform');
+      const { invoke } = await import("@tauri-apps/api/core");
+      const raw = await invoke<string>("get_platform");
       _platform.value = map[raw] ?? raw;
     } catch (e) {
-      console.warn('[useEnv] get_platform 失败，保持 UA 检测结果:', e);
+      console.warn("[useEnv] get_platform 失败，保持 UA 检测结果:", e);
     }
     return;
   }
@@ -108,8 +108,8 @@ export async function initPlatformFromRust(): Promise<void> {
     return; // 鸿蒙桥接模式通过 UA 已能准确识别，不需要额外请求
   }
   try {
-    const { transportInvoke } = await import('./useTransport');
-    const raw = await transportInvoke<string>('get_platform', undefined, 5000);
+    const { transportInvoke } = await import("./useTransport");
+    const raw = await transportInvoke<string>("get_platform", undefined, 5000);
     _platform.value = map[raw] ?? raw;
   } catch {
     // WS 未连接或命令不支持时静默降级
@@ -120,4 +120,4 @@ export async function initPlatformFromRust(): Promise<void> {
 export const isMobile = true;
 
 /** 人类可读的环境标签 */
-export const envLabel = '移动端';
+export const envLabel = "移动端";

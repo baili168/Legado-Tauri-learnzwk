@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { useMessage } from 'naive-ui';
-import { storeToRefs } from 'pinia';
-import { computed } from 'vue';
-import { isTauri } from '@/composables/useEnv';
-import { useLogZonePref } from '@/composables/useLogZonePref';
-import { useAppConfigStore, useShellStatusStore } from '@/stores';
-import { usePreferencesStore } from '@/stores/preferences';
-import SettingItem from './SettingItem.vue';
-import SettingSection from './SettingSection.vue';
-import CssSnippetEditor from './CssSnippetEditor.vue';
+import { ref } from "vue";
+import { useMessage } from "naive-ui";
+import { storeToRefs } from "pinia";
+import { computed } from "vue";
+import { isTauri } from "@/composables/useEnv";
+import { useLogZonePref } from "@/composables/useLogZonePref";
+import { useAppConfigStore, useShellStatusStore } from "@/stores";
+import { usePreferencesStore } from "@/stores/preferences";
+import SettingItem from "./SettingItem.vue";
+import SettingSection from "./SettingSection.vue";
+import CssSnippetEditor from "./CssSnippetEditor.vue";
 
 const message = useMessage();
 const _appCfg = useAppConfigStore();
@@ -28,7 +28,7 @@ const vConsoleChanged = computed(() => devTools.value.vConsoleEnabled !== _initV
 async function handleSet(key: string, value: string) {
   try {
     await setConfig(key, value);
-    message.success('已保存');
+    message.success("已保存");
   } catch (e: unknown) {
     message.error(`保存失败: ${e}`);
   }
@@ -87,10 +87,7 @@ async function handleSet(key: string, value: string) {
       </div>
     </SettingItem>
 
-    <SettingItem
-      label="CSS 片段"
-      desc="管理自定义 CSS 片段，实时注入页面样式"
-    >
+    <SettingItem label="CSS 片段" desc="管理自定义 CSS 片段，实时注入页面样式">
       <n-button size="small" @click="showCssEditor = true">管理</n-button>
     </SettingItem>
   </SettingSection>
@@ -100,7 +97,11 @@ async function handleSet(key: string, value: string) {
     preset="card"
     title="CSS 片段管理"
     :mask-closable="true"
-    @update:show="(v: boolean) => { if (!v) showCssEditor = false; }"
+    @update:show="
+      (v: boolean) => {
+        if (!v) showCssEditor = false;
+      }
+    "
     :style="{ width: '720px', maxWidth: 'calc(100vw - 32px)', maxHeight: '80vh' }"
   >
     <CssSnippetEditor />

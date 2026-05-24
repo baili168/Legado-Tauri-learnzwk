@@ -1,5 +1,5 @@
 <!--
-  BookshelfHeader — 书架页顶部标题、操作入口与分组标签栏。
+  BookshelfHeader — 书架页顶部标题、操作入口、分组标签栏与标签过滤栏。
 -->
 <script setup lang="ts">
 import {
@@ -8,16 +8,21 @@ import {
   Eye,
   FolderPlus,
   FilePlus,
+  ImagePlus,
   RefreshCw,
   Search,
+  FileSearch,
   Pencil,
   Settings2,
-} from 'lucide-vue-next';
-import type { DropdownOption } from 'naive-ui';
-import { computed } from 'vue';
-import MobileToolbarMenu from '@/components/layout/MobileToolbarMenu.vue';
-import type { CardSizeKey } from '@/composables/useViewCardDensity';
-import type { ShelfGroup } from '@/types/shelfGroup';
+  Plus,
+  X,
+  Tag,
+} from "lucide-vue-next";
+import type { DropdownOption } from "naive-ui";
+import { computed, ref, nextTick } from "vue";
+import MobileToolbarMenu from "@/components/layout/MobileToolbarMenu.vue";
+import type { CardSizeKey } from "@/composables/useViewCardDensity";
+import type { BookTag, ShelfGroup } from "@/types/shelfGroup";
 
 const props = defineProps<{
   bookCount: number;
@@ -29,46 +34,95 @@ const props = defineProps<{
   activeGroupId: string;
   showGroupMenu: boolean;
   loading?: boolean;
+  tags: BookTag[];
+  selectedTagIds: string[];
 }>();
 
 const emit = defineEmits<{
-  (e: 'set-size', key: CardSizeKey): void;
-  (e: 'toggle-privacy'): void;
-  (e: 'toggle-group-menu'): void;
-  (e: 'select-group', groupId: string): void;
-  (e: 'import-txt'): void;
-  (e: 'refresh'): void;
-  (e: 'toggle-search'): void;
-  (e: 'toggle-edit'): void;
+  (e: "set-size", key: CardSizeKey): void;
+  (e: "toggle-privacy"): void;
+  (e: "toggle-group-menu"): void;
+  (e: "select-group", groupId: string): void;
+  (e: "import-txt"): void;
+  (e: "import-cbz"): void;
+  (e: "refresh"): void;
+  (e: "toggle-search"): void;
+  (e: "toggle-global-search"): void;
+  (e: "toggle-edit"): void;
+  (e: "create-tag", name: string): void;
+  (e: "toggle-tag", tagId: string): void;
+  (e: "clear-tag-filter"): void;
 }>();
 
-// 启用的分组（排除禁用的）
+const showTagInput = ref(false);
+const newTagName = ref("");
+
 const enabledGroups = computed(() => {
   return props.groups.filter((g) => g.enabled);
 });
 
-// 是否显示分组标签栏（至少有一个启用的分组）
 const showGroupBar = computed(() => {
   return enabledGroups.value.length > 0;
 });
 
+const hasActiveTagFilter = computed(() => {
+  return props.selectedTagIds.length > 0;
+});
+
+function openTagInput() {
+  showTagInput.value = true;
+  newTagName.value = "";
+  nextTick(() => {
+    const input = document.getElementById("new-tag-name-input");
+    if (input instanceof HTMLInputElement) {
+      input.focus();
+    }
+  });
+}
+
+function confirmTag() {
+  const name = newTagName.value.trim();
+  if (name) {
+    emit("create-tag", name);
+  }
+  showTagInput.value = false;
+  newTagName.value = "";
+}
+
+function cancelTag() {
+  showTagInput.value = false;
+  newTagName.value = "";
+}
+
+function handleTagKeydown(e: KeyboardEvent) {
+  if (e.key === "Enter") {
+    confirmTag();
+  } else if (e.key === "Escape") {
+    cancelTag();
+  }
+}
+
 const mobileMenuOptions = computed<DropdownOption[]>(() => [
   {
-    label: '搜索书架',
-    key: 'search',
+    label: "搜索书架",
+    key: "search",
   },
   {
-    label: props.showGroupMenu ? '关闭分组管理' : '分组管理',
-    key: 'group-menu',
+    label: props.showGroupMenu ? "关闭分组管理" : "分组管理",
+    key: "group-menu",
   },
   {
-    label: '刷新书架',
-    key: 'refresh',
+    label: "刷新书架",
+    key: "refresh",
     disabled: props.loading,
   },
   {
-    label: '导入本地 TXT',
-    key: 'import-txt',
+    label: "导入本地 TXT",
+    key: "import-txt",
+  },
+  {
+    label: "导入本地 CBZ",
+    key: "import-cbz",
   },
   ...props.cardSizes.map((size) => ({
     label: `卡片大小：${size.label}`,
@@ -76,38 +130,41 @@ const mobileMenuOptions = computed<DropdownOption[]>(() => [
     disabled: props.activeSizeKey === size.key,
   })),
   {
-    label: props.privacyModeEnabled ? '退出隐私模式' : '进入隐私模式',
-    key: 'privacy',
+    label: props.privacyModeEnabled ? "退出隐私模式" : "进入隐私模式",
+    key: "privacy",
   },
   {
-    label: '编辑书架',
-    key: 'edit',
+    label: "编辑书架",
+    key: "edit",
   },
 ]);
 
 function handleMobileMenuSelect(key: string) {
-  if (key.startsWith('size-')) {
-    emit('set-size', key.slice(5) as CardSizeKey);
+  if (key.startsWith("size-")) {
+    emit("set-size", key.slice(5) as CardSizeKey);
     return;
   }
   switch (key) {
-    case 'search':
-      emit('toggle-search');
+    case "search":
+      emit("toggle-search");
       break;
-    case 'group-menu':
-      emit('toggle-group-menu');
+    case "group-menu":
+      emit("toggle-group-menu");
       break;
-    case 'refresh':
-      emit('refresh');
+    case "refresh":
+      emit("refresh");
       break;
-    case 'import-txt':
-      emit('import-txt');
+    case "import-txt":
+      emit("import-txt");
       break;
-    case 'privacy':
-      emit('toggle-privacy');
+    case "import-cbz":
+      emit("import-cbz");
       break;
-    case 'edit':
-      emit('toggle-edit');
+    case "privacy":
+      emit("toggle-privacy");
+      break;
+    case "edit":
+      emit("toggle-edit");
       break;
   }
 }
@@ -119,12 +176,11 @@ function handleMobileMenuSelect(key: string) {
       <div>
         <h1 class="bs-header__title">书架</h1>
         <p class="bs-header__sub">
-          {{ privacyModeEnabled ? '隐私模式' : `${bookCount} 本书籍` }}
+          {{ privacyModeEnabled ? "隐私模式" : `${bookCount} 本书籍` }}
         </p>
       </div>
       <div class="bs-header__actions">
         <MobileToolbarMenu :options="mobileMenuOptions" @select="handleMobileMenuSelect">
-          <!-- 搜索按钮 -->
           <button
             class="bs-icon-btn"
             type="button"
@@ -134,7 +190,15 @@ function handleMobileMenuSelect(key: string) {
           >
             <Search :size="16" />
           </button>
-          <!-- 分组按钮 -->
+          <button
+            class="bs-icon-btn"
+            type="button"
+            title="全文搜索"
+            aria-label="全文搜索"
+            @click="emit('toggle-global-search')"
+          >
+            <FileSearch :size="16" />
+          </button>
           <button
             class="bs-icon-btn"
             :class="{ 'bs-icon-btn--active': showGroupMenu }"
@@ -145,7 +209,6 @@ function handleMobileMenuSelect(key: string) {
           >
             <FolderPlus :size="16" />
           </button>
-          <!-- 刷新书架 -->
           <button
             class="bs-icon-btn"
             :class="{ 'bs-icon-btn--spinning': loading }"
@@ -157,7 +220,6 @@ function handleMobileMenuSelect(key: string) {
           >
             <RefreshCw :size="16" />
           </button>
-          <!-- TXT 导入 -->
           <button
             class="bs-icon-btn"
             type="button"
@@ -166,6 +228,15 @@ function handleMobileMenuSelect(key: string) {
             @click="emit('import-txt')"
           >
             <FilePlus :size="16" />
+          </button>
+          <button
+            class="bs-icon-btn"
+            type="button"
+            title="导入本地 CBZ"
+            aria-label="导入本地 CBZ"
+            @click="emit('import-cbz')"
+          >
+            <ImagePlus :size="16" />
           </button>
           <n-dropdown
             trigger="click"
@@ -193,7 +264,6 @@ function handleMobileMenuSelect(key: string) {
             <EyeOff v-if="privacyModeEnabled" :size="16" />
             <Eye v-else :size="16" />
           </button>
-          <!-- 编辑书架 -->
           <button
             class="bs-icon-btn"
             type="button"
@@ -207,7 +277,6 @@ function handleMobileMenuSelect(key: string) {
       </div>
     </div>
 
-    <!-- 分组标签栏 -->
     <div v-if="showGroupBar" class="bs-header__groups">
       <button
         v-for="group in enabledGroups"
@@ -218,7 +287,6 @@ function handleMobileMenuSelect(key: string) {
       >
         {{ group.name }}
       </button>
-      <!-- 分组编辑按钮（最右侧） -->
       <button
         class="bs-group-edit-btn"
         :class="{ 'bs-group-edit-btn--active': showGroupMenu }"
@@ -228,6 +296,50 @@ function handleMobileMenuSelect(key: string) {
         @click="emit('toggle-group-menu')"
       >
         <Settings2 :size="13" />
+      </button>
+    </div>
+
+    <div class="bs-header__tags">
+      <div class="bs-header__tags-list">
+        <button
+          v-for="tag in tags"
+          :key="tag.id"
+          class="bs-tag-chip"
+          :class="{ 'bs-tag-chip--active': selectedTagIds.includes(tag.id) }"
+          :style="{ '--tag-color': tag.color }"
+          @click="emit('toggle-tag', tag.id)"
+        >
+          <Tag :size="11" />
+          {{ tag.name }}
+        </button>
+
+        <div v-if="showTagInput" class="bs-tag-input-row">
+          <input
+            id="new-tag-name-input"
+            v-model="newTagName"
+            class="bs-tag-input"
+            placeholder="标签名..."
+            @keydown="handleTagKeydown"
+            @blur="cancelTag"
+          />
+        </div>
+
+        <button
+          v-if="!showTagInput"
+          class="bs-tag-chip bs-tag-chip--add"
+          @click="openTagInput"
+        >
+          <Plus :size="12" />
+        </button>
+      </div>
+
+      <button
+        v-if="hasActiveTagFilter"
+        class="bs-tag-clear-btn"
+        @click="emit('clear-tag-filter')"
+      >
+        <X :size="12" />
+        清除
       </button>
     </div>
   </div>
@@ -304,7 +416,6 @@ function handleMobileMenuSelect(key: string) {
   }
 }
 
-/* 分组标签栏 */
 .bs-header__groups {
   display: flex;
   flex-wrap: wrap;
@@ -365,7 +476,6 @@ function handleMobileMenuSelect(key: string) {
   }
 }
 
-/* 分组栏右侧编辑按钮 */
 .bs-group-edit-btn {
   flex-shrink: 0;
   margin-left: auto;
@@ -396,5 +506,125 @@ function handleMobileMenuSelect(key: string) {
   color: var(--color-accent);
   border-color: var(--color-accent);
   background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+}
+
+.bs-header__tags {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-border);
+}
+
+.bs-header__tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.bs-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: var(--fs-12);
+  color: var(--color-text-muted);
+  background: var(--color-fill-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease-standard),
+    border-color var(--dur-fast) var(--ease-standard),
+    background var(--dur-fast) var(--ease-standard);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .bs-tag-chip:hover {
+    color: var(--color-text);
+    border-color: var(--color-text-muted);
+  }
+}
+
+.bs-tag-chip--active {
+  color: var(--color-on-accent, #fff);
+  border-color: var(--tag-color);
+  background: var(--tag-color);
+}
+
+.bs-tag-chip--add {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  justify-content: center;
+  border-radius: 12px;
+  border-style: dashed;
+}
+
+.bs-tag-input-row {
+  display: flex;
+  align-items: center;
+}
+
+.bs-tag-input {
+  width: 80px;
+  height: 26px;
+  padding: 0 8px;
+  font-size: var(--fs-12);
+  border: 1px solid var(--color-accent);
+  border-radius: 12px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  outline: none;
+}
+
+.bs-tag-clear-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  padding: 3px 8px;
+  font-size: var(--fs-12);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease-standard),
+    border-color var(--dur-fast) var(--ease-standard);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .bs-tag-clear-btn:hover {
+    color: var(--color-text);
+    border-color: var(--color-text-muted);
+  }
+}
+
+@media (pointer: coarse), (max-width: 640px) {
+  .bs-header__tags {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .bs-header__tags::-webkit-scrollbar {
+    display: none;
+  }
+
+  .bs-header__tags-list {
+    flex-wrap: nowrap;
+  }
+
+  .bs-tag-chip {
+    flex-shrink: 0;
+    padding: 3px 8px;
+    font-size: 11px;
+  }
 }
 </style>

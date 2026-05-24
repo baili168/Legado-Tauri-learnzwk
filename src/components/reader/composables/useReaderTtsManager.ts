@@ -1,7 +1,8 @@
-import type { ComputedRef, Ref } from 'vue';
-import { nextTick, ref, watch } from 'vue';
-import { useTts, splitIntoSegments } from '@/composables/useTts';
-import type { PagedModeApi, ScrollModeApi } from './useReaderModeBridge';
+import type { ComputedRef, Ref } from "vue";
+import { nextTick, ref, watch } from "vue";
+import { useTts, splitIntoSegments } from "@/composables/useTts";
+import { useTtsController } from "@/composables/useTtsController";
+import type { PagedModeApi, ScrollModeApi } from "./useReaderModeBridge";
 
 interface UseReaderTtsManagerOptions {
   activeChapterIndex: Ref<number>;
@@ -25,8 +26,8 @@ interface UseReaderTtsManagerOptions {
 /** 从页面 HTML 字符串中提取所有 .reader-line 的纯文本 */
 function extractPageLines(html: string): string[] {
   const parser = new DOMParser();
-  const doc = parser.parseFromString(html, 'text/html');
-  return Array.from(doc.querySelectorAll('.reader-line'))
+  const doc = parser.parseFromString(html, "text/html");
+  return Array.from(doc.querySelectorAll(".reader-line"))
     .map((el) => el.textContent.trim())
     .filter(Boolean);
 }
@@ -55,8 +56,11 @@ export function useReaderTtsManager(options: UseReaderTtsManagerOptions) {
   void _isPagedMode;
 
   const tts = useTts();
-  const ttsProgressText = ref('—');
+  const ttsCtrl = useTtsController();
+  const ttsProgressText = ref("—");
   const ttsScrollHighlightIdx = ref(-1);
+  const ttsScrollSentenceIdx = ref(-1);
+  const isTtsSentenceActive = ref(false);
   const showTtsBar = ref(false);
 
   // TTS 分页模式状态（跨章节持续累计）
@@ -102,7 +106,7 @@ export function useReaderTtsManager(options: UseReaderTtsManagerOptions) {
     ttsFeedChapter = activeChapterIndex.value;
     let globalIdx = 0;
 
-    const firstLines = extractPageLines(pages[startPage] ?? '');
+    const firstLines = extractPageLines(pages[startPage] ?? "");
     if (firstLines.length > 0) {
       ttsPageRanges.push({
         page: startPage,
@@ -119,7 +123,7 @@ export function useReaderTtsManager(options: UseReaderTtsManagerOptions) {
 
       if (nextPage < currentPages.length) {
         ttsFeedPage = nextPage;
-        const lines = extractPageLines(currentPages[nextPage] ?? '');
+        const lines = extractPageLines(currentPages[nextPage] ?? "");
         if (lines.length > 0) {
           ttsPageRanges.push({
             page: nextPage,
@@ -145,7 +149,7 @@ export function useReaderTtsManager(options: UseReaderTtsManagerOptions) {
         return null;
       }
 
-      const lines = extractPageLines(newPages[0] ?? '');
+      const lines = extractPageLines(newPages[0] ?? "");
       if (lines.length > 0) {
         ttsPageRanges.push({
           page: 0,
@@ -189,80 +193,65 @@ export function useReaderTtsManager(options: UseReaderTtsManagerOptions) {
     };
   }
 
-  /** 构建滚动模式的 TTS 启动参数 */
-  function buildScrollTtsOptions() {
-    const startPara = scrollModeRef.value?.getFirstVisibleParaIndex?.() ?? 0;
-    ttsFeedChapter = activeChapterIndex.value;
+  /** 启动滚动模式的句子级 TTS（使用 useTtsController） */
+  function startScrollTtsWithController(): boolean {
+    const text = content.value;
+    const startIdx = activeChapterIndex.value;
 
-    const paragraphs = content.value.split(/\n+/).filter((p) => p.trim());
-    const initialSegs = paragraphs.slice(startPara).flatMap((p) => splitIntoSegments(p));
+    ttsCtrl.setCallbacks({
+      onSentenceChange: (sentenceIdx: number) => {
+        ttsScrollSentenceIdx.value = sentenceIdx;
+        const paraIdx = findParagraphForSentence(sentenceIdx);
+        if (paraIdx >= 0) {
+          ttsScrollHighlightIdx.value = paraIdx;
+        }
+        ttsProgressText.value = `第 ${sentenceIdx + 1} 句`;
+      },
+      onChapterEnd: () => {
+        // handled by chapterProvider
+      },
+      onAllDone: () => {
+        isTtsSentenceActive.value = false;
+        showTtsBar.value = false;
+        ttsScrollSentenceIdx.value = -1;
+        ttsScrollHighlightIdx.value = -1;
+      },
+    });
 
-    if (initialSegs.length === 0) {
-      return null;
-    }
-
-    const segToParaMap: number[] = [];
-    for (let pi = startPara; pi < paragraphs.length; pi++) {
-      const segs = splitIntoSegments(paragraphs[pi] ?? '');
-      for (let si = 0; si < segs.length; si++) {
-        segToParaMap.push(pi);
-      }
-    }
-    let totalInitialSegs = initialSegs.length;
-
-    const onNeedMore = async (): Promise<string[] | null> => {
-      if (!hasNext.value) {
-        return null;
-      }
+    ttsCtrl.setChapterProvider(async (currentKey) => {
+      if (!hasNext.value) return null;
       void fetchRawChapterText(activeChapterIndex.value + 1);
       await gotoNextChapterAndWait();
-      ttsFeedChapter = activeChapterIndex.value;
-      const newParas = content.value.split(/\n+/).filter((p) => p.trim());
-      const newSegs = newParas.flatMap((p) => splitIntoSegments(p));
-      for (let pi = 0; pi < newParas.length; pi++) {
-        const segs = splitIntoSegments(newParas[pi] ?? '');
-        for (let si = 0; si < segs.length; si++) {
-          segToParaMap.push(pi);
-        }
-      }
-      totalInitialSegs += newSegs.length;
-      return newSegs.length > 0 ? newSegs : null;
-    };
+      return {
+        text: content.value,
+        key: activeChapterIndex.value,
+        hasMore: hasNext.value,
+      };
+    });
 
-    const onSegmentStart = (gIdx: number) => {
-      const paraIdx = segToParaMap[gIdx] ?? -1;
-      if (paraIdx >= 0) {
-        ttsScrollHighlightIdx.value = paraIdx;
-        ttsProgressText.value = `第 ${paraIdx + 1} 段`;
-        void nextTick(() => {
-          const el = scrollModeRef.value;
-          if (!el) {
-            return;
-          }
-          const container = el.$el ?? null;
-          if (!container) {
-            return;
-          }
-          const paras = container.querySelectorAll<HTMLElement>('.scroll-mode__para');
-          paras[paraIdx]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        });
-      }
-    };
+    ttsCtrl.start(text, startIdx);
+    isTtsSentenceActive.value = true;
+    return true;
+  }
 
-    return {
-      initialSegments: initialSegs,
-      onNeedMore,
-      onSegmentStart,
-      onAllDone: () => {
-        showTtsBar.value = false;
-      },
-    };
+  function findParagraphForSentence(sentenceIdx: number): number {
+    const paragraphs = content.value.split(/\n+/).filter((p) => p.trim());
+    let globalCount = 0;
+    for (let pi = 0; pi < paragraphs.length; pi++) {
+      const sents = splitIntoSentences(paragraphs[pi] ?? "");
+      if (sentenceIdx < globalCount + sents.length) {
+        return pi;
+      }
+      globalCount += sents.length;
+    }
+    return -1;
   }
 
   function onTtsToggle() {
     if (showTtsBar.value) {
       showTtsBar.value = false;
       tts.stop();
+      ttsCtrl.stop();
       return;
     }
 
@@ -270,19 +259,20 @@ export function useReaderTtsManager(options: UseReaderTtsManagerOptions) {
       return;
     }
 
-    let opts: ReturnType<typeof buildPagedTtsOptions>;
     if (isScrollMode.value) {
-      opts = buildScrollTtsOptions();
+      if (!startScrollTtsWithController()) {
+        return;
+      }
     } else {
-      opts = buildPagedTtsOptions();
-    }
-    if (!opts) {
-      return;
+      const opts = buildPagedTtsOptions();
+      if (!opts) {
+        return;
+      }
+      tts.startReading(opts);
     }
 
     showTtsBar.value = true;
-    ttsProgressText.value = '—';
-    tts.startReading(opts);
+    ttsProgressText.value = "—";
   }
 
   // TTS 控制条关闭时停止播放 + 清除高亮
@@ -291,9 +281,12 @@ export function useReaderTtsManager(options: UseReaderTtsManagerOptions) {
     (v) => {
       if (!v) {
         tts.stop();
+        ttsCtrl.stop();
+        isTtsSentenceActive.value = false;
         ttsScrollHighlightIdx.value = -1;
+        ttsScrollSentenceIdx.value = -1;
         pagedModeRef.value?.clearTtsHighlight?.();
-        ttsProgressText.value = '—';
+        ttsProgressText.value = "—";
       }
     },
   );
@@ -302,7 +295,10 @@ export function useReaderTtsManager(options: UseReaderTtsManagerOptions) {
   watch(activeChapterIndex, () => {
     if (!showTtsBar.value) {
       tts.stop();
+      ttsCtrl.stop();
+      isTtsSentenceActive.value = false;
       ttsScrollHighlightIdx.value = -1;
+      ttsScrollSentenceIdx.value = -1;
     }
   });
 
@@ -310,6 +306,8 @@ export function useReaderTtsManager(options: UseReaderTtsManagerOptions) {
     tts,
     ttsProgressText,
     ttsScrollHighlightIdx,
+    ttsScrollSentenceIdx,
+    isTtsSentenceActive,
     showTtsBar,
     onTtsToggle,
   };

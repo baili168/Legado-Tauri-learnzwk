@@ -1,23 +1,26 @@
 <script setup lang="ts">
-import type { Component } from 'vue';
-import { BookOpen, Compass, Search, LayoutGrid, Package, SlidersHorizontal } from 'lucide-vue-next';
-import type { NavItem } from './types';
+import type { Component } from "vue";
+import { BookOpen, Compass, Search, LayoutGrid, Package, SlidersHorizontal, Bell } from "lucide-vue-next";
+import type { NavItem } from "./types";
 
 const props = withDefaults(
   defineProps<{
     items?: NavItem[];
     activeId?: string;
     version?: string;
+    unreadCount?: number;
   }>(),
   {
     items: () => [],
-    activeId: '',
-    version: '',
+    activeId: "",
+    version: "",
+    unreadCount: 0,
   },
 );
 
 const emit = defineEmits<{
   select: [id: string];
+  notification: [];
 }>();
 
 const ICON_COMPONENTS: Record<string, Component> = {
@@ -59,6 +62,25 @@ const ICON_COMPONENTS: Record<string, Component> = {
             <span v-if="item.badge" class="nav-rail__badge">{{ item.badge }}</span>
           </span>
           <span class="nav-rail__label">{{ item.label }}</span>
+        </button>
+      </li>
+      <li
+        class="nav-rail__item"
+        :class="{ 'nav-rail__item--active': activeId === 'updateFeed' }"
+      >
+        <button
+          class="nav-rail__btn"
+          aria-label="更新通知"
+          :aria-selected="activeId === 'updateFeed'"
+          role="tab"
+          @click="emit('notification')"
+        >
+          <span class="nav-rail__indicator" aria-hidden="true" />
+          <span class="nav-rail__icon">
+            <Bell :size="24" :stroke-width="1.75" />
+            <span v-if="unreadCount > 0" class="nav-rail__badge">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+          </span>
+          <span class="nav-rail__label">更新</span>
         </button>
       </li>
     </ul>

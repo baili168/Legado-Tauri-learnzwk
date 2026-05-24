@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import { NInputNumber, useMessage } from 'naive-ui';
-import { storeToRefs } from 'pinia';
-import { computed, onMounted, ref } from 'vue';
-import type { StorageDebugDump } from '@/composables/useFrontendStorage';
-import type { ShelfBook } from '@/types';
-import { comicCacheClear, comicCacheSize } from '@/composables/useBookSource';
-import { hasNativeTransport } from '@/composables/useEnv';
-import { loadStorageDebugDump } from '@/composables/useFrontendStorage';
-import { invokeWithTimeout } from '@/composables/useInvoke';
-import { isTransportAvailable } from '@/composables/useTransport';
-import { useAppConfigStore, useBookshelfStore } from '@/stores';
-import SettingItem from './SettingItem.vue';
-import SettingSection from './SettingSection.vue';
+import { NInputNumber, useMessage } from "naive-ui";
+import { storeToRefs } from "pinia";
+import { computed, onMounted, ref } from "vue";
+import type { StorageDebugDump } from "@/composables/useFrontendStorage";
+import type { ShelfBook } from "@/types";
+import { comicCacheClear, comicCacheSize } from "@/composables/useBookSource";
+import { hasNativeTransport } from "@/composables/useEnv";
+import { loadStorageDebugDump } from "@/composables/useFrontendStorage";
+import { invokeWithTimeout } from "@/composables/useInvoke";
+import { isTransportAvailable } from "@/composables/useTransport";
+import { useAppConfigStore, useBookshelfStore } from "@/stores";
+import SettingItem from "./SettingItem.vue";
+import SettingSection from "./SettingSection.vue";
 
 const message = useMessage();
 const _appCfg = useAppConfigStore();
@@ -28,10 +28,10 @@ const transportReady = ref(hasNativeTransport);
 const loadingInspector = ref(false);
 const storageDump = ref<StorageDebugDump | null>(null);
 const scriptScopes = ref<Array<{ namespace: string; count: number }>>([]);
-const selectedFrontendNamespace = ref('');
-const selectedScriptScope = ref('');
+const selectedFrontendNamespace = ref("");
+const selectedScriptScope = ref("");
 const bookshelfItems = ref<ShelfBook[]>([]);
-const selectedBookshelfId = ref('');
+const selectedBookshelfId = ref("");
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) {
@@ -87,7 +87,7 @@ const currentBookshelfData = computed(
 async function handleSet(key: string, value: string) {
   try {
     await setConfig(key, value);
-    message.success('已保存');
+    message.success("已保存");
   } catch (e: unknown) {
     message.error(`保存失败: ${e}`);
   }
@@ -103,7 +103,7 @@ async function refreshCacheSize() {
     /* ignore */
   }
   try {
-    coverCacheSizeBytes.value = await invokeWithTimeout<number>('cover_cache_size', {}, 10_000);
+    coverCacheSizeBytes.value = await invokeWithTimeout<number>("cover_cache_size", {}, 10_000);
   } catch {
     /* ignore */
   }
@@ -131,7 +131,7 @@ async function handleClearCoverCache() {
   }
   coverCacheClearing.value = true;
   try {
-    const freed = await invokeWithTimeout<number>('cover_cache_clear', {}, 15_000);
+    const freed = await invokeWithTimeout<number>("cover_cache_clear", {}, 15_000);
     coverCacheSizeBytes.value = 0;
     message.success(`封面缓存已清理 ${formatBytes(freed)}`);
   } catch (e: unknown) {
@@ -150,7 +150,7 @@ async function refreshInspector() {
     await loadConfig();
     storageDump.value = await loadStorageDebugDump();
     scriptScopes.value = await invokeWithTimeout<Array<{ namespace: string; count: number }>>(
-      'config_list_scopes',
+      "config_list_scopes",
       undefined,
       10_000,
     );
@@ -180,7 +180,7 @@ async function refreshSelectedScope() {
   }
   try {
     const entries = await invokeWithTimeout<Array<{ key: string; value: string }>>(
-      'config_dump_scope',
+      "config_dump_scope",
       { scope: selectedScriptScope.value },
       10_000,
     );
@@ -268,10 +268,10 @@ onMounted(async () => {
         <span class="slider-value">
           {{
             config.cache_prefetch_count < 0
-              ? '全部'
+              ? "全部"
               : config.cache_prefetch_count === 0
-                ? '关闭'
-                : config.cache_prefetch_count + '章'
+                ? "关闭"
+                : config.cache_prefetch_count + "章"
           }}
         </span>
       </div>
@@ -311,8 +311,8 @@ onMounted(async () => {
     >
       <div class="inspector-toolbar">
         <n-button size="small" :loading="loadingInspector" @click="refreshInspector">刷新</n-button>
-        <span class="path-text">app_state: {{ storageDump?.appStatePath || '未初始化' }}</span>
-        <span class="path-text">bookshelf: {{ storageDump?.bookshelfPath || '未初始化' }}</span>
+        <span class="path-text">app_state: {{ storageDump?.appStatePath || "未初始化" }}</span>
+        <span class="path-text">bookshelf: {{ storageDump?.bookshelfPath || "未初始化" }}</span>
       </div>
 
       <n-tabs type="line" animated>
@@ -330,7 +330,7 @@ onMounted(async () => {
             />
           </div>
           <pre class="json-view">{{
-            formatJson(currentFrontendNamespaceData ?? { hint: '暂无前端命名空间数据' })
+            formatJson(currentFrontendNamespaceData ?? { hint: "暂无前端命名空间数据" })
           }}</pre>
         </n-tab-pane>
 
@@ -345,7 +345,7 @@ onMounted(async () => {
             />
           </div>
           <pre class="json-view">{{
-            formatJson(currentScriptScopeData ?? { hint: '暂无脚本配置数据' })
+            formatJson(currentScriptScopeData ?? { hint: "暂无脚本配置数据" })
           }}</pre>
         </n-tab-pane>
 
@@ -359,13 +359,13 @@ onMounted(async () => {
             />
           </div>
           <pre class="json-view">{{
-            formatJson(currentBookshelfData ?? { hint: '当前书架为空' })
+            formatJson(currentBookshelfData ?? { hint: "当前书架为空" })
           }}</pre>
         </n-tab-pane>
 
         <n-tab-pane name="client-state" tab="同步状态">
           <pre class="json-view">{{
-            formatJson(storageDump?.clientStates ?? { hint: '暂无客户端同步状态' })
+            formatJson(storageDump?.clientStates ?? { hint: "暂无客户端同步状态" })
           }}</pre>
         </n-tab-pane>
       </n-tabs>

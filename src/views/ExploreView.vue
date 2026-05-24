@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import {
   Search,
   RefreshCw,
@@ -8,39 +8,44 @@ import {
   LayoutGrid,
   Image,
   List,
-} from 'lucide-vue-next';
-import { useDialog, useMessage } from 'naive-ui';
-import { storeToRefs } from 'pinia';
-import { ref, reactive, computed, nextTick, onMounted, onUnmounted, watch } from 'vue';
-import type { BookSourceMeta, BookItem } from '@/types';
-import SourceTypeBadge from '@/components/base/SourceTypeBadge.vue';
-import { useBookDetailDrawerState } from '@/composables/useBookDetailDrawerState';
-import { deleteBookSource } from '@/composables/useBookSource';
-import { useDynamicConfig } from '@/composables/useDynamicConfig';
-import { eventListen, eventEmit } from '@/composables/useEventBus';
-import { dbgLog } from '@/composables/useFrontendStorage';
-import { useInlineBookReader } from '@/composables/useInlineBookReader';
-import { useMobileHorizontalSwipe } from '@/composables/useMobileHorizontalSwipe';
-import { useOverlayBackstack } from '@/composables/useOverlayBackstack';
-import { useViewCardDensity, normalizeCardSizeKey } from '@/composables/useViewCardDensity';
+  TrendingUp,
+} from "lucide-vue-next";
+import { useDialog, useMessage } from "naive-ui";
+import { storeToRefs } from "pinia";
+import { ref, reactive, computed, nextTick, onMounted, onUnmounted, watch } from "vue";
+import type { BookSourceMeta, BookItem } from "@/types";
+import SourceTypeBadge from "@/components/base/SourceTypeBadge.vue";
+import { useBookDetailDrawerState } from "@/composables/useBookDetailDrawerState";
+import { deleteBookSource } from "@/composables/useBookSource";
+import { useDynamicConfig } from "@/composables/useDynamicConfig";
+import { eventListen, eventEmit } from "@/composables/useEventBus";
+import { dbgLog } from "@/composables/useFrontendStorage";
+import { useInlineBookReader } from "@/composables/useInlineBookReader";
+import { useMobileHorizontalSwipe } from "@/composables/useMobileHorizontalSwipe";
+import { useOverlayBackstack } from "@/composables/useOverlayBackstack";
+import { useViewCardDensity, normalizeCardSizeKey } from "@/composables/useViewCardDensity";
+import { useRecommendation } from "@/composables/useRecommendation";
 import {
   useBookSourceStore,
   useNavigationStore,
   useBookshelfStore,
   usePrivacyModeStore,
   useScriptBridgeStore,
-} from '@/stores';
-import AppEmpty from '../components/base/AppEmpty.vue';
-import BookDetailDrawer from '../components/explore/BookDetailDrawer.vue';
-import ChapterReaderModal from '../components/explore/ChapterReaderModal.vue';
-import ExploreViewSortModal from '../components/explore/ExploreViewSortModal.vue';
-import SourceExploreSection from '../components/explore/SourceExploreSection.vue';
-import AppPageHeader from '../components/layout/AppPageHeader.vue';
-import MobileToolbarMenu from '../components/layout/MobileToolbarMenu.vue';
+} from "@/stores";
+import AppEmpty from "../components/base/AppEmpty.vue";
+import BookDetailDrawer from "../components/explore/BookDetailDrawer.vue";
+import ChapterReaderModal from "../components/explore/ChapterReaderModal.vue";
+import ExploreViewSortModal from "../components/explore/ExploreViewSortModal.vue";
+import SourceExploreSection from "../components/explore/SourceExploreSection.vue";
+import TopRankings from "../components/explore/TopRankings.vue";
+import RandomDiscoveryCard from "../components/explore/RandomDiscoveryCard.vue";
+import RecommendationStrip from "../components/explore/RecommendationStrip.vue";
+import AppPageHeader from "../components/layout/AppPageHeader.vue";
+import MobileToolbarMenu from "../components/layout/MobileToolbarMenu.vue";
 import {
   preloadExploreCategoryCache,
   preloadExploreBooksCache,
-} from '../composables/useExploreCategoryCache';
+} from "../composables/useExploreCategoryCache";
 
 const bookSourceStore = useBookSourceStore();
 const navigationStore = useNavigationStore();
@@ -51,13 +56,15 @@ const message = useMessage();
 const dialog = useDialog();
 const { sources: sourcesRef } = storeToRefs(bookSourceStore);
 const { runChapterList, cancelTask, clearExploreCache } = scriptBridgeStore;
+
+const { recommendedBooks, isLoading: recLoading, getRecommendations } = useRecommendation();
 const {
   cardSizes: CARD_SIZES,
   activeSizeKey,
   activeSize,
   style: explorerStyle,
   setSize,
-} = useViewCardDensity('explore');
+} = useViewCardDensity("explore");
 
 // ── 书源列表 & 能力检测 ──────────────────────────────────────────────────
 const explorableSources = computed(() => bookSourceStore.explorableSources);
@@ -68,9 +75,9 @@ const sourceSystemStarting = computed(
 
 // ── 上次选中的书源 tab 持久化 ────────────────────────────────────────────
 const activeTabStore = useDynamicConfig<{ tab: string }>({
-  namespace: 'explore.activeTab',
+  namespace: "explore.activeTab",
   version: 1,
-  defaults: () => ({ tab: '' }),
+  defaults: () => ({ tab: "" }),
   migrate: () => null,
   legacyKeys: [],
 });
@@ -82,7 +89,7 @@ const activeSourceTab = computed<string>({
 });
 // ── 免责声明弹窗 ─────────────────────────────────────────────────────────
 const disclaimerStore = useDynamicConfig<{ hidden: boolean }>({
-  namespace: 'explore.disclaimer',
+  namespace: "explore.disclaimer",
   version: 1,
   defaults: () => ({ hidden: false }),
   migrate: () => null,
@@ -95,30 +102,30 @@ const disclaimerDontShow = ref(false);
 async function confirmDisclaimer() {
   if (disclaimerDontShow.value) {
     await disclaimerStore.replace({ hidden: true });
-    dbgLog('[Disclaimer] hidden=true 写入后端完成');
+    dbgLog("[Disclaimer] hidden=true 写入后端完成");
   }
   showDisclaimer.value = false;
 }
 
 const exploreTabOrderStore = useDynamicConfig<{ order: string[] }>({
-  namespace: 'explore.tabOrder',
+  namespace: "explore.tabOrder",
   version: 1,
   defaults: () => ({ order: [] }),
   migrate: ({ readLegacy }) => {
-    const raw = readLegacy('explore-tab-order');
+    const raw = readLegacy("explore-tab-order");
     if (!raw) {
       return null;
     }
     try {
       const parsed = JSON.parse(raw);
       return {
-        order: Array.isArray(parsed) ? parsed.filter((item) => typeof item === 'string') : [],
+        order: Array.isArray(parsed) ? parsed.filter((item) => typeof item === "string") : [],
       };
     } catch {
       return null;
     }
   },
-  legacyKeys: ['explore-tab-order'],
+  legacyKeys: ["explore-tab-order"],
 });
 
 const tabOrder = computed(() => exploreTabOrderStore.state.order);
@@ -161,6 +168,10 @@ function openSortModal() {
 }
 
 // ── 当前书源元信息 ───────────────────────────────────────────────────────
+const RANKINGS_TAB_KEY = "__rankings__";
+
+const isRankingsTab = computed(() => activeSourceTab.value === RANKINGS_TAB_KEY);
+
 const currentSource = computed<BookSourceMeta | undefined>(() =>
   explorableSources.value.find((s) => s.fileName === activeSourceTab.value),
 );
@@ -171,7 +182,7 @@ const activeSourceCanSearch = computed(() => {
     return false;
   }
   const caps = bookSourceStore.getCachedCapabilities(fileName);
-  return !!(caps?.has('search') && bookSourceStore.isSearchUserEnabled(fileName));
+  return !!(caps?.has("search") && bookSourceStore.isSearchUserEnabled(fileName));
 });
 // ── 刷新（触发当前书源 Section 刷新） ───────────────────────────────────
 const refreshing = ref(false);
@@ -222,11 +233,11 @@ async function handleForceReload() {
 const showCovers = ref(true);
 
 // 显示模式：card=卡片网格，cover=封面书架，list=列表单列
-type ExploreDisplayMode = 'card' | 'cover' | 'list';
+type ExploreDisplayMode = "card" | "cover" | "list";
 const displayModeStore = useDynamicConfig<{ mode: ExploreDisplayMode }>({
-  namespace: 'explore.displayMode',
+  namespace: "explore.displayMode",
   version: 1,
-  defaults: () => ({ mode: 'card' }),
+  defaults: () => ({ mode: "card" }),
   migrate: () => null,
   legacyKeys: [],
 });
@@ -238,25 +249,25 @@ const displayMode = computed<ExploreDisplayMode>({
 // ── 移动端三点菜单 ──────────────────────────────────────────────────────
 const exploreMobileMenuOptions = computed(() => [
   {
-    label: '卡片模式',
-    key: 'mode-card',
-    disabled: displayMode.value === 'card',
+    label: "卡片模式",
+    key: "mode-card",
+    disabled: displayMode.value === "card",
   },
   {
-    label: '封面模式',
-    key: 'mode-cover',
-    disabled: displayMode.value === 'cover',
+    label: "封面模式",
+    key: "mode-cover",
+    disabled: displayMode.value === "cover",
   },
   {
-    label: '列表模式',
-    key: 'mode-list',
-    disabled: displayMode.value === 'list',
+    label: "列表模式",
+    key: "mode-list",
+    disabled: displayMode.value === "list",
   },
-  ...(displayMode.value !== 'cover'
+  ...(displayMode.value !== "cover"
     ? [
         {
-          label: showCovers.value ? '隐藏封面' : '显示封面',
-          key: 'toggle-covers',
+          label: showCovers.value ? "隐藏封面" : "显示封面",
+          key: "toggle-covers",
         },
       ]
     : []),
@@ -266,35 +277,35 @@ const exploreMobileMenuOptions = computed(() => [
     disabled: activeSizeKey.value === s.key,
   })),
   {
-    label: '书源排序',
-    key: 'sort',
+    label: "书源排序",
+    key: "sort",
   },
   {
-    label: '刷新当前书源',
-    key: 'refresh',
+    label: "刷新当前书源",
+    key: "refresh",
   },
   {
-    label: '全部重载',
-    key: 'reload-all',
+    label: "全部重载",
+    key: "reload-all",
   },
 ]);
 
 function handleExploreMobileMenuSelect(key: string) {
-  if (key === 'mode-card') {
-    displayMode.value = 'card';
-  } else if (key === 'mode-cover') {
-    displayMode.value = 'cover';
-  } else if (key === 'mode-list') {
-    displayMode.value = 'list';
-  } else if (key === 'toggle-covers') {
+  if (key === "mode-card") {
+    displayMode.value = "card";
+  } else if (key === "mode-cover") {
+    displayMode.value = "cover";
+  } else if (key === "mode-list") {
+    displayMode.value = "list";
+  } else if (key === "toggle-covers") {
     showCovers.value = !showCovers.value;
-  } else if (key.startsWith('size-')) {
+  } else if (key.startsWith("size-")) {
     setSize(normalizeCardSizeKey(key.slice(5), activeSizeKey.value));
-  } else if (key === 'sort') {
+  } else if (key === "sort") {
     openSortModal();
-  } else if (key === 'refresh') {
+  } else if (key === "refresh") {
     handleRefresh();
-  } else if (key === 'reload-all') {
+  } else if (key === "reload-all") {
     handleForceReload();
   }
 }
@@ -328,6 +339,10 @@ function handleOpenBookByUrl(bookUrl: string, fileName: string) {
   openDetailByUrl(bookUrl, fileName);
 }
 
+function handleRecommendationSelect(book: BookItem, fileName: string) {
+  openDetail(book, fileName);
+}
+
 // ── Tab 右键 / 长按菜单 ──────────────────────────────────────────────────
 const tabMenu = reactive({
   visible: false,
@@ -342,15 +357,15 @@ const tabMenuOptions = computed(() => {
     return [];
   }
   const caps = bookSourceStore.getCachedCapabilities(src.fileName);
-  const hasSearch = caps?.has('search') && bookSourceStore.isSearchUserEnabled(src.fileName);
+  const hasSearch = caps?.has("search") && bookSourceStore.isSearchUserEnabled(src.fileName);
   const opts: { label: string; key: string; type?: string }[] = [];
   if (hasSearch) {
-    opts.push({ label: '使用此书源搜索', key: 'search' });
+    opts.push({ label: "使用此书源搜索", key: "search" });
   }
   opts.push(
-    { label: '禁用书源', key: 'disable' },
-    { type: 'divider', key: 'd1', label: '' },
-    { label: '删除书源', key: 'delete' },
+    { label: "禁用书源", key: "disable" },
+    { type: "divider", key: "d1", label: "" },
+    { label: "删除书源", key: "delete" },
   );
   return opts;
 });
@@ -409,29 +424,29 @@ async function handleTabMenuSelect(key: string) {
     return;
   }
 
-  if (key === 'search') {
+  if (key === "search") {
     navigationStore.navigateToSearch(src.fileName);
-  } else if (key === 'disable') {
+  } else if (key === "disable") {
     try {
       await bookSourceStore.toggleSource(src.fileName, false, src.sourceDir);
       message.success(`已禁用「${src.name}」`);
     } catch (e: unknown) {
       message.error(`禁用失败: ${e instanceof Error ? e.message : String(e)}`);
     }
-  } else if (key === 'delete') {
+  } else if (key === "delete") {
     dialog.warning({
-      title: '删除书源',
+      title: "删除书源",
       content: `确认删除「${src.name}」？此操作将删除磁盘文件，不可恢复。`,
-      positiveText: '删除',
-      negativeText: '取消',
+      positiveText: "删除",
+      negativeText: "取消",
       onPositiveClick: async () => {
         try {
           await deleteBookSource(src.fileName, src.sourceDir);
-          await eventEmit('app:booksource-reload', {
-            scope: 'single',
+          await eventEmit("app:booksource-reload", {
+            scope: "single",
             fileName: src.fileName,
           });
-          message.success('已删除');
+          message.success("已删除");
         } catch (e: unknown) {
           message.error(`删除失败: ${e instanceof Error ? e.message : String(e)}`);
         }
@@ -526,7 +541,7 @@ onMounted(async () => {
     await bookSourceStore.detectAllCapabilities();
     if (!bookSourceStore.explorableSources.some((s) => s.fileName === activeSourceTab.value)) {
       await activeTabStore.replace({
-        tab: bookSourceStore.explorableSources[0]?.fileName ?? '',
+        tab: bookSourceStore.explorableSources[0]?.fileName ?? "",
       });
     }
     if (evTabsRef.value) {
@@ -536,14 +551,15 @@ onMounted(async () => {
     requestAnimationFrame(() => {
       scrollActiveSourceTabIntoView();
     });
+    getRecommendations();
     unlisteners.push(
       await eventListen<{ fileName?: string; reason?: string }>(
-        'booksource:changed',
+        "booksource:changed",
         async (event) => {
           const { fileName: changedFileName, reason } = event.payload ?? {};
           if (changedFileName) {
             // toggle 操作只切换 enabled，不影响发现内容，跳过重载
-            if (reason === 'toggle') {
+            if (reason === "toggle") {
               return;
             }
             await refreshSingleSource(changedFileName);
@@ -555,10 +571,10 @@ onMounted(async () => {
     );
     unlisteners.push(
       await eventListen<{ scope?: string; fileName?: string }>(
-        'app:booksource-reload',
+        "app:booksource-reload",
         async (event) => {
           const { scope, fileName } = event.payload ?? {};
-          if (scope === 'single' && fileName) {
+          if (scope === "single" && fileName) {
             await refreshSingleSource(fileName);
           } else {
             await refreshAllSources();
@@ -567,8 +583,8 @@ onMounted(async () => {
       ),
     );
     unlisteners.push(
-      await eventListen<{ view?: string }>('app:view-reload', async (event) => {
-        if (event.payload?.view === 'explore') {
+      await eventListen<{ view?: string }>("app:view-reload", async (event) => {
+        if (event.payload?.view === "explore") {
           await handleForceReload();
         }
       }),
@@ -584,7 +600,7 @@ onUnmounted(() => {
 });
 
 // ── 移动端滑动手势切换书源 Tab ────────────────────────────────────────────
-function switchActiveSourceTab(direction: 'prev' | 'next') {
+function switchActiveSourceTab(direction: "prev" | "next") {
   const list = sortedSources.value;
   if (list.length < 2) {
     return;
@@ -593,9 +609,9 @@ function switchActiveSourceTab(direction: 'prev' | 'next') {
   if (idx < 0) {
     return;
   }
-  if (direction === 'next' && idx < list.length - 1) {
+  if (direction === "next" && idx < list.length - 1) {
     activeSourceTab.value = list[idx + 1].fileName;
-  } else if (direction === 'prev' && idx > 0) {
+  } else if (direction === "prev" && idx > 0) {
     activeSourceTab.value = list[idx - 1].fileName;
   }
 }
@@ -607,8 +623,8 @@ const {
   onSwipePointerCancel,
   onSwipeClickCapture,
 } = useMobileHorizontalSwipe({
-  onSwipeLeft: () => switchActiveSourceTab('next'),
-  onSwipeRight: () => switchActiveSourceTab('prev'),
+  onSwipeLeft: () => switchActiveSourceTab("next"),
+  onSwipeRight: () => switchActiveSourceTab("prev"),
 });
 
 // ── 鼠标滚轮横向滚动 tabs 导航栏（PC）──────────────────────────────────
@@ -618,11 +634,11 @@ function scrollActiveSourceTabIntoView() {
   if (!evTabsRef.value) {
     return;
   }
-  const activeTabEl = evTabsRef.value.querySelector<HTMLElement>('.n-tabs-tab--active');
+  const activeTabEl = evTabsRef.value.querySelector<HTMLElement>(".n-tabs-tab--active");
   activeTabEl?.scrollIntoView({
-    block: 'nearest',
-    inline: 'center',
-    behavior: 'smooth',
+    block: "nearest",
+    inline: "center",
+    behavior: "smooth",
   });
 }
 
@@ -641,17 +657,17 @@ function setupTabsWheelScroll(el: HTMLElement): (() => void) | undefined {
       e.preventDefault();
       wrapper.scrollLeft += delta;
     }
-    wrapper.addEventListener('wheel', onWheel, { passive: false });
-    cleanup = () => wrapper.removeEventListener('wheel', onWheel);
+    wrapper.addEventListener("wheel", onWheel, { passive: false });
+    cleanup = () => wrapper.removeEventListener("wheel", onWheel);
   }
 
-  const candidate = el.querySelector<HTMLElement>('.n-tabs-nav-scroll-wrapper');
+  const candidate = el.querySelector<HTMLElement>(".n-tabs-nav-scroll-wrapper");
   if (candidate) {
     found = true;
     attach(candidate);
   } else {
     const observer = new MutationObserver(() => {
-      const w = el.querySelector<HTMLElement>('.n-tabs-nav-scroll-wrapper');
+      const w = el.querySelector<HTMLElement>(".n-tabs-nav-scroll-wrapper");
       if (w) {
         found = true;
         observer.disconnect();
@@ -677,7 +693,7 @@ function setupTabsWheelScroll(el: HTMLElement): (() => void) | undefined {
 let cleanupWheelScroll: (() => void) | undefined;
 
 watch(
-  () => [activeSourceTab.value, sortedSources.value.map((src) => src.fileName).join('|')] as const,
+  () => [activeSourceTab.value, sortedSources.value.map((src) => src.fileName).join("|")] as const,
   async () => {
     await nextTick();
     requestAnimationFrame(() => {
@@ -752,7 +768,7 @@ watch(
                 </template>
               </n-button>
             </template>
-            {{ showCovers ? '隐藏封面' : '显示封面' }}
+            {{ showCovers ? "隐藏封面" : "显示封面" }}
           </n-tooltip>
 
           <!-- 卡片尺寸选择 -->
@@ -810,6 +826,11 @@ watch(
       </template>
     </AppPageHeader>
 
+    <RecommendationStrip
+      v-if="recommendedBooks.length > 0 || recLoading"
+      @select="handleRecommendationSelect"
+    />
+
     <!-- 书源排序弹窗 -->
     <ExploreViewSortModal
       v-model:show="showSortModal"
@@ -834,6 +855,24 @@ watch(
           animated
           class="ev-tabs app-scrollbar-proxy--hidden"
         >
+          <n-tab-pane
+            :name="RANKINGS_TAB_KEY"
+            display-directive="show"
+          >
+            <template #tab>
+              <span class="ev-source-tab">
+                <TrendingUp :size="14" class="ev-rankings-tab-icon" />
+                <span class="ev-source-tab__name">榜单</span>
+              </span>
+            </template>
+            <div class="ev-content app-scrollbar">
+              <TopRankings
+                :sources="sortedSources"
+                @select="openDetail"
+              />
+            </div>
+          </n-tab-pane>
+
           <n-tab-pane
             v-for="src in sortedSources"
             :key="src.fileName"
@@ -974,6 +1013,11 @@ watch(
       @select="handleTabMenuSelect"
       @clickoutside="tabMenu.visible = false"
     />
+
+    <RandomDiscoveryCard
+      :sources="sortedSources"
+      @select="openDetail"
+    />
   </div>
 </template>
 
@@ -1015,6 +1059,11 @@ watch(
   flex-shrink: 0;
   color: var(--color-text-muted);
   background-color: transparent;
+}
+
+.ev-rankings-tab-icon {
+  flex-shrink: 0;
+  color: var(--color-warning, #f59e0b);
 }
 
 .ev-tabs-wrap {

@@ -78,9 +78,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { ChevronLeft, ChevronRight, Flame, BookOpen, Clock } from 'lucide-vue-next';
-import { useReadingGoalStore } from '@/stores/readingGoal';
+import { ref, computed } from "vue";
+import { ChevronLeft, ChevronRight, Flame, BookOpen, Clock } from "lucide-vue-next";
+import { useReadingGoalStore } from "@/stores/readingGoal";
 
 interface CalendarDay {
   date: string;
@@ -95,7 +95,7 @@ const props = defineProps<{
   history: string[];
 }>();
 
-const weekdays = ['一', '二', '三', '四', '五', '六', '日'];
+const weekdays = ["一", "二", "三", "四", "五", "六", "日"];
 
 const currentYear = ref(props.year);
 const currentMonth = ref(props.month);
@@ -114,7 +114,7 @@ const calendarDays = computed(() => {
 });
 
 function getDayNumber(dateStr: string): number {
-  const parts = dateStr.split('-');
+  const parts = dateStr.split("-");
   return parseInt(parts[2], 10);
 }
 

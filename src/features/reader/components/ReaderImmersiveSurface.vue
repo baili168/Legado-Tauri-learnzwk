@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import type { StyleValue } from 'vue';
-import { ref } from 'vue';
-import ReaderContentArea from '@/components/reader/ReaderContentArea.vue';
-import ReaderMenuLayer from './ReaderMenuLayer.vue';
-import ReaderPluginLayer from './ReaderPluginLayer.vue';
-import ReaderShell from './ReaderShell.vue';
+import type { StyleValue } from "vue";
+import { ref } from "vue";
+import ReaderContentArea from "@/components/reader/ReaderContentArea.vue";
+import ReaderMenuLayer from "./ReaderMenuLayer.vue";
+import ReaderPluginLayer from "./ReaderPluginLayer.vue";
+import ReaderShell from "./ReaderShell.vue";
 
 defineProps<{
   styleValue: StyleValue;

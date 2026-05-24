@@ -1,5 +1,5 @@
 /**
- * 书架分组类型定义
+ * 书架分组与标签类型定义
  */
 
 export interface ShelfGroup {
@@ -17,8 +17,8 @@ export interface ShelfGroup {
 
 /** 默认分组 */
 export const DEFAULT_GROUP: ShelfGroup = {
-  id: 'all',
-  name: '全部书籍',
+  id: "all",
+  name: "全部书籍",
   createdAt: 0,
   enabled: true,
   order: -1,
@@ -27,4 +27,15 @@ export const DEFAULT_GROUP: ShelfGroup = {
 export interface ShelfGroupWithCount extends ShelfGroup {
   /** 该分组中的书籍数量 */
   bookCount: number;
+}
+
+export interface BookTag {
+  id: string;
+  name: string;
+  color: string;
+}
+
+export interface BookTagRelation {
+  bookId: string;
+  tagId: string;
 }

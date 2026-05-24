@@ -13,32 +13,32 @@
  *   // isLowEnd 和 prefersReducedMotion 都是 ComputedRef<boolean>
  */
 
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted } from "vue";
 
 const KNOWN_LOW_END_DEVICES = [
-  'HUAWEI TAG-AL00',
-  'HUAWEI LDN-LX2',
-  'HUAWEI MED-LX9',
-  'Xiaomi M2004j',
-  'Redmi 9A',
-  'Redmi 8A',
-  'OPPO A5',
-  'OPPO A8',
-  'vivo Y3',
-  'vivo Y50',
-  'Samsung SM-A',
-  'Samsung SM-J',
-  'Galaxy J',
+  "HUAWEI TAG-AL00",
+  "HUAWEI LDN-LX2",
+  "HUAWEI MED-LX9",
+  "Xiaomi M2004j",
+  "Redmi 9A",
+  "Redmi 8A",
+  "OPPO A5",
+  "OPPO A8",
+  "vivo Y3",
+  "vivo Y50",
+  "Samsung SM-A",
+  "Samsung SM-J",
+  "Galaxy J",
 ];
 
 function detectLowEndDevice(): boolean {
-  if (typeof navigator === 'undefined') return false;
+  if (typeof navigator === "undefined") return false;
   const ua = navigator.userAgent.toUpperCase();
   return KNOWN_LOW_END_DEVICES.some((model) => ua.includes(model));
 }
 
 function detectNonSafariMobile(): boolean {
-  if (typeof navigator === 'undefined') return false;
+  if (typeof navigator === "undefined") return false;
   const ua = navigator.userAgent;
   const isMobileUA = /Android|iPhone|iPad|iPod/i.test(ua);
   if (!isMobileUA) return false;
@@ -53,9 +53,9 @@ export function useReaderPerformance() {
   const hardwareConcurrency = ref(navigator.hardwareConcurrency ?? 4);
 
   onMounted(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     prefersReducedMotion.value = mq.matches;
-    mq.addEventListener('change', (e) => {
+    mq.addEventListener("change", (e) => {
       prefersReducedMotion.value = e.matches;
     });
 

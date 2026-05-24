@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { useMessage } from 'naive-ui';
-import { computed, reactive, watch } from 'vue';
-import { useFrontendPlugins, type PluginSettingValue } from '@/composables/useFrontendPlugins';
-import { useOverlayBackstack } from '@/composables/useOverlayBackstack';
+import { useMessage } from "naive-ui";
+import { computed, reactive, watch } from "vue";
+import { useFrontendPlugins, type PluginSettingValue } from "@/composables/useFrontendPlugins";
+import { useOverlayBackstack } from "@/composables/useOverlayBackstack";
 
 const message = useMessage();
 const { pluginDialog, resolvePluginDialog } = useFrontendPlugins();
@@ -13,7 +13,7 @@ const draftValues = reactive<Record<string, PluginSettingValue>>({});
 useOverlayBackstack(() => visible.value, closeDialog);
 
 function cloneValue<T>(value: T): T {
-  if (typeof structuredClone === 'function') {
+  if (typeof structuredClone === "function") {
     return structuredClone(value);
   }
   return JSON.parse(JSON.stringify(value)) as T;
@@ -35,12 +35,12 @@ watch(
 
 function getString(key: string): string {
   const value = draftValues[key];
-  return typeof value === 'string' ? value : '';
+  return typeof value === "string" ? value : "";
 }
 
 function getNumber(key: string): number {
   const value = draftValues[key];
-  return typeof value === 'number' ? value : 0;
+  return typeof value === "number" ? value : 0;
 }
 
 function getBoolean(key: string): boolean {
@@ -49,12 +49,12 @@ function getBoolean(key: string): boolean {
 
 function getScalar(key: string): string | number | null {
   const value = draftValues[key];
-  return typeof value === 'string' || typeof value === 'number' ? value : null;
+  return typeof value === "string" || typeof value === "number" ? value : null;
 }
 
 function getStringList(key: string): string {
   const value = draftValues[key];
-  return Array.isArray(value) ? value.join('\n') : '';
+  return Array.isArray(value) ? value.join("\n") : "";
 }
 
 function updateValue(key: string | undefined, value: PluginSettingValue): void {
@@ -76,7 +76,7 @@ function validate(): boolean {
     const empty =
       value === undefined ||
       value === null ||
-      value === '' ||
+      value === "" ||
       (Array.isArray(value) && value.length === 0);
     if (empty) {
       message.warning(`${field.label || field.key} 不能为空`);
@@ -134,7 +134,7 @@ function handleVisibleChange(next: boolean): void {
               :title="field.label || '说明'"
               :bordered="false"
             >
-              {{ field.description || field.placeholder || '' }}
+              {{ field.description || field.placeholder || "" }}
             </n-alert>
 
             <n-form-item

@@ -1,11 +1,11 @@
-import type { RuntimePluginRecord } from './pluginRuntimeTypes';
+import type { RuntimePluginRecord } from "./pluginRuntimeTypes";
 import type {
   ReaderPluginSlot,
   FrontendPluginApi,
   CleanupFn,
   ReaderSessionSnapshot,
-} from './pluginTypes';
-import { SUPPORTED_READER_PLUGIN_SLOTS } from './readerSlots';
+} from "./pluginTypes";
+import { SUPPORTED_READER_PLUGIN_SLOTS } from "./readerSlots";
 
 export interface SlotManagerDeps {
   getRuntimePlugins: () => RuntimePluginRecord[];
@@ -68,14 +68,14 @@ export function createSlotManager(deps: SlotManagerDeps) {
           continue;
         }
         for (const mount of slotHandlers) {
-          const root = document.createElement('div');
+          const root = document.createElement("div");
           root.dataset.pluginId = record.pluginId;
           root.dataset.pluginSlot = slot;
           host.appendChild(root);
           let cleanup: CleanupFn | null = null;
           try {
             const maybeCleanup = await mount(root, deps.createPluginApi(record));
-            cleanup = typeof maybeCleanup === 'function' ? maybeCleanup : null;
+            cleanup = typeof maybeCleanup === "function" ? maybeCleanup : null;
             const mountedList = record.mountedSlots.get(slot) ?? [];
             mountedList.push({ host, root, cleanup });
             record.mountedSlots.set(slot, mountedList);

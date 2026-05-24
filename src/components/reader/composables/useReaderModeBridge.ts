@@ -1,8 +1,8 @@
 /**
  * 连接具体阅读模式组件与父级控制器，转发翻页、滚动进度和媒体进度事件。
  */
-import { ref, type ComputedRef, type Ref } from 'vue';
-import type { ChapterItem } from '@/stores';
+import { ref, type ComputedRef, type Ref } from "vue";
+import type { ChapterItem } from "@/stores";
 
 export interface PagedModeApi {
   flipNext?: () => boolean;
@@ -25,9 +25,9 @@ export interface ScrollModeApi {
   getReadingScrollRatio?: () => number;
   getReadingLineAnchor?: () => number;
   getReadingParagraphIndex?: () => number;
-  getAdjacentScrollRatio?: (side: 'prev' | 'next') => number;
-  getAdjacentLineAnchor?: (side: 'prev' | 'next') => number;
-  getAdjacentParagraphIndex?: (side: 'prev' | 'next') => number;
+  getAdjacentScrollRatio?: (side: "prev" | "next") => number;
+  getAdjacentLineAnchor?: (side: "prev" | "next") => number;
+  getAdjacentParagraphIndex?: (side: "prev" | "next") => number;
   pageDown?: () => boolean;
   pageUp?: () => boolean;
   getFirstVisibleParaIndex?: () => number;
@@ -43,8 +43,8 @@ export interface ComicModeApi {
   getReadingChapterOffset?: () => number;
   getReadingScrollRatio?: () => number;
   getReadingPageIndex?: () => number;
-  getAdjacentScrollRatio?: (side: 'prev' | 'next') => number;
-  getAdjacentPageIndex?: (side: 'prev' | 'next') => number;
+  getAdjacentScrollRatio?: (side: "prev" | "next") => number;
+  getAdjacentPageIndex?: (side: "prev" | "next") => number;
   currentPage?: number;
   totalPages?: number;
   prepareSeamlessSwap?: (height: number) => void;
@@ -140,7 +140,7 @@ export function useReaderModeBridge(options: UseReaderModeBridgeOptions) {
     }
     options.readingChapterOffset.value = comicModeRef.value?.getReadingChapterOffset?.() ?? 0;
     const page = comicModeRef.value?.getReadingPageIndex?.() ?? comicModeRef.value?.currentPage;
-    if (typeof page === 'number') {
+    if (typeof page === "number") {
       options.currentPageIndex.value = page;
     }
     options.currentScrollRatio.value = comicModeRef.value?.getReadingScrollRatio?.() ?? ratio;
@@ -148,7 +148,7 @@ export function useReaderModeBridge(options: UseReaderModeBridgeOptions) {
 
   function onVideoProgress(time: number, duration: number) {
     const shelfId = options.currentShelfId.value;
-    if (shelfId !== undefined && shelfId !== '' && time > 0) {
+    if (shelfId !== undefined && shelfId !== "" && time > 0) {
       const chapter = options.getChapter(options.activeChapterIndex.value);
       if (chapter) {
         void options

@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { Loader2 } from 'lucide-vue-next';
-import type { ShelfBook } from '@/stores';
-import SourceTypeBadge from '../base/SourceTypeBadge.vue';
-import BookCoverImg from '../BookCoverImg.vue';
+import { Loader2 } from "lucide-vue-next";
+import type { ShelfBook } from "@/stores";
+import SourceTypeBadge from "../base/SourceTypeBadge.vue";
+import BookCoverImg from "../BookCoverImg.vue";
 
 defineProps<{
   book: ShelfBook;
@@ -12,14 +12,14 @@ defineProps<{
   selected?: boolean;
 }>();
 defineEmits<{
-  (e: 'select', book: ShelfBook): void;
-  (e: 'contextmenu', book: ShelfBook, event: MouseEvent): void;
-  (e: 'toggle-private', book: ShelfBook): void;
+  (e: "select", book: ShelfBook): void;
+  (e: "contextmenu", book: ShelfBook, event: MouseEvent): void;
+  (e: "toggle-private", book: ShelfBook): void;
 }>();
 
 function progressWidth(book: ShelfBook): string {
   if (book.totalChapters <= 0 || book.readChapterIndex < 0) {
-    return '0%';
+    return "0%";
   }
   return `${Math.min(100, ((book.readChapterIndex + 1) / book.totalChapters) * 100).toFixed(2)}%`;
 }
@@ -36,20 +36,20 @@ function unreadCount(book: ShelfBook): number {
 
 function statusLabel(book: ShelfBook): string {
   if (book.readChapterIndex < 0) {
-    return '未开始';
+    return "未开始";
   }
   if (book.totalChapters <= 0) {
-    return '阅读中';
+    return "阅读中";
   }
-  return '已读完';
+  return "已读完";
 }
 
 function unreadClass(book: ShelfBook): Record<string, boolean> {
   const count = unreadCount(book);
   return {
-    'shelf-card__unread-bubble--dot': count <= 9,
-    'shelf-card__unread-bubble--compact': count > 9 && count <= 99,
-    'shelf-card__unread-bubble--wide': count > 99,
+    "shelf-card__unread-bubble--dot": count <= 9,
+    "shelf-card__unread-bubble--compact": count > 9 && count <= 99,
+    "shelf-card__unread-bubble--wide": count > 99,
   };
 }
 </script>
@@ -109,7 +109,7 @@ function unreadClass(book: ShelfBook): Record<string, boolean> {
         v-if="!loading && unreadCount(book) > 0"
         class="shelf-card__unread-bubble"
         :class="unreadClass(book)"
-        >{{ unreadCount(book) > 99 ? '99+' : unreadCount(book) }}</span
+        >{{ unreadCount(book) > 99 ? "99+" : unreadCount(book) }}</span
       >
       <!-- 状态标签（已读完 / 阅读中 / 未开始） -->
       <span v-else-if="!loading" class="shelf-card__badge">{{ statusLabel(book) }}</span>
@@ -126,14 +126,14 @@ function unreadClass(book: ShelfBook): Record<string, boolean> {
         :class="{ 'shelf-card__name--placeholder': !book.name }"
         :title="book.name || '未知书名'"
       >
-        {{ book.name || '未知书名' }}
+        {{ book.name || "未知书名" }}
       </span>
       <span
         class="shelf-card__author"
         :class="{ 'shelf-card__author--placeholder': !book.author }"
         :title="book.author || '佚名'"
       >
-        {{ book.author || '佚名' }}
+        {{ book.author || "佚名" }}
       </span>
     </div>
     <!-- 进度条 -->

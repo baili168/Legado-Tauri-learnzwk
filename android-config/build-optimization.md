@@ -63,6 +63,7 @@ tauri = { version = "2", default-features = false, features = [
 ```
 
 **精简后的效果**：
+
 - Rust 编译产物体积减少约 30-40%
 - `libtauri.so` 体积大幅缩小
 - 减少安全攻击面（移除无用 feature 代码路径）
@@ -86,6 +87,7 @@ android {
 ```
 
 **分包策略说明**：
+
 - **arm64-v8a**：主力包，覆盖 95% 以上现代 Android 设备
 - **armeabi-v7a**：兼容老旧 32-bit 设备（部分墨水屏/电纸书）
 - 每个 ABI 独立 APK，减少 50-60% 下载体积
@@ -94,6 +96,7 @@ android {
 ## 5. ProGuard/R8 混淆
 
 参见同目录 `proguard-rules.pro`，核心要点：
+
 - Tauri IPC 通道类（`com.tauri.**`）保持不混淆
 - `@JavascriptInterface` 方法保持不混淆
 - Kotlin Serialization 注解保持
@@ -102,6 +105,7 @@ android {
 ## 6. WebView 预加载与缓存（前端侧）
 
 前端侧通过 `useWebViewWarmup` 和 `useCacheStrategy` 两个 composable 实现：
+
 - **useWebViewWarmup**：`<link rel="preload">` 预热字体/图标，PerformanceObserver 监控 LCP/FCP/TTFB
 - **useCacheStrategy**：Cache API 双层策略（缓存优先/网络优先），自动缓存静态资源
 

@@ -1,8 +1,8 @@
-import { ref, watch, type Ref } from 'vue';
-import type { ChapterGroup, ChapterItem } from '@/stores';
-import { useMusicPlayerStore } from '@/stores';
-import { safeRandomUUID } from '@/utils/uuid';
-import type { ReaderBookInfo } from '../components/reader/types';
+import { ref, watch, type Ref } from "vue";
+import type { ChapterGroup, ChapterItem } from "@/stores";
+import { useMusicPlayerStore } from "@/stores";
+import { safeRandomUUID } from "@/utils/uuid";
+import type { ReaderBookInfo } from "../components/reader/types";
 
 interface ReaderSwitchShelfBook {
   name: string;
@@ -51,15 +51,15 @@ interface UseInlineBookReaderOptions {
 
 export function useInlineBookReader(options: UseInlineBookReaderOptions) {
   const showReader = ref(false);
-  const readerChapterUrl = ref('');
-  const readerChapterName = ref('');
-  const readerFileName = ref('');
+  const readerChapterUrl = ref("");
+  const readerChapterName = ref("");
+  const readerFileName = ref("");
   const readerChapters = ref<ChapterItem[]>([]);
-  const readerChaptersKey = ref('');
+  const readerChaptersKey = ref("");
   const readerCurrentIndex = ref(0);
   const readerBookInfo = ref<ReaderBookInfo | undefined>();
-  const readerSourceType = ref('novel');
-  const readerShelfId = ref('');
+  const readerSourceType = ref("novel");
+  const readerShelfId = ref("");
   const readerChapterGroups = ref<ChapterGroup[] | undefined>();
   const readerActiveGroupIndex = ref<number | undefined>();
   const chapterListTaskId = ref<string | null>(null);
@@ -70,8 +70,8 @@ export function useInlineBookReader(options: UseInlineBookReaderOptions) {
     readerChapters.value = payload.chapters;
     readerCurrentIndex.value = Math.max(0, payload.matchedChapterIndex);
     const chapter = payload.chapters[readerCurrentIndex.value];
-    readerChapterUrl.value = payload.matchedChapterUrl ?? chapter?.url ?? '';
-    readerChapterName.value = chapter?.name ?? '';
+    readerChapterUrl.value = payload.matchedChapterUrl ?? chapter?.url ?? "";
+    readerChapterName.value = chapter?.name ?? "";
     readerBookInfo.value = {
       name: payload.shelfBook.name,
       author: payload.shelfBook.author,
@@ -89,7 +89,7 @@ export function useInlineBookReader(options: UseInlineBookReaderOptions) {
   async function onReadChapter(payload: ReadChapterPayload) {
     options.onTrackReaderOpen?.(payload);
 
-    if (payload.sourceType === 'music') {
+    if (payload.sourceType === "music") {
       // 音乐源：拉一次章节列表，然后交由全局播放器接管
       const player = useMusicPlayerStore();
       let list: ChapterItem[] = readerChapters.value;
@@ -112,7 +112,7 @@ export function useInlineBookReader(options: UseInlineBookReaderOptions) {
           name: payload.bookInfo.name,
           author: payload.bookInfo.author,
           coverUrl:
-            typeof payload.bookInfo.coverUrl === 'string' ? payload.bookInfo.coverUrl : undefined,
+            typeof payload.bookInfo.coverUrl === "string" ? payload.bookInfo.coverUrl : undefined,
           intro: payload.bookInfo.intro,
           sourceName: payload.bookInfo.sourceName,
         },
@@ -134,9 +134,9 @@ export function useInlineBookReader(options: UseInlineBookReaderOptions) {
     try {
       await options.ensureShelfLoaded();
       readerShelfId.value =
-        options.getShelfId(options.drawerBookUrl.value, options.drawerFileName.value) ?? '';
+        options.getShelfId(options.drawerBookUrl.value, options.drawerFileName.value) ?? "";
     } catch {
-      readerShelfId.value = '';
+      readerShelfId.value = "";
     }
 
     const bookKey = `${options.drawerFileName.value}|${options.drawerBookUrl.value}`;

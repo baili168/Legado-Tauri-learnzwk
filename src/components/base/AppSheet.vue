@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
-import { useBreakpoint } from '../../composables/useBreakpoint';
-import { useFocusNavigation } from '../../composables/useFocusNavigation';
-import { useOverlayBackstack } from '../../composables/useOverlayBackstack';
+import { ref, watch } from "vue";
+import { useBreakpoint } from "../../composables/useBreakpoint";
+import { useFocusNavigation } from "../../composables/useFocusNavigation";
+import { useOverlayBackstack } from "../../composables/useOverlayBackstack";
 
 const props = defineProps<{
   modelValue: boolean;
 }>();
 
 const emit = defineEmits<{
-  'update:modelValue': [value: boolean];
+  "update:modelValue": [value: boolean];
   close: [];
 }>();
 
@@ -18,8 +18,8 @@ const { trapFocus, restoreFocus } = useFocusNavigation(sheetRef);
 const { isMediumUp } = useBreakpoint();
 
 function close() {
-  emit('update:modelValue', false);
-  emit('close');
+  emit("update:modelValue", false);
+  emit("close");
   restoreFocus();
 }
 

@@ -1,5 +1,5 @@
-import { defineStore } from 'pinia';
-import { computed, ref } from 'vue';
+import { defineStore } from "pinia";
+import { computed, ref } from "vue";
 import {
   applyBookSourceUpdate,
   checkBookSourceUpdate,
@@ -11,8 +11,8 @@ import {
   toggleBookSource,
   type BookSourceMeta,
   type UpdateCheckResult,
-} from '@/composables/useBookSource';
-import { eventListenSync } from '@/composables/useEventBus';
+} from "@/composables/useBookSource";
+import { eventListenSync } from "@/composables/useEventBus";
 import {
   ensureFrontendNamespaceLoaded,
   getFrontendStorageItem,
@@ -23,23 +23,23 @@ import {
   removeFrontendStorageItem,
   setFrontendStorageItem,
   setFrontendStorageJson,
-} from '@/composables/useFrontendStorage';
-import { safeRandomUUID } from '@/utils/uuid';
+} from "@/composables/useFrontendStorage";
+import { safeRandomUUID } from "@/utils/uuid";
 
 // ── 书源能力存储键（继承自 useSourceCapabilities）────────────────────────
-const STORAGE_NAMESPACE = 'source.capabilities';
+const STORAGE_NAMESPACE = "source.capabilities";
 /** 能力缓存条目前缀：cap_{fileName} → 逗号分隔函数名列表 */
-const CAP_KEY_PREFIX = 'cap_';
+const CAP_KEY_PREFIX = "cap_";
 
 // ── 书源更新检查 ─────────────────────────────────────────────────────────
-const UPDATE_NS = 'source.updates';
-const LAST_CHECK_KEY = 'lastCheckedAt';
+const UPDATE_NS = "source.updates";
+const LAST_CHECK_KEY = "lastCheckedAt";
 /** 最短检查间隔：1 小时 */
 const MIN_CHECK_INTERVAL_MS = 60 * 60 * 1000;
-const LS_EXPLORE_KEY = 'source-explore-disabled';
-const LS_SEARCH_KEY = 'source-search-disabled';
-const EXPLORE_KEY = 'exploreDisabled';
-const SEARCH_KEY = 'searchDisabled';
+const LS_EXPLORE_KEY = "source-explore-disabled";
+const LS_SEARCH_KEY = "source-search-disabled";
+const EXPLORE_KEY = "exploreDisabled";
+const SEARCH_KEY = "searchDisabled";
 
 function parseDisabledSet(raw: string | null): Set<string> {
   if (!raw) {
@@ -67,16 +67,16 @@ function getErrorMessage(error: unknown): string {
   if (error instanceof Error) {
     return error.message;
   }
-  if (typeof error === 'string') {
+  if (typeof error === "string") {
     return error;
   }
-  if (typeof error === 'object' && error !== null) {
-    const message = Reflect.get(error, 'message');
-    if (typeof message === 'string') {
+  if (typeof error === "object" && error !== null) {
+    const message = Reflect.get(error, "message");
+    if (typeof message === "string") {
       return message;
     }
-    const content = Reflect.get(error, 'content');
-    if (typeof content === 'string') {
+    const content = Reflect.get(error, "content");
+    if (typeof content === "string") {
       return content;
     }
   }
@@ -87,15 +87,15 @@ function isStreamingListUnsupported(error: unknown): boolean {
   const message = getErrorMessage(error);
   const normalized = message.toLowerCase();
   return (
-    message.includes('booksource_list_streaming') &&
-    (message.includes('未知命令') ||
-      message.includes('未实现命令') ||
-      normalized.includes('unknown command') ||
-      normalized.includes('not implemented'))
+    message.includes("booksource_list_streaming") &&
+    (message.includes("未知命令") ||
+      message.includes("未实现命令") ||
+      normalized.includes("unknown command") ||
+      normalized.includes("not implemented"))
   );
 }
 
-export const useBookSourceStore = defineStore('bookSource', () => {
+export const useBookSourceStore = defineStore("bookSource", () => {
   // ── 书源列表状态 ─────────────────────────────────────────────────────
   const sources = ref<BookSourceMeta[]>([]);
   const sourceDirs = ref<string[]>([]);
@@ -106,7 +106,7 @@ export const useBookSourceStore = defineStore('bookSource', () => {
   let _loadInFlight: Promise<void> | null = null;
   let _detectAllInFlight: Promise<void> | null = null;
   /** 当前活跃的流式加载请求 ID，用于过滤过期事件 */
-  let _streamRequestId = '';
+  let _streamRequestId = "";
   // ── 更新检查结果 ─────────────────────────────────────────────────────────
   /** 上次检查发现有可用更新的书源列表（含版本对比信息） */
   const pendingUpdates = ref<UpdateCheckResult[]>([]);
@@ -124,7 +124,7 @@ export const useBookSourceStore = defineStore('bookSource', () => {
   const explorableSources = computed(() =>
     enabledSources.value.filter(
       (s) =>
-        (s.sourceType === 'webpage' || fnsCache.value[s.fileName]?.has('explore')) &&
+        (s.sourceType === "webpage" || fnsCache.value[s.fileName]?.has("explore")) &&
         !exploreDisabled.value.has(s.fileName),
     ),
   );
@@ -132,8 +132,8 @@ export const useBookSourceStore = defineStore('bookSource', () => {
   const searchableSources = computed(() =>
     enabledSources.value.filter(
       (s) =>
-        s.sourceType !== 'webpage' &&
-        fnsCache.value[s.fileName]?.has('search') &&
+        s.sourceType !== "webpage" &&
+        fnsCache.value[s.fileName]?.has("search") &&
         !searchDisabled.value.has(s.fileName),
     ),
   );
@@ -202,7 +202,7 @@ export const useBookSourceStore = defineStore('bookSource', () => {
             done: boolean;
             total?: number;
             error?: string;
-          }>('booksource:batch', (event) => {
+          }>("booksource:batch", (event) => {
             const { requestId: id, items, done, error } = event.payload;
 
             // 非当前请求的批次（过期流）：等 done 时自动清理监听
@@ -222,7 +222,7 @@ export const useBookSourceStore = defineStore('bookSource', () => {
               // 全部到达后按名称排序后增量合并，不清空现有列表
               applySourcesBatch(freshItems.toSorted((a, b) => a.name.localeCompare(b.name)));
               unlisten();
-              if (typeof error === 'string' && error.length > 0) {
+              if (typeof error === "string" && error.length > 0) {
                 reject(new Error(error));
               } else {
                 resolve();
@@ -284,7 +284,7 @@ export const useBookSourceStore = defineStore('bookSource', () => {
       }
       const fn = key.slice(CAP_KEY_PREFIX.length);
       if (!fnsCache.value[fn]) {
-        patch[fn] = new Set(val ? val.split(',').filter(Boolean) : []);
+        patch[fn] = new Set(val ? val.split(",").filter(Boolean) : []);
       }
     }
     if (Object.keys(patch).length > 0) {
@@ -300,14 +300,14 @@ export const useBookSourceStore = defineStore('bookSource', () => {
     try {
       const raw = await evalBookSource(fileName);
       const fns = new Set(
-        (raw ?? '')
-          .split(',')
+        (raw ?? "")
+          .split(",")
           .map((s) => s.trim())
           .filter(Boolean),
       );
       fnsCache.value = { ...fnsCache.value, [fileName]: fns };
       // 仅当检测结果与已存储值不同时才持久化（避免缓存数据的冗余写入）
-      const newVal = [...fns].join(',');
+      const newVal = [...fns].join(",");
       const storedVal = getFrontendStorageItem(STORAGE_NAMESPACE, CAP_KEY_PREFIX + fileName);
       if (storedVal !== newVal) {
         setFrontendStorageItem(STORAGE_NAMESPACE, CAP_KEY_PREFIX + fileName, newVal);
@@ -455,7 +455,7 @@ export const useBookSourceStore = defineStore('bookSource', () => {
         batch.map((src) => checkBookSourceUpdate(src.fileName)),
       );
       for (const r of batchResults) {
-        if (r.status === 'fulfilled' && r.value.hasUpdate) {
+        if (r.status === "fulfilled" && r.value.hasUpdate) {
           results.push(r.value);
         }
       }

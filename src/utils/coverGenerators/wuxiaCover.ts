@@ -1,6 +1,6 @@
-import type { ShelfBook } from '@/stores';
-import type { BuiltinCoverGeneratorDefinition } from './types';
-import { bookAuthor, bookKind, buildDataUrl, verticalTextSpans, wrapText } from './shared';
+import type { ShelfBook } from "@/stores";
+import type { BuiltinCoverGeneratorDefinition } from "./types";
+import { bookAuthor, bookKind, buildDataUrl, verticalTextSpans, wrapText } from "./shared";
 
 function generateWuxiaCover(book: ShelfBook): string {
   const title = verticalTextSpans(wrapText(book.name, 4, 3), {
@@ -23,14 +23,14 @@ function generateWuxiaCover(book: ShelfBook): string {
   <path d="M98 620L528 268" stroke="#fef3c7" stroke-width="10" stroke-linecap="round" opacity="0.76" />
   <path d="M120 648L550 296" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.54" />
   <text fill="#fff7ed" font-size="112" font-weight="900" font-family="'Noto Serif SC','Source Han Serif SC',serif">${title}</text>
-  <text x="74" y="674" fill="#fed7aa" font-size="48" font-weight="800">${bookKind(book, '武侠江湖')}</text>
+  <text x="74" y="674" fill="#fed7aa" font-size="48" font-weight="800">${bookKind(book, "武侠江湖")}</text>
   <text x="74" y="724" fill="#ffffff" font-size="60" font-weight="900">${bookAuthor(book)}</text>
 </svg>`);
 }
 
 export const wuxiaCoverGenerator: BuiltinCoverGeneratorDefinition = {
-  id: 'builtin:wuxia',
-  name: '武侠江湖',
-  description: '月色、山影与刀光，适合武侠、仙侠、江湖题材。',
+  id: "builtin:wuxia",
+  name: "武侠江湖",
+  description: "月色、山影与刀光，适合武侠、仙侠、江湖题材。",
   generate: generateWuxiaCover,
 };

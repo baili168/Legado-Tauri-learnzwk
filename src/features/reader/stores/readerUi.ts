@@ -1,13 +1,13 @@
-import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import { defineStore } from "pinia";
+import { ref } from "vue";
 
-export const useReaderUiStore = defineStore('readerUi', () => {
+export const useReaderUiStore = defineStore("readerUi", () => {
   const showMenu = ref(false);
   const showToc = ref(false);
   const settingsVisible = ref(false);
   const showTtsBar = ref(false);
   const showSourceSwitchDialog = ref(false);
-  const sourceSwitchMode = ref<'whole-book' | 'chapter-temp'>('whole-book');
+  const sourceSwitchMode = ref<"whole-book" | "chapter-temp">("whole-book");
   const menuOpenTime = ref(0);
 
   function resetLayers() {
@@ -15,7 +15,7 @@ export const useReaderUiStore = defineStore('readerUi', () => {
     showToc.value = false;
     settingsVisible.value = false;
     showSourceSwitchDialog.value = false;
-    sourceSwitchMode.value = 'whole-book';
+    sourceSwitchMode.value = "whole-book";
     menuOpenTime.value = 0;
   }
 
@@ -39,7 +39,7 @@ export const useReaderUiStore = defineStore('readerUi', () => {
     showToc.value = false;
   }
 
-  function openSourceSwitch(mode: 'whole-book' | 'chapter-temp') {
+  function openSourceSwitch(mode: "whole-book" | "chapter-temp") {
     sourceSwitchMode.value = mode;
     showSourceSwitchDialog.value = true;
   }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed } from "vue";
 
 const props = defineProps<{
   modelValue: string | number;
@@ -7,11 +7,11 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  'update:modelValue': [key: string | number];
+  "update:modelValue": [key: string | number];
 }>();
 
 function selectTab(key: string | number) {
-  emit('update:modelValue', key);
+  emit("update:modelValue", key);
 }
 
 function onKeyDown(event: KeyboardEvent) {
@@ -20,11 +20,11 @@ function onKeyDown(event: KeyboardEvent) {
     return;
   }
 
-  if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+  if (event.key === "ArrowRight" || event.key === "ArrowDown") {
     event.preventDefault();
     const next = props.tabs[(currentIdx + 1) % props.tabs.length];
     selectTab(next.key);
-  } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+  } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
     event.preventDefault();
     const prev = props.tabs[(currentIdx - 1 + props.tabs.length) % props.tabs.length];
     selectTab(prev.key);
@@ -82,12 +82,12 @@ const activeIdx = computed(() => props.tabs.findIndex((t) => t.key === props.mod
   transition: color var(--dur-fast) var(--ease-standard);
 }
 
-.app-tabs__tab[aria-selected='true'] {
+.app-tabs__tab[aria-selected="true"] {
   color: var(--color-accent);
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .app-tabs__tab:not([aria-selected='true']):hover {
+  .app-tabs__tab:not([aria-selected="true"]):hover {
     color: var(--color-text);
   }
 }

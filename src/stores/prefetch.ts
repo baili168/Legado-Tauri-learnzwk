@@ -1,6 +1,6 @@
-import { defineStore } from 'pinia';
-import { ref } from 'vue';
-import { invokeWithTimeout } from '@/composables/useInvoke';
+import { defineStore } from "pinia";
+import { ref } from "vue";
+import { invokeWithTimeout } from "@/composables/useInvoke";
 
 export interface PrefetchPayload {
   id: string;
@@ -28,21 +28,21 @@ function customEventDetail(ev: Event): unknown {
 }
 
 function parseDonePayload(value: unknown): { taskId: string } | null {
-  if (value === null || typeof value !== 'object' || !('taskId' in value)) {
+  if (value === null || typeof value !== "object" || !("taskId" in value)) {
     return null;
   }
   const taskId = value.taskId;
-  return typeof taskId === 'string' ? { taskId } : null;
+  return typeof taskId === "string" ? { taskId } : null;
 }
 
 function parseProgressPayload(value: unknown): PrefetchProgressPayload | null {
   if (
     value === null ||
-    typeof value !== 'object' ||
-    !('taskId' in value) ||
-    !('done' in value) ||
-    !('total' in value) ||
-    !('chapterIndex' in value)
+    typeof value !== "object" ||
+    !("taskId" in value) ||
+    !("done" in value) ||
+    !("total" in value) ||
+    !("chapterIndex" in value)
   ) {
     return null;
   }
@@ -51,27 +51,27 @@ function parseProgressPayload(value: unknown): PrefetchProgressPayload | null {
   const total = value.total;
   const chapterIndex = value.chapterIndex;
   if (
-    typeof taskId !== 'string' ||
-    typeof done !== 'number' ||
-    typeof total !== 'number' ||
-    typeof chapterIndex !== 'number'
+    typeof taskId !== "string" ||
+    typeof done !== "number" ||
+    typeof total !== "number" ||
+    typeof chapterIndex !== "number"
   ) {
     return null;
   }
-  const error = 'error' in value && typeof value.error === 'string' ? value.error : undefined;
+  const error = "error" in value && typeof value.error === "string" ? value.error : undefined;
   return { taskId, done, total, chapterIndex, error };
 }
 
-export const usePrefetchStore = defineStore('prefetch', () => {
+export const usePrefetchStore = defineStore("prefetch", () => {
   // ── 主动缓存状态 ─────────────────────────────────────────────────────
   const manualRunning = ref(false);
   const manualProgress = ref({ done: 0, total: 0 });
-  const manualBookName = ref('');
-  const manualTaskId = ref('');
+  const manualBookName = ref("");
+  const manualTaskId = ref("");
 
   // ── 静默缓存状态 ─────────────────────────────────────────────────────
   const silentRunning = ref(false);
-  const silentTaskId = ref('');
+  const silentTaskId = ref("");
 
   let _progressUnlisten: (() => void) | null = null;
   let _doneUnlisten: (() => void) | null = null;
@@ -99,20 +99,20 @@ export const usePrefetchStore = defineStore('prefetch', () => {
 
   async function setupManualListeners(tid: string) {
     try {
-      const { listen } = await import('@tauri-apps/api/event');
-      _progressUnlisten = await listen<PrefetchProgressPayload>('shelf:prefetch-progress', (ev) => {
+      const { listen } = await import("@tauri-apps/api/event");
+      _progressUnlisten = await listen<PrefetchProgressPayload>("shelf:prefetch-progress", (ev) => {
         if (ev.payload.taskId !== tid) {
           return;
         }
         manualProgress.value = { done: ev.payload.done, total: ev.payload.total };
         _onChapterCached?.(ev.payload.chapterIndex, ev.payload);
       });
-      _doneUnlisten = await listen<{ taskId: string }>('shelf:prefetch-done', (ev) => {
+      _doneUnlisten = await listen<{ taskId: string }>("shelf:prefetch-done", (ev) => {
         if (ev.payload.taskId !== tid) {
           return;
         }
         manualRunning.value = false;
-        manualTaskId.value = '';
+        manualTaskId.value = "";
         cleanupManual();
       });
     } catch {
@@ -132,36 +132,36 @@ export const usePrefetchStore = defineStore('prefetch', () => {
           return;
         }
         manualRunning.value = false;
-        manualTaskId.value = '';
+        manualTaskId.value = "";
         cleanupManual();
       };
-      window.addEventListener('shelf:prefetch-progress', progressHandler);
-      window.addEventListener('shelf:prefetch-done', doneHandler);
+      window.addEventListener("shelf:prefetch-progress", progressHandler);
+      window.addEventListener("shelf:prefetch-done", doneHandler);
       _progressUnlisten = () =>
-        window.removeEventListener('shelf:prefetch-progress', progressHandler);
-      _doneUnlisten = () => window.removeEventListener('shelf:prefetch-done', doneHandler);
+        window.removeEventListener("shelf:prefetch-progress", progressHandler);
+      _doneUnlisten = () => window.removeEventListener("shelf:prefetch-done", doneHandler);
     }
   }
 
   async function setupSilentListeners(tid: string) {
     try {
-      const { listen } = await import('@tauri-apps/api/event');
+      const { listen } = await import("@tauri-apps/api/event");
       _silentProgressUnlisten = await listen<{
         taskId: string;
         chapterIndex: number;
         error?: string;
-      }>('shelf:prefetch-progress', (ev) => {
+      }>("shelf:prefetch-progress", (ev) => {
         if (ev.payload.taskId !== tid) {
           return;
         }
         _onSilentChapterCached?.(ev.payload.chapterIndex);
       });
-      _silentDoneUnlisten = await listen<{ taskId: string }>('shelf:prefetch-done', (ev) => {
+      _silentDoneUnlisten = await listen<{ taskId: string }>("shelf:prefetch-done", (ev) => {
         if (ev.payload.taskId !== tid) {
           return;
         }
         silentRunning.value = false;
-        silentTaskId.value = '';
+        silentTaskId.value = "";
         cleanupSilent();
       });
     } catch {
@@ -179,15 +179,15 @@ export const usePrefetchStore = defineStore('prefetch', () => {
           return;
         }
         silentRunning.value = false;
-        silentTaskId.value = '';
+        silentTaskId.value = "";
         cleanupSilent();
       };
-      window.addEventListener('shelf:prefetch-progress', silentProgressHandler);
-      window.addEventListener('shelf:prefetch-done', silentDoneHandler);
+      window.addEventListener("shelf:prefetch-progress", silentProgressHandler);
+      window.addEventListener("shelf:prefetch-done", silentDoneHandler);
       _silentProgressUnlisten = () =>
-        window.removeEventListener('shelf:prefetch-progress', silentProgressHandler);
+        window.removeEventListener("shelf:prefetch-progress", silentProgressHandler);
       _silentDoneUnlisten = () =>
-        window.removeEventListener('shelf:prefetch-done', silentDoneHandler);
+        window.removeEventListener("shelf:prefetch-done", silentDoneHandler);
     }
   }
 
@@ -201,7 +201,7 @@ export const usePrefetchStore = defineStore('prefetch', () => {
   ): Promise<void> {
     if (manualTaskId.value) {
       try {
-        await invokeWithTimeout('booksource_cancel', { taskId: manualTaskId.value }, 3000);
+        await invokeWithTimeout("booksource_cancel", { taskId: manualTaskId.value }, 3000);
       } catch {
         // 忽略
       }
@@ -220,13 +220,13 @@ export const usePrefetchStore = defineStore('prefetch', () => {
 
     try {
       await invokeWithTimeout(
-        'bookshelf_prefetch_chapters',
+        "bookshelf_prefetch_chapters",
         { payload: { ...payload, taskId: tid } },
         10_000,
       );
     } catch (e) {
       manualRunning.value = false;
-      manualTaskId.value = '';
+      manualTaskId.value = "";
       cleanupManual();
       throw e;
     }
@@ -238,11 +238,11 @@ export const usePrefetchStore = defineStore('prefetch', () => {
       return;
     }
     const tid = manualTaskId.value;
-    manualTaskId.value = '';
+    manualTaskId.value = "";
     manualRunning.value = false;
     cleanupManual();
     try {
-      await invokeWithTimeout('booksource_cancel', { taskId: tid }, 3000);
+      await invokeWithTimeout("booksource_cancel", { taskId: tid }, 3000);
     } catch {
       // 忽略
     }
@@ -270,13 +270,13 @@ export const usePrefetchStore = defineStore('prefetch', () => {
 
     try {
       await invokeWithTimeout(
-        'bookshelf_prefetch_chapters',
+        "bookshelf_prefetch_chapters",
         { payload: { ...payload, taskId: tid } },
         10_000,
       );
     } catch {
       silentRunning.value = false;
-      silentTaskId.value = '';
+      silentTaskId.value = "";
       cleanupSilent();
     }
   }

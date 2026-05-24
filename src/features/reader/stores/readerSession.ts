@@ -1,14 +1,14 @@
-import { defineStore } from 'pinia';
-import { ref } from 'vue';
-import type { TemporaryChapterSourceOverride } from '@/components/reader/types';
-import type { ChapterItem } from '@/stores';
+import { defineStore } from "pinia";
+import { ref } from "vue";
+import type { TemporaryChapterSourceOverride } from "@/components/reader/types";
+import type { ChapterItem } from "@/stores";
 
-export const useReaderSessionStore = defineStore('readerSession', () => {
+export const useReaderSessionStore = defineStore("readerSession", () => {
   const activeChapterIndex = ref(0);
   const loading = ref(false);
   const pagedLoading = ref(false);
-  const content = ref('');
-  const error = ref('');
+  const content = ref("");
+  const error = ref("");
 
   const currentPageIndex = ref(-1);
   const currentScrollRatio = ref(-1);
@@ -19,7 +19,7 @@ export const useReaderSessionStore = defineStore('readerSession', () => {
 
   const openingChapter = ref(false);
   const restoringPosition = ref(false);
-  const navDirection = ref<'forward' | 'backward'>('forward');
+  const navDirection = ref<"forward" | "backward">("forward");
 
   const readIndices = ref<Set<number>>(new Set());
   const cachedIndices = ref<Set<number>>(new Set());
@@ -29,8 +29,8 @@ export const useReaderSessionStore = defineStore('readerSession', () => {
     activeChapterIndex.value = currentIndex;
     loading.value = false;
     pagedLoading.value = false;
-    content.value = '';
-    error.value = '';
+    content.value = "";
+    error.value = "";
     currentPageIndex.value = -1;
     currentScrollRatio.value = -1;
     pagedPageIndex.value = 0;
@@ -39,15 +39,15 @@ export const useReaderSessionStore = defineStore('readerSession', () => {
     pendingResumePlaybackTime.value = -1;
     openingChapter.value = false;
     restoringPosition.value = false;
-    navDirection.value = 'forward';
+    navDirection.value = "forward";
     readIndices.value = new Set();
     cachedIndices.value = new Set();
     temporaryChapterOverrides.value = {};
   }
 
   function resetForClose() {
-    content.value = '';
-    error.value = '';
+    content.value = "";
+    error.value = "";
     readIndices.value = new Set();
     cachedIndices.value = new Set();
     temporaryChapterOverrides.value = {};

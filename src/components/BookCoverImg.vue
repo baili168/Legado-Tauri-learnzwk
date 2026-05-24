@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
-import { extractLocalFilePath, isLocalFileRef, toFileSrcSync } from '@/composables/useFileSrc';
-import { invokeWithTimeout } from '@/composables/useInvoke';
+import { ref, watch } from "vue";
+import { extractLocalFilePath, isLocalFileRef, toFileSrcSync } from "@/composables/useFileSrc";
+import { invokeWithTimeout } from "@/composables/useInvoke";
 import {
   getCoverImageHeaders,
   getCoverImageReferer,
   getCoverImageSourceUrl,
   getCoverImageUrl,
   type CoverImageInput,
-} from '@/utils/coverImage';
+} from "@/utils/coverImage";
 
 /**
  * 书籍封面图片组件
@@ -35,12 +35,12 @@ const props = withDefaults(
     /** 用于解析相对路径的基础 URL（bookUrl / tocUrl 等），同时启用本地缓存 */
     baseUrl?: string;
   }>(),
-  { alt: '' },
+  { alt: "" },
 );
 
-type CoverStatus = 'loading' | 'loaded' | 'error' | 'empty';
+type CoverStatus = "loading" | "loaded" | "error" | "empty";
 
-const status = ref<CoverStatus>('empty');
+const status = ref<CoverStatus>("empty");
 /** 最终传给 <img> 的 src（已解析 & 可能是本地 asset:// URI） */
 const resolvedSrc = ref<string | undefined>(undefined);
 /** 当前展示的是否来自本地缓存（避免重复触发下载） */
@@ -56,7 +56,7 @@ const lastLoadedSrc = ref<string | undefined>(undefined);
 let resolveSeq = 0;
 
 async function hasCoverCacheTransport(): Promise<boolean> {
-  const { isTransportAvailable } = await import('@/composables/useTransport');
+  const { isTransportAvailable } = await import("@/composables/useTransport");
   return isTransportAvailable();
 }
 
@@ -77,7 +77,7 @@ function applyResolvedSrc(newSrc: string, fromCache: boolean) {
   isFromCache.value = fromCache;
   resolvedSrc.value = newSrc;
   // img src 未变化时，onLoad 不会重触发，直接恢复 loaded 状态
-  status.value = newSrc === lastLoadedSrc.value ? 'loaded' : 'loading';
+  status.value = newSrc === lastLoadedSrc.value ? "loaded" : "loading";
 }
 
 watch(
@@ -89,7 +89,7 @@ watch(
     if (!rawUrl) {
       resolvedSrc.value = undefined;
       isFromCache.value = false;
-      status.value = 'empty';
+      status.value = "empty";
       return;
     }
 
@@ -100,13 +100,13 @@ watch(
 
     const sourceUrl = getCoverImageSourceUrl(src);
     const absUrl = toAbsUrl(rawUrl, sourceUrl || baseUrl);
-    status.value = 'loading';
+    status.value = "loading";
     resolvedSrc.value = undefined;
 
     if (await hasCoverCacheTransport()) {
       try {
         const result = await invokeWithTimeout<{ localPath: string; localRef: string }>(
-          'cover_resolve_cache',
+          "cover_resolve_cache",
           {
             request: {
               url: absUrl,
@@ -123,7 +123,7 @@ watch(
         return;
       } catch {
         if (seq === resolveSeq) {
-          status.value = 'error';
+          status.value = "error";
         }
         return;
       }
@@ -139,7 +139,7 @@ watch(
 
 function onLoad() {
   lastLoadedSrc.value = resolvedSrc.value;
-  status.value = 'loaded';
+  status.value = "loaded";
 }
 
 function onError() {
@@ -152,7 +152,7 @@ function onError() {
       return;
     }
   }
-  status.value = 'error';
+  status.value = "error";
 }
 </script>
 
@@ -203,7 +203,7 @@ function onError() {
         />
       </svg>
       <span class="book-cover-img__label">
-        {{ status === 'error' ? '加载失败' : '暂无封面' }}
+        {{ status === "error" ? "加载失败" : "暂无封面" }}
       </span>
     </div>
   </div>

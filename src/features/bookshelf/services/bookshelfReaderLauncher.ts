@@ -1,16 +1,16 @@
-﻿import type { MessageApi } from 'naive-ui';
-import { useTocAutoUpdate } from '@/composables/useTocAutoUpdate';
+﻿import type { MessageApi } from "naive-ui";
+import { useTocAutoUpdate } from "@/composables/useTocAutoUpdate";
 import {
   useBookshelfStore,
   useMusicPlayerStore,
   useScriptBridgeStore,
   type ChapterItem,
   type ShelfBook,
-} from '@/stores';
-import { LOCAL_TXT_FILE_NAME } from '@/stores/bookshelf';
-import { useBookshelfReaderStore } from '../stores/bookshelfReader';
-import { useBookshelfUiStore } from '../stores/bookshelfUi';
-import { chapterItemsToCachedChapters } from '../utils/readerBookInfo';
+} from "@/stores";
+import { LOCAL_TXT_FILE_NAME } from "@/stores/bookshelf";
+import { useBookshelfReaderStore } from "../stores/bookshelfReader";
+import { useBookshelfUiStore } from "../stores/bookshelfUi";
+import { chapterItemsToCachedChapters } from "../utils/readerBookInfo";
 
 export function useBookshelfReaderLauncher(message: MessageApi) {
   const readerStore = useBookshelfReaderStore();
@@ -35,11 +35,11 @@ export function useBookshelfReaderLauncher(message: MessageApi) {
     if (!readerStore.readerChapters.length) {
       // 本地 TXT 书籍没有书源，章节列表丢失时直接提示重新导入
       if (book.fileName === LOCAL_TXT_FILE_NAME) {
-        message.error('本地书籍章节记录已丢失，请重新导入 TXT 文件');
+        message.error("本地书籍章节记录已丢失，请重新导入 TXT 文件");
         return;
       }
       if (!book.bookUrl || !book.fileName) {
-        message.warning('无法获取书籍地址，请从发现页重新打开');
+        message.warning("无法获取书籍地址，请从发现页重新打开");
         return;
       }
       if (uiStore.openingBookId) {
@@ -75,13 +75,13 @@ export function useBookshelfReaderLauncher(message: MessageApi) {
         uiStore.openingBookId = null;
       }
       if (!readerStore.readerChapters.length) {
-        message.warning('书源未返回章节列表');
+        message.warning("书源未返回章节列表");
         return;
       }
     }
 
     const index = book.readChapterIndex >= 0 ? book.readChapterIndex : 0;
-    if (book.sourceType === 'music') {
+    if (book.sourceType === "music") {
       await musicPlayer.playList(
         {
           shelfId: book.id,
@@ -120,7 +120,7 @@ export function useBookshelfReaderLauncher(message: MessageApi) {
     const bookUrl = readerStore.readerBookInfo?.bookUrl;
     const fileName = readerStore.readerFileName;
     if (!bookUrl || !fileName || !readerStore.readerShelfId) {
-      message.warning('无法获取书籍地址，请先确保书籍已加入书架');
+      message.warning("无法获取书籍地址，请先确保书籍已加入书架");
       return;
     }
     readerStore.refreshingToc = true;
@@ -145,7 +145,7 @@ export function useBookshelfReaderLauncher(message: MessageApi) {
       if (newCount > 0) {
         message.success(`目录已更新，新增 ${newCount} 章`);
       } else {
-        message.info('目录已是最新，无新章节');
+        message.info("目录已是最新，无新章节");
       }
     } catch (error: unknown) {
       message.error(`更新目录失败：${error instanceof Error ? error.message : String(error)}`);

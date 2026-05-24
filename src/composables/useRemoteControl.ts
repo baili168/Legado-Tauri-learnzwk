@@ -1,36 +1,36 @@
-import { onMounted, onUnmounted } from 'vue';
+import { onMounted, onUnmounted } from "vue";
 
-type RemoteAction = 'up' | 'down' | 'left' | 'right' | 'confirm' | 'back' | 'menu';
+type RemoteAction = "up" | "down" | "left" | "right" | "confirm" | "back" | "menu";
 
 const keyMap: Record<string, RemoteAction | undefined> = {
-  ArrowUp: 'up',
-  ArrowDown: 'down',
-  ArrowLeft: 'left',
-  ArrowRight: 'right',
-  Enter: 'confirm',
-  ' ': 'confirm',
-  Escape: 'back',
-  Backspace: 'back',
-  ContextMenu: 'menu',
+  ArrowUp: "up",
+  ArrowDown: "down",
+  ArrowLeft: "left",
+  ArrowRight: "right",
+  Enter: "confirm",
+  " ": "confirm",
+  Escape: "back",
+  Backspace: "back",
+  ContextMenu: "menu",
 };
 
 function getFocusableElements(container: ParentNode = document): HTMLElement[] {
   return Array.from(
     container.querySelectorAll<HTMLElement>(
       [
-        'button:not(:disabled)',
-        'a[href]',
-        'input:not(:disabled)',
-        'select:not(:disabled)',
-        'textarea:not(:disabled)',
+        "button:not(:disabled)",
+        "a[href]",
+        "input:not(:disabled)",
+        "select:not(:disabled)",
+        "textarea:not(:disabled)",
         "[tabindex]:not([tabindex='-1'])",
         "[role='button']",
         "[role='option']",
-      ].join(','),
+      ].join(","),
     ),
   ).filter((el) => {
     const style = window.getComputedStyle(el);
-    return style.display !== 'none' && style.visibility !== 'hidden';
+    return style.display !== "none" && style.visibility !== "hidden";
   });
 }
 
@@ -39,17 +39,17 @@ function focusElement(el: HTMLElement | undefined) {
     return;
   }
   el.focus({ preventScroll: false });
-  el.dataset.focused = 'true';
+  el.dataset.focused = "true";
 
   setTimeout(() => {
-    el.dataset.focused = 'false';
+    el.dataset.focused = "false";
   }, 180);
 }
 
 function findNearestByDirection(
   current: HTMLElement,
   elements: HTMLElement[],
-  direction: 'up' | 'down' | 'left' | 'right',
+  direction: "up" | "down" | "left" | "right",
 ): HTMLElement | undefined {
   const currentRect = current.getBoundingClientRect();
   const currentCenterX = currentRect.left + currentRect.width / 2;
@@ -71,17 +71,17 @@ function findNearestByDirection(
     const dy = centerY - currentCenterY;
 
     const isCandidate =
-      (direction === 'up' && dy < -4) ||
-      (direction === 'down' && dy > 4) ||
-      (direction === 'left' && dx < -4) ||
-      (direction === 'right' && dx > 4);
+      (direction === "up" && dy < -4) ||
+      (direction === "down" && dy > 4) ||
+      (direction === "left" && dx < -4) ||
+      (direction === "right" && dx > 4);
 
     if (!isCandidate) {
       continue;
     }
 
-    const primary = direction === 'up' || direction === 'down' ? Math.abs(dy) : Math.abs(dx);
-    const secondary = direction === 'up' || direction === 'down' ? Math.abs(dx) : Math.abs(dy);
+    const primary = direction === "up" || direction === "down" ? Math.abs(dy) : Math.abs(dx);
+    const secondary = direction === "up" || direction === "down" ? Math.abs(dx) : Math.abs(dy);
     const score = primary * 2 + secondary;
 
     if (score < bestScore) {
@@ -110,7 +110,7 @@ export function useRemoteControl(options?: {
     const active = document.activeElement as HTMLElement | null;
     const focusables = getFocusableElements();
 
-    if (action === 'confirm') {
+    if (action === "confirm") {
       if (active && active !== document.body) {
         event.preventDefault();
         active.click();
@@ -118,26 +118,26 @@ export function useRemoteControl(options?: {
       return;
     }
 
-    if (action === 'back') {
+    if (action === "back") {
       event.preventDefault();
       options?.onBack?.();
       return;
     }
 
-    if (action === 'menu') {
+    if (action === "menu") {
       event.preventDefault();
       options?.onMenu?.();
       return;
     }
 
     const customHandled =
-      action === 'left'
+      action === "left"
         ? options?.onLeft?.()
-        : action === 'right'
+        : action === "right"
           ? options?.onRight?.()
-          : action === 'up'
+          : action === "up"
             ? options?.onUp?.()
-            : action === 'down'
+            : action === "down"
               ? options?.onDown?.()
               : false;
 
@@ -160,10 +160,10 @@ export function useRemoteControl(options?: {
   }
 
   onMounted(() => {
-    document.addEventListener('keydown', onKeyDown, true);
+    document.addEventListener("keydown", onKeyDown, true);
   });
 
   onUnmounted(() => {
-    document.removeEventListener('keydown', onKeyDown, true);
+    document.removeEventListener("keydown", onKeyDown, true);
   });
 }

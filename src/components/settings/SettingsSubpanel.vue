@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { isMobile } from '@/composables/useEnv';
-import { useOverlayBackstack } from '@/composables/useOverlayBackstack';
+import { ref } from "vue";
+import { isMobile } from "@/composables/useEnv";
+import { useOverlayBackstack } from "@/composables/useOverlayBackstack";
 
 withDefaults(
   defineProps<{
@@ -12,10 +12,10 @@ withDefaults(
     mobileHeight?: string | number;
   }>(),
   {
-    description: '',
-    actionLabel: '打开面板',
-    desktopWidth: 'min(720px, calc(100vw - 48px))',
-    mobileHeight: '78vh',
+    description: "",
+    actionLabel: "打开面板",
+    desktopWidth: "min(720px, calc(100vw - 48px))",
+    mobileHeight: "78vh",
   },
 );
 

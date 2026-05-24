@@ -1,4 +1,4 @@
-import type { ShelfBook } from '@/stores';
+import type { ShelfBook } from "@/stores";
 
 export function hashSeed(input: string): number {
   let hash = 0;
@@ -9,7 +9,7 @@ export function hashSeed(input: string): number {
 }
 
 export function paletteFromBook(book: ShelfBook) {
-  const seed = hashSeed(`${book.name}|${book.author}|${book.kind ?? ''}`);
+  const seed = hashSeed(`${book.name}|${book.author}|${book.kind ?? ""}`);
   const hue = seed % 360;
   return {
     primary: `hsl(${hue} 72% 46%)`,
@@ -21,20 +21,20 @@ export function paletteFromBook(book: ShelfBook) {
 }
 
 export function bookAuthor(book: ShelfBook): string {
-  return escapeSvgText(book.author || '佚名');
+  return escapeSvgText(book.author || "佚名");
 }
 
-export function bookKind(book: ShelfBook, fallback = 'Legado Cover'): string {
+export function bookKind(book: ShelfBook, fallback = "Legado Cover"): string {
   return escapeSvgText(book.kind ?? fallback);
 }
 
 export function escapeSvgText(input: string): string {
   return input
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 }
 
 export function wrapText(input: string, lineLength: number, lineLimit: number): string[] {
@@ -46,10 +46,10 @@ export function wrapText(input: string, lineLength: number, lineLimit: number): 
     index < chars.length && lines.length < lineLimit;
     index += effectiveLineLength
   ) {
-    lines.push(chars.slice(index, index + effectiveLineLength).join(''));
+    lines.push(chars.slice(index, index + effectiveLineLength).join(""));
   }
   if (!lines.length) {
-    lines.push('未命名作品');
+    lines.push("未命名作品");
   }
   if (chars.length > effectiveLineLength * lineLimit) {
     const last = lines.length - 1;
@@ -62,13 +62,13 @@ export function textSpans(
   lines: string[],
   options: { x: number | string; lineHeight: number; firstDy?: number | string },
 ): string {
-  const lineHeight = '10em';
+  const lineHeight = "10em";
   return lines
     .map(
       (line, index) =>
         `<tspan x="${options.x}" dy="${index === 0 ? (options.firstDy ?? 0) : lineHeight}">${escapeSvgText(line)}</tspan>`,
     )
-    .join('');
+    .join("");
 }
 
 export function verticalTextSpans(
@@ -85,9 +85,9 @@ export function verticalTextSpans(
           (char, charIndex) =>
             `<tspan x="${x}" y="${options.y + charIndex * charGap}">${escapeSvgText(char)}</tspan>`,
         )
-        .join('');
+        .join("");
     })
-    .join('');
+    .join("");
 }
 
 export function buildDataUrl(svg: string): string {

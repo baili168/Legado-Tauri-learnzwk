@@ -1,19 +1,26 @@
 <script setup lang="ts">
-import { Pause, Play, SkipForward, X } from 'lucide-vue-next';
-/**
- * 全局底部 Mini 播放条
- *
- * - 使用项目 CSS 变量，自动跟随深色/浅色主题
- * - 移动端位于 BottomNav 之上，支持上划展开、左划下一首、右划上一首
- * - 桌面端 hover 微浮动
- */
-import { storeToRefs } from 'pinia';
-import { computed } from 'vue';
-import { isMobile } from '@/composables/useEnv';
-import { useMusicPlayerStore } from '@/stores';
-import { getCoverImageUrl } from '@/utils/coverImage';
+import {
+  ChevronDown,
+  GripVertical,
+  ListMusic,
+  Pause,
+  Play,
+  Repeat,
+  Repeat1,
+  Shuffle,
+  SkipForward,
+  Trash2,
+  X,
+} from "lucide-vue-next";
+import { storeToRefs } from "pinia";
+import { computed, ref } from "vue";
+import { isMobile } from "@/composables/useEnv";
+import { useAudioPlaylist } from "@/composables/useAudioPlaylist";
+import { useMusicPlayerStore, type PlayMode } from "@/stores";
+import { getCoverImageUrl } from "@/utils/coverImage";
 
 const player = useMusicPlayerStore();
+const audioPlaylist = useAudioPlaylist();
 const {
   hasSession,
   currentTrack,
@@ -23,15 +30,49 @@ const {
   duration,
   book,
   showFullPlayer,
+  tracks,
+  currentIndex,
+  playMode,
 } = storeToRefs(player);
 
+const showQueue = ref(false);
+
 const cover = computed(() => getCoverImageUrl(book.value?.coverUrl));
+const isLocalSession = computed(() => book.value?.fileName === "local-playlist");
+const isLocalType = computed(() => {
+  if (!currentTrack.value?.audioUrl) return false;
+  return currentTrack.value.audioUrl.startsWith("blob:") || currentTrack.value.audioUrl.startsWith("file://");
+});
+
 const progressPct = computed(() => {
   if (!Number.isFinite(duration.value) || duration.value <= 0) {
     return 0;
   }
   return Math.max(0, Math.min(100, (currentTime.value / duration.value) * 100));
 });
+
+const PLAY_MODE_LABEL: Record<PlayMode, string> = {
+  order: "顺序播放",
+  "list-loop": "列表循环",
+  "repeat-one": "单曲循环",
+  shuffle: "随机播放",
+};
+
+const loopIcon = computed(() => {
+  if (playMode.value === "shuffle") return Shuffle;
+  if (playMode.value === "repeat-one") return Repeat1;
+  return Repeat;
+});
+
+const isLoopActive = computed(() => playMode.value !== "order");
+
+function formatTime(secs: number): string {
+  if (!Number.isFinite(secs) || secs <= 0) return "00:00";
+  const total = Math.floor(secs);
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
 
 function expand() {
   player.openFullPlayer();
@@ -44,17 +85,161 @@ function onTogglePlay(e: Event) {
 
 function onNext(e: Event) {
   e.stopPropagation();
-  void player.next();
+  if (isLocalSession.value) {
+    void audioPlaylist.playNext();
+  } else {
+    void player.next();
+  }
 }
 
 function onPrev(e: Event) {
   e.stopPropagation();
-  void player.prev();
+  if (isLocalSession.value) {
+    void audioPlaylist.playPrev();
+  } else {
+    void player.prev();
+  }
 }
 
 function onClose(e: Event) {
   e.stopPropagation();
   player.clearSession();
+}
+
+function toggleQueue(e: Event) {
+  e.stopPropagation();
+  showQueue.value = !showQueue.value;
+}
+
+function togglePlayMode(e: Event) {
+  e.stopPropagation();
+  const MODES: PlayMode[] = ["order", "list-loop", "repeat-one", "shuffle"];
+  const current = MODES.indexOf(playMode.value);
+  const next = MODES[(current + 1) % MODES.length];
+  if (isLocalSession.value) {
+    audioPlaylist.setLoopMode(next);
+  } else {
+    player.setPlayMode(next);
+  }
+}
+
+function selectFromQueue(index: number) {
+  showQueue.value = false;
+  if (isLocalSession.value) {
+    void audioPlaylist.playLocalIndex(index);
+  } else {
+    void player.playIndex(index);
+  }
+}
+
+function removeFromQueue(e: Event, index: number) {
+  e.stopPropagation();
+  if (isLocalSession.value) {
+    const wasCurrent = index === audioPlaylist.currentIndex.value;
+    audioPlaylist.removeTrack(index);
+    if (audioPlaylist.playlist.value.length === 0) {
+      player.clearSession();
+      return;
+    }
+    const rebuilt = audioPlaylist.playlist.value.map((t) => ({
+      chapterUrl: t.blobUrl,
+      name: t.name,
+      audioUrl: t.blobUrl,
+    }));
+    player.tracks = rebuilt;
+    const newIdx = Math.min(audioPlaylist.currentIndex.value, rebuilt.length - 1);
+    player.currentIndex = newIdx;
+    if (wasCurrent) {
+      void player.playIndex(newIdx);
+    }
+  } else {
+    const newTracks = [...tracks.value];
+    newTracks.splice(index, 1);
+    if (newTracks.length === 0) {
+      player.clearSession();
+      return;
+    }
+    const newCurrentIndex =
+      index <= currentIndex.value && currentIndex.value > 0
+        ? currentIndex.value - 1
+        : Math.min(currentIndex.value, newTracks.length - 1);
+    player.tracks = newTracks;
+    player.currentIndex = newCurrentIndex;
+  }
+}
+
+function onPlaylistItemClick(index: number) {
+  selectFromQueue(index);
+}
+
+// ── 播放列表拖拽排序 ────────────────────────────────────────────────────
+let dragFromIndex = -1;
+
+function onDragStart(e: DragEvent, index: number) {
+  dragFromIndex = index;
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", String(index));
+  }
+}
+
+function onDragOver(e: DragEvent, index: number) {
+  e.preventDefault();
+  if (e.dataTransfer) {
+    e.dataTransfer.dropEffect = "move";
+  }
+}
+
+function onDragEnd() {
+  dragFromIndex = -1;
+}
+
+function onDrop(e: DragEvent, toIndex: number) {
+  e.preventDefault();
+  if (dragFromIndex < 0) return;
+  if (isLocalSession.value) {
+    audioPlaylist.moveTrack(dragFromIndex, toIndex);
+    const rebuilt = audioPlaylist.playlist.value.map((t) => ({
+      chapterUrl: t.blobUrl,
+      name: t.name,
+      audioUrl: t.blobUrl,
+    }));
+    player.tracks = rebuilt;
+    player.currentIndex = audioPlaylist.currentIndex.value;
+  }
+  dragFromIndex = -1;
+}
+
+// ── 播放列表滑动删除 ────────────────────────────────────────────────────
+const swipeOffsets = ref<Record<number, number>>({});
+let swipeStartX = 0;
+let swipeCurrentIndex = -1;
+
+function onPlaylistTouchStart(e: TouchEvent, index: number) {
+  const t = e.touches[0];
+  swipeStartX = t.clientX;
+  swipeCurrentIndex = index;
+}
+
+function onPlaylistTouchMove(e: TouchEvent, index: number) {
+  if (swipeCurrentIndex !== index) return;
+  const t = e.touches[0];
+  const dx = t.clientX - swipeStartX;
+  if (dx < 0) {
+    swipeOffsets.value = { ...swipeOffsets.value, [index]: Math.max(dx, -120) };
+  } else {
+    swipeOffsets.value = { ...swipeOffsets.value, [index]: 0 };
+  }
+}
+
+function onPlaylistTouchEnd(e: TouchEvent, index: number) {
+  if (swipeCurrentIndex !== index) return;
+  const offset = swipeOffsets.value[index] || 0;
+  if (offset < -60) {
+    removeFromQueue(e, index);
+  }
+  swipeOffsets.value = { ...swipeOffsets.value, [index]: 0 };
+  swipeCurrentIndex = -1;
 }
 
 // ── 移动端滑动手势 ────────────────────────────────────────────────────
@@ -73,24 +258,40 @@ function onTouchEnd(e: TouchEvent) {
   const dy = t.clientY - touchStartY;
   const adx = Math.abs(dx);
   const ady = Math.abs(dy);
-  // 滑动距离不足 40px 视为点击（由 @click 处理）
   if (adx < 40 && ady < 40) {
     return;
   }
   e.preventDefault();
   if (ady > adx) {
-    // 上划：展开全屏
     if (dy < 0) {
       expand();
     }
   } else {
-    // 左划：下一首；右划：上一首
-    if (dx < 0) {
-      void player.next();
+    if (isLocalSession.value) {
+      if (dx < 0) {
+        void audioPlaylist.playNext();
+      } else {
+        void audioPlaylist.playPrev();
+      }
     } else {
-      void player.prev();
+      if (dx < 0) {
+        void player.next();
+      } else {
+        void player.prev();
+      }
     }
   }
+}
+
+function getDisplayTracks() {
+  if (isLocalSession.value) {
+    return audioPlaylist.playlist.value.map((t, i) => ({
+      name: t.name,
+      index: i,
+      format: t.format,
+    }));
+  }
+  return tracks.value.map((t, i) => ({ name: t.name, index: i }));
 }
 </script>
 
@@ -109,28 +310,35 @@ function onTouchEnd(e: TouchEvent) {
         @touchstart.passive="onTouchStart"
         @touchend="onTouchEnd"
       >
-        <!-- 顶部进度条 -->
         <div class="mini-player__progress" :style="{ width: progressPct + '%' }" />
 
-        <!-- 封面 -->
         <div class="mini-player__cover">
           <img v-if="cover" :src="cover" :alt="book?.name ?? ''" loading="lazy" />
           <div v-else class="mini-player__cover-fallback">♪</div>
         </div>
 
-        <!-- 曲目信息 -->
         <div class="mini-player__meta">
           <div class="mini-player__title" :title="currentTrack?.name">
-            {{ currentTrack?.name || '未播放' }}
+            {{ currentTrack?.name || "未播放" }}
           </div>
           <div class="mini-player__sub" :title="book?.name">
-            {{ book?.name }}<span v-if="book?.author"> · {{ book.author }}</span>
+            <span v-if="isLocalType" class="mini-player__local-badge">本地</span>
+            {{ isLocalSession ? "本地音乐" : book?.name }}
+            <span v-if="book?.author && !isLocalSession"> · {{ book.author }}</span>
           </div>
         </div>
 
-        <!-- 操作按钮 -->
         <div class="mini-player__actions">
-          <!-- 移动端多显一个上一首 -->
+          <button
+            type="button"
+            class="mini-player__btn mini-player__btn--mode"
+            :aria-label="PLAY_MODE_LABEL[playMode]"
+            :title="PLAY_MODE_LABEL[playMode]"
+            :class="{ 'mini-player__btn--active': isLoopActive }"
+            @click="togglePlayMode"
+          >
+            <component :is="loopIcon" :size="15" />
+          </button>
           <button
             v-if="isMobile"
             type="button"
@@ -156,6 +364,15 @@ function onTouchEnd(e: TouchEvent) {
           </button>
           <button
             type="button"
+            class="mini-player__btn"
+            aria-label="播放列表"
+            :class="{ 'mini-player__btn--active': showQueue }"
+            @click="toggleQueue"
+          >
+            <ListMusic :size="16" />
+          </button>
+          <button
+            type="button"
             class="mini-player__btn mini-player__btn--close"
             aria-label="关闭播放器"
             @click="onClose"
@@ -163,6 +380,70 @@ function onTouchEnd(e: TouchEvent) {
             <X :size="16" />
           </button>
         </div>
+
+        <!-- 播放列表弹出层 -->
+        <Transition name="queue-sheet-fade">
+          <div v-if="showQueue" class="mini-player__queue-sheet" @click.stop>
+            <div class="mini-queue__header">
+              <span class="mini-queue__title">播放列表（{{ tracks.length }}）</span>
+              <button
+                type="button"
+                class="mini-queue__close"
+                aria-label="关闭"
+                @click="showQueue = false"
+              >
+                <ChevronDown :size="16" />
+              </button>
+            </div>
+            <ul class="mini-queue__list">
+              <li
+                v-for="(t, i) in getDisplayTracks()"
+                :key="i"
+                class="mini-queue__item"
+                :class="{
+                  'mini-queue__item--active': i === currentIndex,
+                  'mini-queue__item--dragging': dragFromIndex === i,
+                }"
+                :style="{
+                  transform: `translateX(${swipeOffsets[i] || 0}px)`,
+                  transition: swipeCurrentIndex === i ? 'none' : 'transform 0.2s ease',
+                }"
+                draggable="true"
+                @click="onPlaylistItemClick(i)"
+                @dragstart="onDragStart($event, i)"
+                @dragover="onDragOver($event, i)"
+                @dragend="onDragEnd"
+                @drop="onDrop($event, i)"
+                @touchstart.passive="onPlaylistTouchStart($event, i)"
+                @touchmove="onPlaylistTouchMove($event, i)"
+                @touchend="onPlaylistTouchEnd($event, i)"
+              >
+                <span class="mini-queue__grip" @click.stop>
+                  <GripVertical :size="14" />
+                </span>
+                <span class="mini-queue__index">{{ i + 1 }}</span>
+                <span class="mini-queue__name">{{ t.name }}</span>
+                <span v-if="t.format" class="mini-queue__format">{{ t.format.toUpperCase() }}</span>
+                <Play
+                  v-if="i === currentIndex && isPlaying"
+                  class="mini-queue__playing"
+                  :size="13"
+                />
+                <button
+                  type="button"
+                  class="mini-queue__remove"
+                  aria-label="移除"
+                  @click.stop="removeFromQueue($event, i)"
+                >
+                  <Trash2 :size="13" />
+                </button>
+              </li>
+            </ul>
+            <div v-if="getDisplayTracks().length === 0" class="mini-queue__empty">
+              播放列表为空
+            </div>
+          </div>
+        </Transition>
       </div>
     </Transition>
   </Teleport>
@@ -179,8 +460,8 @@ function onTouchEnd(e: TouchEvent) {
 
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 0 10px 0 8px;
+  gap: 10px;
+  padding: 0 8px 0 6px;
   height: 62px;
 
   border-radius: 14px;
@@ -191,7 +472,7 @@ function onTouchEnd(e: TouchEvent) {
   box-shadow: var(--mini-player-shadow);
 
   cursor: pointer;
-  overflow: hidden;
+  overflow: visible;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
   transition:
@@ -201,32 +482,44 @@ function onTouchEnd(e: TouchEvent) {
 
 /* 浅色主题 */
 :root,
-[data-theme='light'] {
+[data-theme="light"] {
   --mini-player-bg: rgba(255, 255, 255, 0.88);
   --mini-player-shadow: 0 4px 24px rgba(0, 0, 0, 0.1), 0 1px 4px rgba(0, 0, 0, 0.06);
   --mini-player-btn-hover: rgba(0, 0, 0, 0.06);
   --mini-player-play-bg: var(--color-accent, #3452e6);
   --mini-player-play-color: #fff;
+  --mini-queue-bg: rgba(255, 255, 255, 0.95);
+  --mini-queue-hover: rgba(0, 0, 0, 0.04);
+  --mini-queue-active: var(--color-accent, #3452e6);
+  --mini-queue-sep: rgba(0, 0, 0, 0.08);
 }
 
 /* 深色主题 */
-[data-theme='dark'] {
+[data-theme="dark"] {
   --mini-player-bg: rgba(30, 32, 40, 0.9);
   --mini-player-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 1px 4px rgba(0, 0, 0, 0.2);
   --mini-player-btn-hover: rgba(255, 255, 255, 0.1);
   --mini-player-play-bg: var(--color-accent, #8fafff);
   --mini-player-play-color: #111;
+  --mini-queue-bg: rgba(24, 26, 32, 0.96);
+  --mini-queue-hover: rgba(255, 255, 255, 0.06);
+  --mini-queue-active: #6ee7b7;
+  --mini-queue-sep: rgba(255, 255, 255, 0.08);
 }
 
 /* 系统深色（auto/未设置主题） */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]),
-  [data-theme='auto'] {
+  [data-theme="auto"] {
     --mini-player-bg: rgba(30, 32, 40, 0.9);
     --mini-player-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 1px 4px rgba(0, 0, 0, 0.2);
     --mini-player-btn-hover: rgba(255, 255, 255, 0.1);
     --mini-player-play-bg: var(--color-accent, #8fafff);
     --mini-player-play-color: #111;
+    --mini-queue-bg: rgba(24, 26, 32, 0.96);
+    --mini-queue-hover: rgba(255, 255, 255, 0.06);
+    --mini-queue-active: #6ee7b7;
+    --mini-queue-sep: rgba(255, 255, 255, 0.08);
   }
 }
 
@@ -262,9 +555,9 @@ function onTouchEnd(e: TouchEvent) {
 
 /* ── 封面 ────────────────────────────────────────────────────────────── */
 .mini-player__cover {
-  flex: 0 0 46px;
-  width: 46px;
-  height: 46px;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
   border-radius: 8px;
   overflow: hidden;
   background: var(--color-border);
@@ -281,7 +574,7 @@ function onTouchEnd(e: TouchEvent) {
 }
 
 .mini-player__cover-fallback {
-  font-size: 22px;
+  font-size: 20px;
   color: var(--color-text-muted);
 }
 
@@ -291,7 +584,7 @@ function onTouchEnd(e: TouchEvent) {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
 }
 
 .mini-player__title {
@@ -311,19 +604,34 @@ function onTouchEnd(e: TouchEvent) {
   overflow: hidden;
   text-overflow: ellipsis;
   line-height: 1.3;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mini-player__local-badge {
+  font-size: 9px;
+  font-weight: 600;
+  padding: 0 4px;
+  height: 15px;
+  line-height: 15px;
+  border-radius: 3px;
+  background: var(--color-accent, #3452e6);
+  color: #fff;
+  flex-shrink: 0;
 }
 
 /* ── 操作区 ──────────────────────────────────────────────────────────── */
 .mini-player__actions {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 1px;
   flex-shrink: 0;
 }
 
 .mini-player__btn {
-  width: 38px;
-  height: 38px;
+  width: 34px;
+  height: 34px;
   border: none;
   border-radius: 50%;
   background: transparent;
@@ -349,10 +657,14 @@ function onTouchEnd(e: TouchEvent) {
   cursor: not-allowed;
 }
 
+.mini-player__btn--active {
+  color: var(--color-accent, #3452e6);
+}
+
 /* 主播放按钮：填充主题色 */
 .mini-player__btn--play {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   background: var(--mini-player-play-bg);
   color: var(--mini-player-play-color);
 }
@@ -362,9 +674,178 @@ function onTouchEnd(e: TouchEvent) {
   background: var(--mini-player-play-bg);
 }
 
-.mini-player__btn--close {
+.mini-player__btn--mode {
   width: 30px;
   height: 30px;
+  color: var(--color-text-muted);
+}
+
+.mini-player__btn--mode.mini-player__btn--active {
+  color: var(--color-accent, #3452e6);
+}
+
+.mini-player__btn--close {
+  width: 28px;
+  height: 28px;
+  color: var(--color-text-muted);
+}
+
+/* ── 播放列表弹出层 ──────────────────────────────────────────────────── */
+.mini-player__queue-sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 8px);
+  max-height: 320px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  background: var(--mini-queue-bg);
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 10;
+}
+
+.mini-queue__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--mini-queue-sep);
+  flex-shrink: 0;
+}
+
+.mini-queue__title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.mini-queue__close {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.mini-queue__close:hover {
+  background: var(--mini-player-btn-hover);
+}
+
+.mini-queue__list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  overflow-y: auto;
+  flex: 1;
+  scrollbar-width: thin;
+}
+
+.mini-queue__item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--color-text);
+  transition: background 0.12s ease;
+}
+
+.mini-queue__item:hover {
+  background: var(--mini-queue-hover);
+}
+
+.mini-queue__item--active {
+  color: var(--mini-queue-active);
+  font-weight: 500;
+}
+
+.mini-queue__item--dragging {
+  opacity: 0.4;
+}
+
+.mini-queue__grip {
+  flex-shrink: 0;
+  cursor: grab;
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  padding: 2px;
+}
+
+.mini-queue__grip:active {
+  cursor: grabbing;
+}
+
+.mini-queue__index {
+  width: 20px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+.mini-queue__name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mini-queue__format {
+  font-size: 9px;
+  color: var(--color-text-muted);
+  padding: 0 4px;
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.mini-queue__playing {
+  flex: 0 0 13px;
+  color: var(--mini-queue-active);
+}
+
+.mini-queue__remove {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.12s, background 0.12s;
+}
+
+.mini-queue__item:hover .mini-queue__remove {
+  opacity: 1;
+}
+
+.mini-queue__remove:hover {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+
+.mini-queue__empty {
+  padding: 24px;
+  text-align: center;
+  font-size: 12px;
   color: var(--color-text-muted);
 }
 
@@ -380,5 +861,18 @@ function onTouchEnd(e: TouchEvent) {
 .mini-player-fade-leave-to {
   opacity: 0;
   transform: translateY(16px);
+}
+
+.queue-sheet-fade-enter-active,
+.queue-sheet-fade-leave-active {
+  transition:
+    opacity 0.18s ease,
+    transform 0.2s ease;
+}
+
+.queue-sheet-fade-enter-from,
+.queue-sheet-fade-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
 }
 </style>

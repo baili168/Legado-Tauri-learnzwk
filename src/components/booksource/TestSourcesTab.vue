@@ -64,18 +64,15 @@ function findRunningStatesBySourceName(sourceName: string): TestSourceState[] {
 
 /** 订阅书源实时日志事件（组件生命周期内保持订阅） */
 async function subscribeTestLogs() {
-  unlistenLog = await eventListen<{ message: string; sourceName?: string }>(
-    "script:log",
-    (e) => {
-      const { message, sourceName } = e.payload;
-      if (!sourceName) {
-        return;
-      }
-      for (const state of findRunningStatesBySourceName(sourceName)) {
-        pushLog(state, `  · ${message}`);
-      }
-    },
-  );
+  unlistenLog = await eventListen<{ message: string; sourceName?: string }>("script:log", (e) => {
+    const { message, sourceName } = e.payload;
+    if (!sourceName) {
+      return;
+    }
+    for (const state of findRunningStatesBySourceName(sourceName)) {
+      pushLog(state, `  · ${message}`);
+    }
+  });
 
   unlistenHttp = await eventListen<{
     url: string;
@@ -91,8 +88,7 @@ async function subscribeTestLogs() {
       return;
     }
     const sc = p.status ? ` ${p.status}` : "";
-    const ms =
-      p.elapsed !== null && p.elapsed !== undefined ? ` (${p.elapsed}ms)` : "";
+    const ms = p.elapsed !== null && p.elapsed !== undefined ? ` (${p.elapsed}ms)` : "";
     const errPart = p.error ? ` → ${p.error}` : "";
     const line = `  [http] ${p.ok ? "✓" : "✗"}${sc} ${p.method} ${p.url}${ms}${errPart}`;
     for (const state of findRunningStatesBySourceName(p.sourceName)) {
@@ -139,10 +135,7 @@ watch(
     const next = new Map<string, TestSourceState>();
     for (const src of props.sources) {
       if (src.enabled) {
-        next.set(
-          src.fileName,
-          testStates.value.get(src.fileName) ?? createTestState(src.fileName),
-        );
+        next.set(src.fileName, testStates.value.get(src.fileName) ?? createTestState(src.fileName));
         continue;
       }
       const existing = testStates.value.get(src.fileName);
@@ -188,12 +181,10 @@ function pushBatchLog(msg: string) {
 
 // ---- 计算属性 ----
 const passCount = computed(
-  () =>
-    [...testStates.value.values()].filter((s) => s.allPassed === true).length,
+  () => [...testStates.value.values()].filter((s) => s.allPassed === true).length,
 );
 const failCount = computed(
-  () =>
-    [...testStates.value.values()].filter((s) => s.allPassed === false).length,
+  () => [...testStates.value.values()].filter((s) => s.allPassed === false).length,
 );
 
 /** 按日志过滤器生成当前应显示的日志行 */
@@ -244,19 +235,13 @@ async function runSingleTest(fileName: string) {
     state.status = "done";
     for (const step of result.steps) {
       const icon = step.passed ? "✓" : "✗";
-      pushLog(
-        state,
-        `  ${icon} [${step.step}] ${step.message} (${step.durationMs}ms)`,
-      );
+      pushLog(state, `  ${icon} [${step.step}] ${step.message} (${step.durationMs}ms)`);
     }
     pushLog(state, `  ${result.allPassed ? "✅ 全部通过" : "❌ 存在失败"}`);
   } catch (e: unknown) {
     state.status = "done";
     state.allPassed = false;
-    pushLog(
-      state,
-      `  ✗ 测试异常: ${e instanceof Error ? e.message : String(e)}`,
-    );
+    pushLog(state, `  ✗ 测试异常: ${e instanceof Error ? e.message : String(e)}`);
   } finally {
     runningFileNames.delete(fileName);
   }
@@ -293,10 +278,7 @@ async function runAllTests() {
         // runSingleTest 内部已有 try/catch，此处只做最后兜底，防止单个异常令 Promise.all 提前 reject
       }
       testProgress.value.current++;
-      if (
-        totalTimeoutSecs.value > 0 &&
-        Date.now() - startTime > totalTimeoutSecs.value * 1000
-      ) {
+      if (totalTimeoutSecs.value > 0 && Date.now() - startTime > totalTimeoutSecs.value * 1000) {
         aborted = true;
         break;
       }
@@ -304,12 +286,7 @@ async function runAllTests() {
   }
 
   try {
-    await Promise.all(
-      Array.from(
-        { length: Math.min(concurrencyVal, fileNames.length) },
-        worker,
-      ),
-    );
+    await Promise.all(Array.from({ length: Math.min(concurrencyVal, fileNames.length) }, worker));
   } finally {
     const suffix = aborted ? " (已超时中断)" : "";
     pushBatchLog(
@@ -368,9 +345,7 @@ function clearLogs() {
           :disabled="testRunning"
         />
         <span class="bv-test__settings-label">s</span>
-        <span class="bv-test__settings-label" style="margin-left: 4px"
-          >总超时</span
-        >
+        <span class="bv-test__settings-label" style="margin-left: 4px">总超时</span>
         <n-input-number
           v-model:value="totalTimeoutSecs"
           :min="0"
@@ -393,18 +368,13 @@ function clearLogs() {
           :key="'test-' + src.fileName"
           class="bv-test__item"
           :class="{
-            'bv-test__item--running':
-              testStates.get(src.fileName)?.status === 'running',
-            'bv-test__item--pass':
-              testStates.get(src.fileName)?.allPassed === true,
-            'bv-test__item--fail':
-              testStates.get(src.fileName)?.allPassed === false,
+            'bv-test__item--running': testStates.get(src.fileName)?.status === 'running',
+            'bv-test__item--pass': testStates.get(src.fileName)?.allPassed === true,
+            'bv-test__item--fail': testStates.get(src.fileName)?.allPassed === false,
           }"
         >
           <div class="bv-test__item-header">
-            <span class="bv-test__item-name">{{
-              src.name || src.fileName
-            }}</span>
+            <span class="bv-test__item-name">{{ src.name || src.fileName }}</span>
             <n-button
               size="tiny"
               quaternary
@@ -420,9 +390,7 @@ function clearLogs() {
               v-for="step in testStates.get(src.fileName)?.steps ?? []"
               :key="step.step"
               class="bv-test__step"
-              :class="
-                step.passed ? 'bv-test__step--pass' : 'bv-test__step--fail'
-              "
+              :class="step.passed ? 'bv-test__step--pass' : 'bv-test__step--fail'"
               :title="step.message"
             >
               {{ step.passed ? "✓" : "✗" }}
@@ -466,16 +434,13 @@ function clearLogs() {
             class="bv-test__log-line"
             :class="{
               'bv-test__log-line--pass':
-                log.includes('✅') ||
-                (log.includes('✓') && !log.startsWith('  [http]')),
+                log.includes('✅') || (log.includes('✓') && !log.startsWith('  [http]')),
               'bv-test__log-line--fail':
-                log.includes('❌') ||
-                (log.includes('✗') && !log.startsWith('  [http]')),
+                log.includes('❌') || (log.includes('✗') && !log.startsWith('  [http]')),
               'bv-test__log-line--banner': log.includes('═══'),
               'bv-test__log-line--http-ok': log.startsWith('  [http] ✓'),
               'bv-test__log-line--http-err': log.startsWith('  [http] ✗'),
-              'bv-test__log-line--detail':
-                log.startsWith('  ·') || log.startsWith('  [http]'),
+              'bv-test__log-line--detail': log.startsWith('  ·') || log.startsWith('  [http]'),
             }"
           >
             {{ log }}

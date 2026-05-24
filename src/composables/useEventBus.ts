@@ -21,7 +21,7 @@
  * ```
  */
 
-import { transportListen, transportEmit, type EventHandler, type UnlistenFn } from './useTransport';
+import { transportListen, transportEmit, type EventHandler, type UnlistenFn } from "./useTransport";
 
 /**
  * 监听后端事件（统一入口）

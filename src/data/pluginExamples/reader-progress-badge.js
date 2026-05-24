@@ -12,7 +12,7 @@
 // ==/UserScript==
 
 legado.registerPlugin({
-  id: 'reader-progress-badge',
+  id: "reader-progress-badge",
   setup: function (api) {
     var badge = null;
     var unlisten = null;
@@ -21,40 +21,40 @@ legado.registerPlugin({
       if (!badge || !session) {
         return;
       }
-      var text = '';
-      if (api.settings.get('showChapterIndex', true)) {
-        text += '第' + (session.chapterIndex + 1) + '章';
+      var text = "";
+      if (api.settings.get("showChapterIndex", true)) {
+        text += "第" + (session.chapterIndex + 1) + "章";
       }
       if (
-        api.settings.get('showRatio', true) &&
-        typeof session.scrollRatio === 'number' &&
+        api.settings.get("showRatio", true) &&
+        typeof session.scrollRatio === "number" &&
         session.scrollRatio >= 0
       ) {
         if (text) {
-          text += ' · ';
+          text += " · ";
         }
-        text += Math.round(session.scrollRatio * 100) + '%';
+        text += Math.round(session.scrollRatio * 100) + "%";
       }
       badge.textContent = text || session.chapterName;
       badge.style.cssText = [
-        'display:inline-flex',
-        'align-items:center',
-        'padding:6px 10px',
-        'border-radius:999px',
-        'background:' + api.settings.get('backgroundColor', 'rgba(255,255,255,0.88)'),
-        'color:' + api.settings.get('textColor', '#1f2937'),
-        'font-size:12px',
-        'font-weight:600',
-        'box-shadow:0 6px 18px rgba(15,23,42,0.16)',
-      ].join(';');
+        "display:inline-flex",
+        "align-items:center",
+        "padding:6px 10px",
+        "border-radius:999px",
+        "background:" + api.settings.get("backgroundColor", "rgba(255,255,255,0.88)"),
+        "color:" + api.settings.get("textColor", "#1f2937"),
+        "font-size:12px",
+        "font-weight:600",
+        "box-shadow:0 6px 18px rgba(15,23,42,0.16)",
+      ].join(";");
     }
 
     function mountAt(slotName) {
       return function (container) {
-        if (api.settings.get('position', 'overlay-bottom-right') !== slotName) {
+        if (api.settings.get("position", "overlay-bottom-right") !== slotName) {
           return;
         }
-        badge = document.createElement('div');
+        badge = document.createElement("div");
         container.appendChild(badge);
         render(api.reader.getSession());
         unlisten = api.reader.onSessionChange(function (session) {
@@ -73,35 +73,35 @@ legado.registerPlugin({
     return {
       settings: {
         defaults: {
-          position: 'overlay-bottom-right',
+          position: "overlay-bottom-right",
           showChapterIndex: true,
           showRatio: true,
-          backgroundColor: 'rgba(255,255,255,0.88)',
-          textColor: '#1f2937',
+          backgroundColor: "rgba(255,255,255,0.88)",
+          textColor: "#1f2937",
         },
         schema: [
           {
-            type: 'select',
-            key: 'position',
-            label: '显示位置',
+            type: "select",
+            key: "position",
+            label: "显示位置",
             options: [
-              { label: '右下角', value: 'overlay-bottom-right' },
-              { label: '左下角', value: 'overlay-bottom-left' },
-              { label: '右上角', value: 'overlay-top-right' },
-              { label: '左上角', value: 'overlay-top-left' },
+              { label: "右下角", value: "overlay-bottom-right" },
+              { label: "左下角", value: "overlay-bottom-left" },
+              { label: "右上角", value: "overlay-top-right" },
+              { label: "左上角", value: "overlay-top-left" },
             ],
           },
-          { type: 'switch', key: 'showChapterIndex', label: '显示章节序号' },
-          { type: 'switch', key: 'showRatio', label: '显示章节内进度' },
-          { type: 'color', key: 'backgroundColor', label: '背景色' },
-          { type: 'color', key: 'textColor', label: '文字色' },
+          { type: "switch", key: "showChapterIndex", label: "显示章节序号" },
+          { type: "switch", key: "showRatio", label: "显示章节内进度" },
+          { type: "color", key: "backgroundColor", label: "背景色" },
+          { type: "color", key: "textColor", label: "文字色" },
         ],
       },
       slots: {
-        'overlay-bottom-right': mountAt('overlay-bottom-right'),
-        'overlay-bottom-left': mountAt('overlay-bottom-left'),
-        'overlay-top-right': mountAt('overlay-top-right'),
-        'overlay-top-left': mountAt('overlay-top-left'),
+        "overlay-bottom-right": mountAt("overlay-bottom-right"),
+        "overlay-bottom-left": mountAt("overlay-bottom-left"),
+        "overlay-top-right": mountAt("overlay-top-right"),
+        "overlay-top-left": mountAt("overlay-top-left"),
       },
     };
   },

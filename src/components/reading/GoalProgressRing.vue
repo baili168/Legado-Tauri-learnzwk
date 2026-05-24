@@ -31,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, onMounted } from 'vue';
+import { computed, ref, watch, onMounted } from "vue";
 
 interface Props {
   current: number;
@@ -47,7 +47,7 @@ const props = withDefaults(defineProps<Props>(), {
   size: 120,
   strokeWidth: 8,
   showLabel: true,
-  label: '今日进度',
+  label: "今日进度",
   animationDuration: 600,
 });
 

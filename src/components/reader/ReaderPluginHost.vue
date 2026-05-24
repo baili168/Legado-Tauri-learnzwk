@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue';
-import { useFrontendPlugins, type ReaderPluginSlot } from '@/composables/useFrontendPlugins';
+import { onBeforeUnmount, onMounted, ref } from "vue";
+import { useFrontendPlugins, type ReaderPluginSlot } from "@/composables/useFrontendPlugins";
 
 const props = defineProps<{
   slotId: ReaderPluginSlot;

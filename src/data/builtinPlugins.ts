@@ -1,4 +1,4 @@
-import type { ExtensionMeta } from '@/composables/useExtension';
+import type { ExtensionMeta } from "@/composables/useExtension";
 
 export interface BuiltinPluginDefinition {
   id: string;

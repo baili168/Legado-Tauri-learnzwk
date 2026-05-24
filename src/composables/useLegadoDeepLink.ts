@@ -1,14 +1,14 @@
-import { isTauri, isHarmonyNative } from './useEnv';
-import { eventListen } from './useEventBus';
+import { isTauri, isHarmonyNative } from "./useEnv";
+import { eventListen } from "./useEventBus";
 
-const LEGADO_SCHEME = 'legado:';
+const LEGADO_SCHEME = "legado:";
 
 // ── 深链接类型定义 ────────────────────────────────────────────────────────────
 export type LegadoDeepLinkPayload =
-  | { type: 'booksource'; url: string }
-  | { type: 'repo'; url: string; name?: string }
-  | { type: 'plugin'; url: string }
-  | { type: 'book'; bookUrl?: string; bookId?: string };
+  | { type: "booksource"; url: string }
+  | { type: "repo"; url: string; name?: string }
+  | { type: "plugin"; url: string }
+  | { type: "book"; bookUrl?: string; bookId?: string };
 
 /** 将原始 payload 字符串规范化为 https?:// URL，至多解码两次 */
 function normalizeHttpUrl(payload: string): string {
@@ -27,14 +27,14 @@ function normalizeHttpUrl(payload: string): string {
       break;
     }
   }
-  if (p.startsWith('//')) {
+  if (p.startsWith("//")) {
     p = `http:${p}`;
   } else if (!/^https?:\/\//i.test(p)) {
-    p = `http://${p.replace(/^\/+/, '')}`;
+    p = `http://${p.replace(/^\/+/, "")}`;
   }
   const url = new URL(p);
-  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-    throw new Error('仅支持 http 或 https 地址');
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
+    throw new Error("仅支持 http 或 https 地址");
   }
   return url.href;
 }
@@ -51,16 +51,16 @@ function normalizeHttpUrl(payload: string): string {
 export function parseLegadoDeepLink(rawUrl: string): LegadoDeepLinkPayload {
   const input = rawUrl.trim();
   if (!input) {
-    throw new Error('链接为空');
+    throw new Error("链接为空");
   }
 
   // 纯 https?:// → 默认当书源处理（向下兼容）
   if (/^https?:\/\//i.test(input)) {
-    return { type: 'booksource', url: normalizeHttpUrl(input) };
+    return { type: "booksource", url: normalizeHttpUrl(input) };
   }
 
   if (!input.toLowerCase().startsWith(LEGADO_SCHEME)) {
-    throw new Error('不是 legado 深链接');
+    throw new Error("不是 legado 深链接");
   }
 
   // 解析为标准 URL（legado://host?params 或 legado://?params）
@@ -71,61 +71,61 @@ export function parseLegadoDeepLink(rawUrl: string): LegadoDeepLinkPayload {
     // fallback handled below
   }
 
-  const host = parsed?.hostname ?? ''; // e.g. "repo" / "plugin" / ""
+  const host = parsed?.hostname ?? ""; // e.g. "repo" / "plugin" / ""
   const params = parsed?.searchParams;
 
   // ── 仓库 ────────────────────────────────────────────────────────────────────
-  if (host === 'repo') {
-    const rawRepoUrl = params?.get('url') ?? '';
+  if (host === "repo") {
+    const rawRepoUrl = params?.get("url") ?? "";
     if (!rawRepoUrl) {
-      throw new Error('仓库链接缺少 url 参数');
+      throw new Error("仓库链接缺少 url 参数");
     }
-    const name = params?.get('name')?.trim() ?? undefined;
-    return { type: 'repo', url: normalizeHttpUrl(rawRepoUrl), name };
+    const name = params?.get("name")?.trim() ?? undefined;
+    return { type: "repo", url: normalizeHttpUrl(rawRepoUrl), name };
   }
 
   // ── 插件 ────────────────────────────────────────────────────────────────────
-  if (host === 'plugin') {
-    const rawPluginUrl = params?.get('url') ?? '';
+  if (host === "plugin") {
+    const rawPluginUrl = params?.get("url") ?? "";
     if (!rawPluginUrl) {
-      throw new Error('插件链接缺少 url 参数');
+      throw new Error("插件链接缺少 url 参数");
     }
-    return { type: 'plugin', url: normalizeHttpUrl(rawPluginUrl) };
+    return { type: "plugin", url: normalizeHttpUrl(rawPluginUrl) };
   }
 
-  if (host === 'book') {
-    const bookUrl = params?.get('url') ?? params?.get('bookUrl') ?? undefined;
-    const bookId = params?.get('id') ?? params?.get('bookId') ?? undefined;
+  if (host === "book") {
+    const bookUrl = params?.get("url") ?? params?.get("bookUrl") ?? undefined;
+    const bookId = params?.get("id") ?? params?.get("bookId") ?? undefined;
     if (!bookUrl && !bookId) {
-      throw new Error('书籍链接缺少 url 或 id 参数');
+      throw new Error("书籍链接缺少 url 或 id 参数");
     }
-    return { type: 'book', bookUrl, bookId };
+    return { type: "book", bookUrl, bookId };
   }
 
   // ── 书源（legado://?url=... 或 legado://...）─────────────────────────────
-  let payload = params?.get('url') ?? '';
+  let payload = params?.get("url") ?? "";
   if (!payload) {
     // 兼容 legado://https://... 形式
     payload = input.slice(`${LEGADO_SCHEME}//`.length);
   }
   if (!payload) {
-    throw new Error('书源链接缺少 url 参数');
+    throw new Error("书源链接缺少 url 参数");
   }
-  return { type: 'booksource', url: normalizeHttpUrl(payload) };
+  return { type: "booksource", url: normalizeHttpUrl(payload) };
 }
 
 /** @deprecated 使用 parseLegadoDeepLink 代替 */
 export function parseLegadoBookSourceUrl(rawUrl: string): string {
   const result = parseLegadoDeepLink(rawUrl);
-  if (result.type !== 'booksource') {
-    throw new Error('不是 legado 书源链接');
+  if (result.type !== "booksource") {
+    throw new Error("不是 legado 书源链接");
   }
   return result.url;
 }
 
 export async function handleBookDeepLink(bookUrl?: string, bookId?: string): Promise<void> {
-  const { useBookshelfStore } = await import('@/stores/bookshelf');
-  const { useNavigationStore } = await import('@/stores');
+  const { useBookshelfStore } = await import("@/stores/bookshelf");
+  const { useNavigationStore } = await import("@/stores");
 
   const bookshelfStore = useBookshelfStore();
   const navigationStore = useNavigationStore();
@@ -144,16 +144,16 @@ export async function handleBookDeepLink(bookUrl?: string, bookId?: string): Pro
 
   if (foundBook) {
     window.dispatchEvent(
-      new CustomEvent<{ bookId: string }>('app:open-book', {
+      new CustomEvent<{ bookId: string }>("app:open-book", {
         detail: { bookId: foundBook.id },
       }),
     );
   } else {
-    const keyword = bookUrl || bookId || '';
+    const keyword = bookUrl || bookId || "";
     if (keyword) {
-      navigationStore.setActiveView('search');
+      navigationStore.setActiveView("search");
       window.dispatchEvent(
-        new CustomEvent<{ keyword: string }>('app:search-book', {
+        new CustomEvent<{ keyword: string }>("app:search-book", {
           detail: { keyword },
         }),
       );
@@ -173,7 +173,7 @@ export async function installLegadoDeepLinkListener(handler: DeepLinkHandler): P
 
   if (isTauri) {
     try {
-      const { getCurrent, onOpenUrl } = await import('@tauri-apps/plugin-deep-link');
+      const { getCurrent, onOpenUrl } = await import("@tauri-apps/plugin-deep-link");
       const current = await getCurrent();
       if (current?.length) {
         handler(current);
@@ -181,12 +181,12 @@ export async function installLegadoDeepLinkListener(handler: DeepLinkHandler): P
       const unlisten = await onOpenUrl((urls) => handler(urls));
       unlisteners.push(unlisten);
     } catch (e) {
-      console.warn('[LegadoDeepLink] Tauri deep-link 初始化失败:', e);
+      console.warn("[LegadoDeepLink] Tauri deep-link 初始化失败:", e);
     }
   }
 
   if (isHarmonyNative) {
-    const unlisten = await eventListen<HarmonyDeepLinkPayload>('deep-link://new-url', (event) => {
+    const unlisten = await eventListen<HarmonyDeepLinkPayload>("deep-link://new-url", (event) => {
       const payload = event.payload;
       if (Array.isArray(payload?.urls)) {
         handler(payload.urls);
@@ -197,10 +197,10 @@ export async function installLegadoDeepLinkListener(handler: DeepLinkHandler): P
     unlisteners.push(unlisten);
   }
 
-  if (!isTauri && !isHarmonyNative && typeof window !== 'undefined') {
+  if (!isTauri && !isHarmonyNative && typeof window !== "undefined") {
     const url = new URL(window.location.href);
-    const fromQuery = url.searchParams.get('legado') ?? url.searchParams.get('url');
-    const fromHash = url.hash.startsWith('#legado=') ? url.hash.slice('#legado='.length) : '';
+    const fromQuery = url.searchParams.get("legado") ?? url.searchParams.get("url");
+    const fromHash = url.hash.startsWith("#legado=") ? url.hash.slice("#legado=".length) : "";
     const current = fromQuery ?? fromHash;
     if (current) {
       handler([current]);

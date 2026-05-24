@@ -1,5 +1,5 @@
-import { onUnmounted, ref, type Ref } from 'vue';
-import { eventListenSync } from './useEventBus';
+import { onUnmounted, ref, type Ref } from "vue";
+import { eventListenSync } from "./useEventBus";
 
 type LifecycleCallback = () => void | Promise<void>;
 
@@ -8,7 +8,9 @@ const resumeCallbacks = new Set<LifecycleCallback>();
 const stopCallbacks = new Set<LifecycleCallback>();
 const destroyCallbacks = new Set<LifecycleCallback>();
 
-const isForeground: Ref<boolean> = ref(typeof document !== 'undefined' && document.visibilityState === 'visible');
+const isForeground: Ref<boolean> = ref(
+  typeof document !== "undefined" && document.visibilityState === "visible",
+);
 
 let visibilityUnlisten: (() => void) | null = null;
 let beforeunloadBound = false;
@@ -16,10 +18,10 @@ let lifecycleUnlisten: (() => void) | null = null;
 let initialized = false;
 
 function handleVisibilityChange() {
-  if (document.visibilityState === 'visible') {
+  if (document.visibilityState === "visible") {
     isForeground.value = true;
     resumeCallbacks.forEach((fn) => fn());
-  } else if (document.visibilityState === 'hidden') {
+  } else if (document.visibilityState === "hidden") {
     isForeground.value = false;
     pauseCallbacks.forEach((fn) => fn());
   }
@@ -35,18 +37,18 @@ function handleLifecycleEvent(event: unknown) {
   if (!payload?.state) return;
 
   switch (payload.state) {
-    case 'resume':
+    case "resume":
       isForeground.value = true;
       resumeCallbacks.forEach((fn) => fn());
       break;
-    case 'pause':
+    case "pause":
       isForeground.value = false;
       pauseCallbacks.forEach((fn) => fn());
       break;
-    case 'stop':
+    case "stop":
       stopCallbacks.forEach((fn) => fn());
       break;
-    case 'destroy':
+    case "destroy":
       destroyCallbacks.forEach((fn) => fn());
       break;
   }
@@ -56,17 +58,18 @@ function ensureInitialized() {
   if (initialized) return;
   initialized = true;
 
-  if (typeof document !== 'undefined') {
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    visibilityUnlisten = () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  if (typeof document !== "undefined") {
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    visibilityUnlisten = () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
   }
 
-  if (typeof window !== 'undefined') {
-    window.addEventListener('beforeunload', handleBeforeUnload);
+  if (typeof window !== "undefined") {
+    window.addEventListener("beforeunload", handleBeforeUnload);
     beforeunloadBound = true;
   }
 
-  lifecycleUnlisten = eventListenSync('legado:lifecycle', handleLifecycleEvent);
+  lifecycleUnlisten = eventListenSync("legado:lifecycle", handleLifecycleEvent);
 }
 
 export function useAndroidLifecycle() {

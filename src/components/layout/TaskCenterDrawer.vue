@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import type { ShellTaskItem } from '@/stores';
-import { useOverlayBackstack } from '@/composables/useOverlayBackstack';
+import { computed } from "vue";
+import type { ShellTaskItem } from "@/stores";
+import { useOverlayBackstack } from "@/composables/useOverlayBackstack";
 
 const props = withDefaults(
   defineProps<{
@@ -21,9 +21,9 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{
-  'update:show': [value: boolean];
+  "update:show": [value: boolean];
   close: [];
-  'open-log': [];
+  "open-log": [];
 }>();
 
 const hasAnyTask = computed(
@@ -35,8 +35,8 @@ const hasAnyTask = computed(
 );
 
 function close() {
-  emit('update:show', false);
-  emit('close');
+  emit("update:show", false);
+  emit("close");
 }
 
 useOverlayBackstack(() => props.show, close);
@@ -87,7 +87,7 @@ function taskPercent(task: ShellTaskItem): number {
                 <span class="tc-item__meta">{{ task.module }}</span>
               </div>
               <div class="tc-item__row tc-item__row--sub">
-                <span>{{ task.phase || '执行中' }}</span>
+                <span>{{ task.phase || "执行中" }}</span>
                 <span>{{ formatDuration(task) }}</span>
               </div>
               <div class="tc-item__progress" role="progressbar" :aria-valuenow="taskPercent(task)">
@@ -113,7 +113,7 @@ function taskPercent(task: ShellTaskItem): number {
                 <strong class="tc-item__name">{{ task.name }}</strong>
                 <span class="tc-item__meta">{{ task.module }}</span>
               </div>
-              <p class="tc-item__error">{{ task.error || '任务执行失败' }}</p>
+              <p class="tc-item__error">{{ task.error || "任务执行失败" }}</p>
               <div class="tc-item__actions">
                 <button class="focusable" @click="emit('open-log')">查看日志</button>
               </div>
@@ -129,7 +129,7 @@ function taskPercent(task: ShellTaskItem): number {
               </div>
               <div class="tc-item__row tc-item__row--sub">
                 <span>{{ task.module }}</span>
-                <span>{{ task.endedAt ? new Date(task.endedAt).toLocaleTimeString() : '' }}</span>
+                <span>{{ task.endedAt ? new Date(task.endedAt).toLocaleTimeString() : "" }}</span>
               </div>
             </article>
           </section>

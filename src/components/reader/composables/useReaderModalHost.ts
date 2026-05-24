@@ -1,4 +1,4 @@
-import type { DialogApi, MessageApi } from 'naive-ui';
+import type { DialogApi, MessageApi } from "naive-ui";
 /**
  * 绑定阅读弹层宿主交互、生命周期、缓存控制和窗口重排恢复。
  */
@@ -10,26 +10,26 @@ import {
   watch,
   type ComputedRef,
   type Ref,
-} from 'vue';
-import type { ChapterItem } from '@/stores';
-import type { CachedChapter } from '@/types';
-import { eventListenSync } from '@/composables/useEventBus';
-import { FRONTEND_PLUGIN_TOAST_EVENT } from '@/composables/useFrontendPlugins';
-import { useOverlayBackstack } from '@/composables/useOverlayBackstack';
-import { createReaderCacheController } from '@/features/reader/services/readerCache';
+} from "vue";
+import type { ChapterItem } from "@/stores";
+import type { CachedChapter } from "@/types";
+import { eventListenSync } from "@/composables/useEventBus";
+import { FRONTEND_PLUGIN_TOAST_EVENT } from "@/composables/useFrontendPlugins";
+import { useOverlayBackstack } from "@/composables/useOverlayBackstack";
+import { createReaderCacheController } from "@/features/reader/services/readerCache";
 import {
   createReaderLifecycleController,
   type ShelfReaderSettingsSnapshot,
-} from '@/features/reader/services/readerLifecycle';
-import { createReaderSourceSwitchController } from '@/features/reader/services/readerSourceSwitch';
-import { getCoverImageUrl } from '@/utils/coverImage';
+} from "@/features/reader/services/readerLifecycle";
+import { createReaderSourceSwitchController } from "@/features/reader/services/readerSourceSwitch";
+import { getCoverImageUrl } from "@/utils/coverImage";
 import type {
   ReaderBookInfo,
   TemporaryChapterSourceOverride,
   WholeBookSwitchedPayload,
-} from '../types';
-import type { ReadingAnchor } from './usePagination';
-import type { OpenChapterOptions } from './useReaderChapterOpen';
+} from "../types";
+import type { ReadingAnchor } from "./usePagination";
+import type { OpenChapterOptions } from "./useReaderChapterOpen";
 
 interface ReaderProgressPayloadLike {
   pageIndex?: number;
@@ -128,7 +128,7 @@ interface UseReaderModalHostOptions {
   showToc: Ref<boolean>;
   settingsVisible: Ref<boolean>;
   showSourceSwitchDialog: Ref<boolean>;
-  sourceSwitchMode: Ref<'whole-book' | 'chapter-temp'>;
+  sourceSwitchMode: Ref<"whole-book" | "chapter-temp">;
   showTtsBar: Ref<boolean>;
   hasPrev: ComputedRef<boolean>;
   hasNext: ComputedRef<boolean>;
@@ -147,6 +147,8 @@ interface UseReaderModalHostOptions {
   blockingError: ComputedRef<boolean>;
   ttsProgressText: Ref<string>;
   ttsScrollHighlightIdx: Ref<number>;
+  ttsScrollSentenceIdx: Ref<number>;
+  isTtsSentenceActive: Ref<boolean>;
   currentScrollChapterLoading: ComputedRef<boolean>;
   prevScrollChapterContent: Ref<string>;
   prevScrollChapterTitle: Ref<string>;
@@ -201,7 +203,7 @@ interface UseReaderModalHostOptions {
   openLinearChapter: (index: number) => Promise<unknown>;
   openPagedChapter: (
     index: number,
-    options?: { position?: 'resume' | 'first'; pageRatio?: number },
+    options?: { position?: "resume" | "first"; pageRatio?: number },
   ) => Promise<unknown>;
   retryCurrentChapter: () => void;
   gotoPrevChapter: () => Promise<void>;
@@ -243,7 +245,7 @@ interface UseReaderModalHostOptions {
   clearAllRuntimeCache: () => void;
   invalidatePages: () => void;
   resetProgressSyncState: () => void;
-  reportPluginToast?: (text: string, type: 'info' | 'success' | 'warning' | 'error') => void;
+  reportPluginToast?: (text: string, type: "info" | "success" | "warning" | "error") => void;
   clearAllSeamlessSlots: () => void;
   getShelfDataReady: () => Promise<void> | null;
   setShelfDataReady: (ready: Promise<void> | null) => void;
@@ -286,6 +288,8 @@ export function useReaderModalHost(options: UseReaderModalHostOptions) {
     currentChapterOverride: options.currentChapterOverride,
     ttsProgressText: options.ttsProgressText,
     ttsScrollHighlightIdx: options.ttsScrollHighlightIdx,
+    ttsScrollSentenceIdx: options.ttsScrollSentenceIdx,
+    isTtsSentenceActive: options.isTtsSentenceActive,
     currentScrollChapterLoading: options.currentScrollChapterLoading,
     prevScrollChapterContent: options.prevScrollChapterContent,
     prevScrollChapterTitle: options.prevScrollChapterTitle,
@@ -330,15 +334,15 @@ export function useReaderModalHost(options: UseReaderModalHostOptions) {
         {
           name: info.name,
           author: info.author,
-          coverUrl: getCoverImageUrl(info.coverUrl) ?? '',
+          coverUrl: getCoverImageUrl(info.coverUrl) ?? "",
           intro: info.intro,
           kind: info.kind,
-          bookUrl: info.bookUrl ?? '',
+          bookUrl: info.bookUrl ?? "",
           lastChapter: info.lastChapter,
-          sourceType: options.getSourceType() ?? 'novel',
+          sourceType: options.getSourceType() ?? "novel",
         },
         options.getFileName(),
-        info.sourceName ?? '',
+        info.sourceName ?? "",
       );
 
       const chapters = options.getChapters();
@@ -369,7 +373,7 @@ export function useReaderModalHost(options: UseReaderModalHostOptions) {
           .catch(() => {});
       }
 
-      options.message.success('已加入书架');
+      options.message.success("已加入书架");
       options.emitAddedToShelf(result.id);
       return true;
     } catch (error: unknown) {
@@ -387,10 +391,10 @@ export function useReaderModalHost(options: UseReaderModalHostOptions) {
     const info = options.getBookInfo();
     if (!options.isOnShelf.value && info && !options.isVideoMode.value) {
       options.dialog.create({
-        title: '加入书架',
+        title: "加入书架",
         content: `《${info.name}》还未加入书架，是否加入？`,
-        positiveText: '加入',
-        negativeText: '不用了',
+        positiveText: "加入",
+        negativeText: "不用了",
         closeOnEsc: false,
         maskClosable: false,
         onPositiveClick: () => {
@@ -409,9 +413,9 @@ export function useReaderModalHost(options: UseReaderModalHostOptions) {
 
   async function closeWithBackBehavior() {
     await close();
-    if (options.settings.backBehavior === 'desktop') {
+    if (options.settings.backBehavior === "desktop") {
       try {
-        const { getCurrentWindow } = await import('@tauri-apps/api/window');
+        const { getCurrentWindow } = await import("@tauri-apps/api/window");
         await getCurrentWindow().minimize();
       } catch {
         // 非 Tauri 环境忽略
@@ -457,8 +461,8 @@ export function useReaderModalHost(options: UseReaderModalHostOptions) {
     },
   );
 
-  function onTap(zone: 'left' | 'center' | 'right') {
-    if (zone === 'center') {
+  function onTap(zone: "left" | "center" | "right") {
+    if (zone === "center") {
       if (options.showToc.value) {
         options.showToc.value = false;
       } else if (!options.showMenu.value) {
@@ -470,7 +474,7 @@ export function useReaderModalHost(options: UseReaderModalHostOptions) {
       return;
     }
 
-    if (zone === 'left') {
+    if (zone === "left") {
       void options.gotoPrevBoundary();
       return;
     }
@@ -484,9 +488,9 @@ export function useReaderModalHost(options: UseReaderModalHostOptions) {
     }
     return (
       target.isContentEditable ||
-      target.tagName === 'INPUT' ||
-      target.tagName === 'TEXTAREA' ||
-      target.tagName === 'SELECT'
+      target.tagName === "INPUT" ||
+      target.tagName === "TEXTAREA" ||
+      target.tagName === "SELECT"
     );
   }
 
@@ -502,15 +506,15 @@ export function useReaderModalHost(options: UseReaderModalHostOptions) {
     }
 
     switch (event.key) {
-      case 'ArrowRight':
-      case 'd':
-      case 'D':
+      case "ArrowRight":
+      case "d":
+      case "D":
         event.preventDefault();
         options.flipNext();
         return true;
-      case 'ArrowLeft':
-      case 'a':
-      case 'A':
+      case "ArrowLeft":
+      case "a":
+      case "A":
         event.preventDefault();
         options.flipPrev();
         return true;
@@ -531,7 +535,7 @@ export function useReaderModalHost(options: UseReaderModalHostOptions) {
       return;
     }
 
-    if (event.key === ' ' || event.key === 'Enter') {
+    if (event.key === " " || event.key === "Enter") {
       event.preventDefault();
       if (options.showToc.value) {
         options.showToc.value = false;
@@ -553,7 +557,7 @@ export function useReaderModalHost(options: UseReaderModalHostOptions) {
     }
 
     switch (event.key) {
-      case 'AudioVolumeDown':
+      case "AudioVolumeDown":
         if (
           options.settings.volumeKeyPageTurnEnabled &&
           !options.isVideoMode.value &&
@@ -563,7 +567,7 @@ export function useReaderModalHost(options: UseReaderModalHostOptions) {
           options.volumePageNext();
         }
         break;
-      case 'AudioVolumeUp':
+      case "AudioVolumeUp":
         if (
           options.settings.volumeKeyPageTurnEnabled &&
           !options.isVideoMode.value &&
@@ -615,8 +619,8 @@ export function useReaderModalHost(options: UseReaderModalHostOptions) {
     pendingRestoreScrollRatio: options.pendingRestoreScrollRatio,
     isPagedMode: options.isPagedMode,
     isComicMode: options.isComicMode,
-    getBookUrl: () => options.getBookInfo()?.bookUrl ?? '',
-    getBookName: () => options.getBookInfo()?.name ?? '',
+    getBookUrl: () => options.getBookInfo()?.bookUrl ?? "",
+    getBookName: () => options.getBookInfo()?.name ?? "",
     getChapter: options.getChapter,
     buildAnchorForChapterPage: (chapterIndex, pageIndex) =>
       options.pagedCache.buildAnchorForChapterPage(chapterIndex, pageIndex),
@@ -669,7 +673,7 @@ export function useReaderModalHost(options: UseReaderModalHostOptions) {
       book_name: options.getBookInfo()?.name,
       author_name: options.getBookInfo()?.author,
       source_file: options.getFileName(),
-      source_type: options.getSourceType() ?? 'novel',
+      source_type: options.getSourceType() ?? "novel",
       chapter_name: options.getChapterName(),
       chapter_index: options.getCurrentIndex(),
       shelf_book_id: options.getShelfBookId() ?? options.localAddedShelfId.value,
@@ -685,7 +689,7 @@ export function useReaderModalHost(options: UseReaderModalHostOptions) {
     activateBookSettings: options.activateBookSettings,
     deactivateBookSettings: options.deactivateBookSettings,
     clearLocalAddedShelfId: () => {
-      options.localAddedShelfId.value = '';
+      options.localAddedShelfId.value = "";
     },
     setShelfDataReady: options.setShelfDataReady,
     getShelfDataReady: options.getShelfDataReady,
@@ -743,7 +747,7 @@ export function useReaderModalHost(options: UseReaderModalHostOptions) {
           );
           options.pagedCache.invalidatePages();
           void options.openChapter(options.activeChapterIndex.value, {
-            position: 'resume',
+            position: "resume",
             anchor,
           });
           return;
@@ -811,7 +815,7 @@ export function useReaderModalHost(options: UseReaderModalHostOptions) {
         return;
       }
 
-      if (nextMode === 'scroll') {
+      if (nextMode === "scroll") {
         if (options.currentScrollRatio.value >= 0) {
           options.pendingRestoreScrollRatio.value = options.currentScrollRatio.value;
         }
@@ -819,9 +823,9 @@ export function useReaderModalHost(options: UseReaderModalHostOptions) {
         return;
       }
 
-      if (prevMode === 'scroll') {
+      if (prevMode === "scroll") {
         void options.openPagedChapter(options.activeChapterIndex.value, {
-          position: options.currentScrollRatio.value >= 0 ? 'resume' : 'first',
+          position: options.currentScrollRatio.value >= 0 ? "resume" : "first",
           pageRatio:
             options.currentScrollRatio.value >= 0 ? options.currentScrollRatio.value : undefined,
         });
@@ -856,12 +860,12 @@ export function useReaderModalHost(options: UseReaderModalHostOptions) {
   );
 
   onMounted(() => {
-    window.addEventListener('keydown', onPageTurnKeyDownCapture, true);
-    window.addEventListener('keydown', onKeyDown);
-    window.addEventListener('resize', schedulePagedRepaginate);
-    window.addEventListener('orientationchange', schedulePagedRepaginate);
-    document.addEventListener('visibilitychange', options.onVisibilityChange);
-    window.addEventListener('beforeunload', options.onBeforeUnloadSave);
+    window.addEventListener("keydown", onPageTurnKeyDownCapture, true);
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("resize", schedulePagedRepaginate);
+    window.addEventListener("orientationchange", schedulePagedRepaginate);
+    document.addEventListener("visibilitychange", options.onVisibilityChange);
+    window.addEventListener("beforeunload", options.onBeforeUnloadSave);
     resizeObserver = new ResizeObserver(() => {
       schedulePagedRepaginate();
     });
@@ -872,21 +876,21 @@ export function useReaderModalHost(options: UseReaderModalHostOptions) {
     unlistenPluginToast = eventListenSync<{
       pluginId?: string;
       message?: string;
-      type?: 'info' | 'success' | 'warning' | 'error';
+      type?: "info" | "success" | "warning" | "error";
     }>(FRONTEND_PLUGIN_TOAST_EVENT, (event) => {
       const text = event.payload.message?.trim();
       if (!text) {
         return;
       }
-      const prefix = event.payload.pluginId ? `[${event.payload.pluginId}] ` : '';
+      const prefix = event.payload.pluginId ? `[${event.payload.pluginId}] ` : "";
       switch (event.payload.type) {
-        case 'success':
+        case "success":
           options.message.success(prefix + text);
           break;
-        case 'warning':
+        case "warning":
           options.message.warning(prefix + text);
           break;
-        case 'error':
+        case "error":
           options.message.error(prefix + text);
           break;
         default:
@@ -898,12 +902,12 @@ export function useReaderModalHost(options: UseReaderModalHostOptions) {
 
   onBeforeUnmount(() => {
     syncNativeVolumeKeyPageTurn(false);
-    window.removeEventListener('keydown', onPageTurnKeyDownCapture, true);
-    window.removeEventListener('keydown', onKeyDown);
-    window.removeEventListener('resize', schedulePagedRepaginate);
-    window.removeEventListener('orientationchange', schedulePagedRepaginate);
-    document.removeEventListener('visibilitychange', options.onVisibilityChange);
-    window.removeEventListener('beforeunload', options.onBeforeUnloadSave);
+    window.removeEventListener("keydown", onPageTurnKeyDownCapture, true);
+    window.removeEventListener("keydown", onKeyDown);
+    window.removeEventListener("resize", schedulePagedRepaginate);
+    window.removeEventListener("orientationchange", schedulePagedRepaginate);
+    document.removeEventListener("visibilitychange", options.onVisibilityChange);
+    window.removeEventListener("beforeunload", options.onBeforeUnloadSave);
     options.stopAutoSave();
     void options.saveDetailedProgress();
     clearRepaginateWork();

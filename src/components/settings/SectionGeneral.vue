@@ -1,18 +1,20 @@
 <script setup lang="ts">
-import { storeToRefs } from 'pinia';
-import { computed, reactive, ref, onMounted, defineAsyncComponent } from 'vue';
-import { useAppConfigStore, usePreferencesStore } from '@/stores';
-import { useNotification } from '@/composables/useNotification';
-import { useMaterialYou } from '@/composables/useMaterialYou';
-import type { CustomTheme } from '@/composables/useMaterialYou';
-import { useOnlineThemeSource } from '@/composables/useOnlineThemeSource';
-import type { ThemeEntry } from '@/composables/useOnlineThemeSource';
-import SettingItem from './SettingItem.vue';
-import SettingSection from './SettingSection.vue';
+import { storeToRefs } from "pinia";
+import { computed, reactive, ref, onMounted, defineAsyncComponent } from "vue";
+import { useAppConfigStore, usePreferencesStore, useNavigationStore } from "@/stores";
+import { useNotification } from "@/composables/useNotification";
+import { useMaterialYou } from "@/composables/useMaterialYou";
+import type { CustomTheme } from "@/composables/useMaterialYou";
+import { useOnlineThemeSource } from "@/composables/useOnlineThemeSource";
+import type { ThemeEntry } from "@/composables/useOnlineThemeSource";
+import SettingItem from "./SettingItem.vue";
+import SettingSection from "./SettingSection.vue";
+import { useBlueLightFilter } from "@/composables/useBlueLightFilter";
+import { Store } from "lucide-vue-next";
 
-const ThemeEditor = defineAsyncComponent(() => import('./theme/ThemeEditor.vue'));
-const ThemeImportDialog = defineAsyncComponent(() => import('./theme/ThemeImportDialog.vue'));
-const ThemeExportDialog = defineAsyncComponent(() => import('./theme/ThemeExportDialog.vue'));
+const ThemeEditor = defineAsyncComponent(() => import("./theme/ThemeEditor.vue"));
+const ThemeImportDialog = defineAsyncComponent(() => import("./theme/ThemeImportDialog.vue"));
+const ThemeExportDialog = defineAsyncComponent(() => import("./theme/ThemeExportDialog.vue"));
 
 const _appCfg = useAppConfigStore();
 const { config } = storeToRefs(_appCfg);
@@ -21,26 +23,32 @@ const { setConfig } = _appCfg;
 const prefsStore = usePreferencesStore();
 const tocCfg = computed(() => prefsStore.tocAutoUpdate);
 const searchCfg = computed(() => prefsStore.search);
+const navigationStore = useNavigationStore();
+
+function navigateToThemeMarket() {
+  navigationStore.setActiveView("themeMarket");
+}
 
 const DENSITY_OPTIONS = [
-  { label: '紧凑', value: 'compact', desc: '更多内容' },
-  { label: '标准', value: 'standard', desc: '默认' },
-  { label: '舒适', value: 'comfortable', desc: '更大间距' },
+  { label: "紧凑", value: "compact", desc: "更多内容" },
+  { label: "标准", value: "standard", desc: "默认" },
+  { label: "舒适", value: "comfortable", desc: "更大间距" },
 ] as const;
 
-const FONT_SCALE_KEY = 'legado-ui-font-scale';
-const fontScale = ref<string>(localStorage.getItem(FONT_SCALE_KEY) || 'medium');
+const FONT_SCALE_KEY = "legado-ui-font-scale";
+const fontScale = ref<string>(localStorage.getItem(FONT_SCALE_KEY) || "medium");
 
 function handleFontScaleChange(scale: string) {
   fontScale.value = scale;
   localStorage.setItem(FONT_SCALE_KEY, scale);
   const root = document.documentElement;
-  root.setAttribute('data-font-scale', scale);
-  const scaleMap: Record<string, string> = { small: '0.875', medium: '1', large: '1.125' };
-  root.style.setProperty('--ui-font-scale', scaleMap[scale] || '1');
+  root.setAttribute("data-font-scale", scale);
+  const scaleMap: Record<string, string> = { small: "0.875", medium: "1", large: "1.125" };
+  root.style.setProperty("--ui-font-scale", scaleMap[scale] || "1");
 }
 
-const { scheduleReminder, getReminderConfig, isNotificationSupported, requestPermission } = useNotification();
+const { scheduleReminder, getReminderConfig, isNotificationSupported, requestPermission } =
+  useNotification();
 
 const reminderState = reactive({
   enabled: false,
@@ -76,10 +84,10 @@ async function handleSet(key: string, value: string) {
 }
 
 const INTERVAL_OPTIONS = [
-  { label: '2 小时', value: 7200 },
-  { label: '4 小时', value: 14400 },
-  { label: '8 小时', value: 28800 },
-  { label: '24 小时', value: 86400 },
+  { label: "2 小时", value: 7200 },
+  { label: "4 小时", value: 14400 },
+  { label: "8 小时", value: 28800 },
+  { label: "24 小时", value: 86400 },
 ];
 
 const {
@@ -98,23 +106,20 @@ const {
   importTheme,
 } = useMaterialYou();
 
-const {
-  fetchThemeManifest,
-  importThemeFromSource,
-  DEFAULT_THEME_SOURCE_URL,
-} = useOnlineThemeSource();
+const { fetchThemeManifest, importThemeFromSource, DEFAULT_THEME_SOURCE_URL } =
+  useOnlineThemeSource();
 
 const presets = getPresets();
 
 const showEditor = ref(false);
 const showImport = ref(false);
 const showExport = ref(false);
-const exportThemeId = ref('');
+const exportThemeId = ref("");
 const customThemes = ref<CustomTheme[]>([]);
 const pluginThemes = ref<CustomTheme[]>([]);
 const onlineThemes = ref<ThemeEntry[]>([]);
 const loadingOnline = ref(false);
-const onlineError = ref('');
+const onlineError = ref("");
 
 function refreshThemes() {
   customThemes.value = listCustomThemes();
@@ -142,18 +147,18 @@ function isActive(themeId: string): boolean {
 
 function getThemeDots(theme: CustomTheme): string[] {
   return [
-    theme.colors.primary || '#888',
-    theme.colors.secondary || theme.colors.primary || '#888',
-    theme.colors.surface || '#ccc',
-    theme.colors.error || '#e11d48',
+    theme.colors.primary || "#888",
+    theme.colors.secondary || theme.colors.primary || "#888",
+    theme.colors.surface || "#ccc",
+    theme.colors.error || "#e11d48",
   ];
 }
 
 function getOnlineThemeDots(entry: ThemeEntry): string[] {
   return [
-    entry.colors.primary || '#888',
-    entry.colors.surface || '#ccc',
-    entry.colors.error || '#e11d48',
+    entry.colors.primary || "#888",
+    entry.colors.surface || "#ccc",
+    entry.colors.error || "#e11d48",
   ];
 }
 
@@ -166,12 +171,12 @@ function handleThemeSave(payload: { name: string; colors: Record<string, string>
 async function loadOnlineThemes() {
   if (!DEFAULT_THEME_SOURCE_URL) return;
   loadingOnline.value = true;
-  onlineError.value = '';
+  onlineError.value = "";
   try {
     const manifest = await fetchThemeManifest(DEFAULT_THEME_SOURCE_URL);
     onlineThemes.value = manifest.themes;
   } catch (e) {
-    onlineError.value = e instanceof Error ? e.message : '加载在线主题失败';
+    onlineError.value = e instanceof Error ? e.message : "加载在线主题失败";
   } finally {
     loadingOnline.value = false;
   }
@@ -182,7 +187,7 @@ async function handleImportOnlineTheme(entry: ThemeEntry) {
     importThemeFromSource(entry);
     refreshThemes();
   } catch (e) {
-    onlineError.value = e instanceof Error ? e.message : '导入主题失败';
+    onlineError.value = e instanceof Error ? e.message : "导入主题失败";
   }
 }
 
@@ -191,6 +196,47 @@ onMounted(() => {
   refreshThemes();
   loadOnlineThemes().catch(() => {});
 });
+
+const blFilter = useBlueLightFilter();
+const blPreview = ref(false);
+
+function blToggleEnabled() {
+  blFilter.toggle();
+}
+
+function blSetIntensity(v: number | null) {
+  blFilter.setIntensity(v ?? 0.5);
+}
+
+function blSetScheduleStartHour(h: number | null) {
+  blFilter.setSchedule({
+    ...blFilter.schedule.value,
+    startHour: Math.max(0, Math.min(23, h ?? 22)),
+  });
+}
+
+function blSetScheduleStartMinute(m: number | null) {
+  blFilter.setSchedule({
+    ...blFilter.schedule.value,
+    startMinute: Math.max(0, Math.min(59, m ?? 0)),
+  });
+}
+
+function blSetScheduleEndHour(h: number | null) {
+  blFilter.setSchedule({
+    ...blFilter.schedule.value,
+    endHour: Math.max(0, Math.min(23, h ?? 6)),
+  });
+}
+
+function blSetScheduleEndMinute(m: number | null) {
+  blFilter.setSchedule({
+    ...blFilter.schedule.value,
+    endMinute: Math.max(0, Math.min(59, m ?? 0)),
+  });
+}
+
+const blEffective = computed(() => blPreview.value || blFilter.effectiveEnabled.value);
 </script>
 
 <template>
@@ -208,7 +254,7 @@ onMounted(() => {
     </SettingItem>
 
     <SettingItem label="界面密度" desc="调整全局间距和控件大小">
-      <div style="display:flex;align-items:center;gap:6px">
+      <div style="display: flex; align-items: center; gap: 6px">
         <n-radio-group
           :value="config.ui_density"
           size="small"
@@ -219,17 +265,13 @@ onMounted(() => {
           </n-radio-button>
         </n-radio-group>
         <span class="density-hint">
-          {{ DENSITY_OPTIONS.find(o => o.value === config.ui_density)?.desc ?? '' }}
+          {{ DENSITY_OPTIONS.find((o) => o.value === config.ui_density)?.desc ?? "" }}
         </span>
       </div>
     </SettingItem>
 
     <SettingItem label="字体大小" desc="调整界面文字大小">
-      <n-radio-group
-        :value="fontScale"
-        size="small"
-        @update:value="handleFontScaleChange"
-      >
+      <n-radio-group :value="fontScale" size="small" @update:value="handleFontScaleChange">
         <n-radio-button value="small">小</n-radio-button>
         <n-radio-button value="medium">中</n-radio-button>
         <n-radio-button value="large">大</n-radio-button>
@@ -270,7 +312,9 @@ onMounted(() => {
             <span class="theme-name">{{ theme.name }}</span>
             <div class="theme-item-actions">
               <n-button size="tiny" quaternary @click.stop="handleExport(theme.id)">导出</n-button>
-              <n-button size="tiny" quaternary type="error" @click.stop="handleDelete(theme.id)">删除</n-button>
+              <n-button size="tiny" quaternary type="error" @click.stop="handleDelete(theme.id)"
+                >删除</n-button
+              >
             </div>
           </button>
         </div>
@@ -312,11 +356,7 @@ onMounted(() => {
           <n-button size="tiny" quaternary @click="loadOnlineThemes">重试</n-button>
         </div>
         <div v-else-if="onlineThemes.length > 0" class="theme-list">
-          <div
-            v-for="theme in onlineThemes"
-            :key="theme.id"
-            class="theme-item"
-          >
+          <div v-for="theme in onlineThemes" :key="theme.id" class="theme-item">
             <div class="theme-dots">
               <span
                 v-for="(dot, di) in getOnlineThemeDots(theme)"
@@ -330,7 +370,9 @@ onMounted(() => {
               <span v-if="theme.description" class="theme-desc">{{ theme.description }}</span>
             </div>
             <div class="theme-item-actions">
-              <n-button size="tiny" quaternary @click="handleImportOnlineTheme(theme)">导入</n-button>
+              <n-button size="tiny" quaternary @click="handleImportOnlineTheme(theme)"
+                >导入</n-button
+              >
             </div>
           </div>
         </div>
@@ -344,7 +386,9 @@ onMounted(() => {
             v-for="preset in presets"
             :key="preset.name"
             class="preset-dot"
-            :class="{ 'preset-dot--active': currentMode === 'preset' && currentColor === preset.color }"
+            :class="{
+              'preset-dot--active': currentMode === 'preset' && currentColor === preset.color,
+            }"
             :style="{ backgroundColor: preset.color }"
             :title="preset.name"
             @click="applyTheme('preset', preset.color)"
@@ -355,6 +399,13 @@ onMounted(() => {
       <div class="theme-toolbar">
         <n-button size="small" @click="showEditor = true">+ 新建主题</n-button>
         <n-button size="small" @click="showImport = true">导入</n-button>
+        <div class="theme-toolbar-spacer" />
+        <n-button size="small" secondary @click="navigateToThemeMarket">
+          <template #icon>
+            <Store :size="14" :stroke-width="1.75" />
+          </template>
+          主题市场
+        </n-button>
       </div>
 
       <div class="theme-list-section">
@@ -480,14 +531,8 @@ onMounted(() => {
   </SettingSection>
 
   <SettingSection title="阅读提醒" section-id="section-reminder">
-    <SettingItem
-      label="每日阅读提醒"
-      desc="在设定时间发送通知提醒您阅读"
-    >
-      <n-switch
-        :value="reminderState.enabled"
-        @update:value="handleReminderToggle"
-      >
+    <SettingItem label="每日阅读提醒" desc="在设定时间发送通知提醒您阅读">
+      <n-switch :value="reminderState.enabled" @update:value="handleReminderToggle">
         <template #checked>开启</template>
         <template #unchecked>关闭</template>
       </n-switch>
@@ -529,13 +574,123 @@ onMounted(() => {
     </template>
   </SettingSection>
 
-  <ThemeEditor v-if="showEditor" :show="showEditor" @update:show="showEditor = $event" @save="handleThemeSave" />
-  <ThemeImportDialog v-if="showImport" @close="showImport = false; refreshThemes()" />
-  <ThemeExportDialog
-    v-if="showExport"
-    :theme-id="exportThemeId"
-    @close="showExport = false"
+  <SettingSection title="夜间蓝光过滤" section-id="section-blue-light">
+    <SettingItem label="自动启用" desc="在设定时间段内自动启用暖色滤镜，减少蓝光，保护夜间阅读视力">
+      <n-switch
+        :value="blFilter.enabled.value"
+        @update:value="blToggleEnabled()"
+      >
+        <template #checked>开启</template>
+        <template #unchecked>关闭</template>
+      </n-switch>
+    </SettingItem>
+
+    <template v-if="blFilter.enabled.value">
+      <SettingItem label="开始时间" desc="每天从此时间开始启用滤镜">
+        <div style="display: flex; gap: 8px; align-items: center">
+          <n-input-number
+            :value="blFilter.schedule.value.startHour"
+            size="small"
+            :min="0"
+            :max="23"
+            style="width: 72px"
+            @update:value="blSetScheduleStartHour"
+          />
+          <span>时</span>
+          <n-input-number
+            :value="blFilter.schedule.value.startMinute"
+            size="small"
+            :min="0"
+            :max="59"
+            style="width: 72px"
+            @update:value="blSetScheduleStartMinute"
+          />
+          <span>分</span>
+        </div>
+      </SettingItem>
+
+      <SettingItem label="结束时间" desc="每天到此时间关闭滤镜">
+        <div style="display: flex; gap: 8px; align-items: center">
+          <n-input-number
+            :value="blFilter.schedule.value.endHour"
+            size="small"
+            :min="0"
+            :max="23"
+            style="width: 72px"
+            @update:value="blSetScheduleEndHour"
+          />
+          <span>时</span>
+          <n-input-number
+            :value="blFilter.schedule.value.endMinute"
+            size="small"
+            :min="0"
+            :max="59"
+            style="width: 72px"
+            @update:value="blSetScheduleEndMinute"
+          />
+          <span>分</span>
+        </div>
+      </SettingItem>
+
+      <SettingItem label="滤镜强度" desc="暖色滤镜的强度，数值越高颜色越暖（{{ Math.round(blFilter.intensity.value * 100) }}%）">
+        <div style="display: flex; align-items: center; gap: 12px; width: 100%">
+          <span style="font-size: var(--fs-12); color: var(--color-text-muted)">30%</span>
+          <n-slider
+            :value="blFilter.intensity.value * 100"
+            :min="30"
+            :max="70"
+            :step="1"
+            style="flex: 1"
+            @update:value="(v: number) => blSetIntensity(v / 100)"
+          />
+          <span style="font-size: var(--fs-12); color: var(--color-text-muted)">70%</span>
+        </div>
+      </SettingItem>
+
+      <SettingItem label="当前状态" desc="根据时间自动判断">
+        <div style="display: flex; align-items: center; gap: 8px">
+          <span
+            class="bl-status-dot"
+            :class="{ 'bl-status-dot--active': blFilter.isNightTime.value }"
+          />
+          <span style="font-size: var(--fs-13)">
+            {{ blFilter.isNightTime.value ? '当前处于夜间时段，滤镜已启用' : '当前不在夜间时段，滤镜未启用' }}
+          </span>
+        </div>
+      </SettingItem>
+    </template>
+
+    <SettingItem label="预览效果" desc="暂时开启滤镜预览，不影响自动启用设置">
+      <n-switch
+        :value="blPreview"
+        @update:value="(v: boolean) => (blPreview = v)"
+      >
+        <template #checked>预览中</template>
+        <template #unchecked>关闭</template>
+      </n-switch>
+    </SettingItem>
+  </SettingSection>
+
+  <div
+    v-if="blPreview"
+    class="blue-light-filter-preview"
+    :style="{ '--filter-intensity': blFilter.cssIntensity.value }"
   />
+
+  <ThemeEditor
+    v-if="showEditor"
+    :show="showEditor"
+    @update:show="showEditor = $event"
+    @save="handleThemeSave"
+  />
+  <ThemeImportDialog
+    v-if="showImport"
+    @close="
+      showImport = false;
+      refreshThemes();
+    "
+  />
+  <ThemeExportDialog v-if="showExport" :theme-id="exportThemeId" @close="showExport = false" />
 </template>
 
 <style scoped>
@@ -565,7 +720,9 @@ onMounted(() => {
   border: 1px solid transparent;
   background: transparent;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
   width: 100%;
   text-align: left;
   font-size: 14px;
@@ -577,7 +734,7 @@ onMounted(() => {
 }
 
 .theme-item--active {
-  border-color: var(--color-accent, #4467FF);
+  border-color: var(--color-accent, #4467ff);
   background: rgba(68, 103, 255, 0.06);
 }
 
@@ -613,6 +770,10 @@ onMounted(() => {
   padding: 8px 16px;
 }
 
+.theme-toolbar-spacer {
+  flex: 1;
+}
+
 .preset-grid {
   display: flex;
   gap: 10px;
@@ -627,7 +788,9 @@ onMounted(() => {
   border-radius: 50%;
   border: 2px solid transparent;
   cursor: pointer;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
   padding: 0;
   outline: none;
 }
@@ -642,15 +805,7 @@ onMounted(() => {
 }
 
 .preset-dot--custom {
-  background: conic-gradient(
-    #ff0000,
-    #ffff00,
-    #00ff00,
-    #00ffff,
-    #0000ff,
-    #ff00ff,
-    #ff0000
-  );
+  background: conic-gradient(#ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000);
   position: relative;
   overflow: hidden;
 }
@@ -719,5 +874,29 @@ onMounted(() => {
   font-size: 13px;
   color: var(--color-text-muted, #999);
   padding: 8px 0;
+}
+
+.blue-light-filter-preview {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  background-color: rgba(255, 180, 80, calc(var(--filter-intensity, 0.5)));
+  transition: opacity 1s ease;
+}
+
+.bl-status-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.bl-status-dot--active {
+  background-color: #f59e0b;
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.6);
 }
 </style>

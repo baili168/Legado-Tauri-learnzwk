@@ -1,28 +1,28 @@
 <script setup lang="ts">
-import { openUrl } from '@tauri-apps/plugin-opener';
-import { ChevronLeft, ArrowUp } from 'lucide-vue-next';
-import { useMessage } from 'naive-ui';
-import { ref, computed, watch, onMounted, type CSSProperties } from 'vue';
-import type { CachedChapter, BookDetail, ChapterItem, ChapterGroup } from '@/types';
-import { useBookshelfStore, useScriptBridgeStore, groupChapters } from '@/stores';
-import type { ReaderBookInfo } from '../reader/types';
-import { isMobile } from '../../composables/useEnv';
+import { openUrl } from "@tauri-apps/plugin-opener";
+import { ChevronLeft, ArrowUp } from "lucide-vue-next";
+import { useMessage } from "naive-ui";
+import { ref, computed, watch, onMounted, type CSSProperties } from "vue";
+import type { CachedChapter, BookDetail, ChapterItem, ChapterGroup } from "@/types";
+import { useBookshelfStore, useScriptBridgeStore, groupChapters } from "@/stores";
+import type { ReaderBookInfo } from "../reader/types";
+import { isMobile } from "../../composables/useEnv";
 import {
   ensureFrontendNamespaceLoaded,
   getFrontendStorageItem,
   legacyLocalStorageEntries,
   legacyLocalStorageRemove,
   setFrontendStorageItem,
-} from '../../composables/useFrontendStorage';
-import { useOverlayBackstack } from '../../composables/useOverlayBackstack';
+} from "../../composables/useFrontendStorage";
+import { useOverlayBackstack } from "../../composables/useOverlayBackstack";
 import {
   getBookMetaBadges,
   getLatestChapterText,
   getNormalizedLastChapter,
-} from '../../utils/bookMeta';
-import { getCoverImageUrl } from '../../utils/coverImage';
-import AppButton from '../base/AppButton.vue';
-import BookCoverImg from '../BookCoverImg.vue';
+} from "../../utils/bookMeta";
+import { getCoverImageUrl } from "../../utils/coverImage";
+import AppButton from "../base/AppButton.vue";
+import BookCoverImg from "../BookCoverImg.vue";
 
 const props = defineProps<{
   show: boolean;
@@ -34,9 +34,9 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'update:show', val: boolean): void;
+  (e: "update:show", val: boolean): void;
   (
-    e: 'read-chapter',
+    e: "read-chapter",
     payload: {
       chapterUrl: string;
       chapterName: string;
@@ -58,7 +58,7 @@ const { runBookInfo, runChapterList, runChapterContent } = useScriptBridgeStore(
 const { addToShelf, saveChapters, saveContent, isOnShelf, ensureLoaded } = useBookshelfStore();
 
 const loading = ref(false);
-const error = ref('');
+const error = ref("");
 const detail = ref<BookDetail | null>(null);
 const chapters = ref<ChapterItem[]>([]);
 const addingToShelf = ref(false);
@@ -69,7 +69,7 @@ const chapterGroups = ref<ChapterGroup[]>([]);
 /** 当前选中的线路标签索引 */
 const activeGroupIndex = ref(0);
 /** 列表排序：asc 正序，desc 倒序 */
-const sortOrder = ref<'asc' | 'desc'>('asc');
+const sortOrder = ref<"asc" | "desc">("asc");
 
 /** 是否需要显示分组标签页 */
 const hasGroups = computed(() => chapterGroups.value.length > 1);
@@ -84,7 +84,7 @@ const displayChapters = computed(() => {
   } else {
     list = chapters.value;
   }
-  if (sortOrder.value === 'desc') {
+  if (sortOrder.value === "desc") {
     return [...list].toReversed();
   }
   return list;
@@ -95,27 +95,27 @@ function storageKey(suffix: string) {
   return `bd-video-${props.bookUrl}-${suffix}`;
 }
 
-const STORAGE_NAMESPACE = 'explore.book-detail';
+const STORAGE_NAMESPACE = "explore.book-detail";
 
 /** 保存标签和排序状态 */
 function saveTabState() {
-  setFrontendStorageItem(STORAGE_NAMESPACE, storageKey('group'), String(activeGroupIndex.value));
-  setFrontendStorageItem(STORAGE_NAMESPACE, storageKey('sort'), sortOrder.value);
+  setFrontendStorageItem(STORAGE_NAMESPACE, storageKey("group"), String(activeGroupIndex.value));
+  setFrontendStorageItem(STORAGE_NAMESPACE, storageKey("sort"), sortOrder.value);
 }
 
 /** 恢复标签和排序状态 */
 function restoreTabState() {
   try {
-    const savedGroup = getFrontendStorageItem(STORAGE_NAMESPACE, storageKey('group'));
+    const savedGroup = getFrontendStorageItem(STORAGE_NAMESPACE, storageKey("group"));
     if (savedGroup !== null) {
       const idx = Number(savedGroup);
       if (idx >= 0 && idx < chapterGroups.value.length) {
         activeGroupIndex.value = idx;
       }
     }
-    const savedSort = getFrontendStorageItem(STORAGE_NAMESPACE, storageKey('sort'));
-    if (savedSort === 'desc') {
-      sortOrder.value = 'desc';
+    const savedSort = getFrontendStorageItem(STORAGE_NAMESPACE, storageKey("sort"));
+    if (savedSort === "desc") {
+      sortOrder.value = "desc";
     }
   } catch {
     /* ignore */
@@ -142,21 +142,23 @@ function onGroupChange(index: number) {
 }
 
 function toggleSortOrder() {
-  sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+  sortOrder.value = sortOrder.value === "asc" ? "desc" : "asc";
   saveTabState();
 }
 
-const drawerWidth = computed(() => '100vw');
-const drawerTitle = computed(() => '');
-const drawerHeaderStyle = computed(() => ({ display: 'none' }));
-const drawerBodyContentStyle = computed((): CSSProperties => ({
-  display: 'flex',
-  flexDirection: 'column',
-  overflow: 'hidden',
-  padding: '0',
-  height: '100%',
-}));
-const mobileHeaderTitle = computed(() => detail.value?.name?.trim() || '书籍详情');
+const drawerWidth = computed(() => "100vw");
+const drawerTitle = computed(() => "");
+const drawerHeaderStyle = computed(() => ({ display: "none" }));
+const drawerBodyContentStyle = computed(
+  (): CSSProperties => ({
+    display: "flex",
+    flexDirection: "column",
+    overflow: "hidden",
+    padding: "0",
+    height: "100%",
+  }),
+);
+const mobileHeaderTitle = computed(() => detail.value?.name?.trim() || "书籍详情");
 const mobileHeaderSubtitle = computed(() => `来自 ${props.sourceName}`);
 const detailBadges = computed(() => getBookMetaBadges(detail.value, props.sourceType));
 const detailLatestChapter = computed(() => getLatestChapterText(detail.value));
@@ -167,22 +169,22 @@ const detailMetaRows = computed(() => {
   }
   const rows: { label: string; value: string }[] = [];
   if (detailLatestChapter.value) {
-    rows.push({ label: '最新章节', value: detailLatestChapter.value });
+    rows.push({ label: "最新章节", value: detailLatestChapter.value });
   }
   if (d.wordCount?.trim()) {
-    rows.push({ label: '字数', value: d.wordCount.trim() });
+    rows.push({ label: "字数", value: d.wordCount.trim() });
   }
-  if (typeof d.chapterCount === 'number' && Number.isFinite(d.chapterCount) && d.chapterCount > 0) {
-    rows.push({ label: '章节总数', value: `${Math.floor(d.chapterCount)} 章` });
+  if (typeof d.chapterCount === "number" && Number.isFinite(d.chapterCount) && d.chapterCount > 0) {
+    rows.push({ label: "章节总数", value: `${Math.floor(d.chapterCount)} 章` });
   }
   if (d.updateTime?.trim()) {
-    rows.push({ label: '更新时间', value: d.updateTime.trim() });
+    rows.push({ label: "更新时间", value: d.updateTime.trim() });
   }
   return rows;
 });
 
 function closeDrawer() {
-  emit('update:show', false);
+  emit("update:show", false);
 }
 
 useOverlayBackstack(() => props.show, closeDrawer);
@@ -194,12 +196,12 @@ watch(
       return;
     }
     loading.value = true;
-    error.value = '';
+    error.value = "";
     detail.value = null;
     chapters.value = [];
     chapterGroups.value = [];
     activeGroupIndex.value = 0;
-    sortOrder.value = 'asc';
+    sortOrder.value = "asc";
     onShelf.value = false;
     try {
       await ensureLoaded();
@@ -234,10 +236,10 @@ function onClickChapter(ch: ChapterItem, indexInDisplay: number) {
     ? (chapterGroups.value[activeGroupIndex.value]?.chapters ?? [])
     : chapters.value;
   const realIndex =
-    sortOrder.value === 'desc' ? currentList.length - 1 - indexInDisplay : indexInDisplay;
+    sortOrder.value === "desc" ? currentList.length - 1 - indexInDisplay : indexInDisplay;
   const bookInfo: ReaderBookInfo = {
-    name: d?.name ?? '',
-    author: d?.author ?? '',
+    name: d?.name ?? "",
+    author: d?.author ?? "",
     coverUrl: d?.coverUrl,
     intro: d?.intro,
     kind: d?.kind,
@@ -253,12 +255,12 @@ function onClickChapter(ch: ChapterItem, indexInDisplay: number) {
     status: d?.status,
     totalChapters: currentList.length,
   };
-  emit('read-chapter', {
+  emit("read-chapter", {
     chapterUrl: ch.url,
     chapterName: ch.name,
     index: realIndex,
     bookInfo,
-    sourceType: props.sourceType ?? 'novel',
+    sourceType: props.sourceType ?? "novel",
     tocUrl: detail.value?.tocUrl ?? props.bookUrl,
     chapterGroups: hasGroups.value ? chapterGroups.value : undefined,
     activeGroupIndex: hasGroups.value ? activeGroupIndex.value : undefined,
@@ -281,7 +283,7 @@ async function handleAddToShelf() {
         kind: d.kind,
         bookUrl: props.bookUrl,
         lastChapter: getNormalizedLastChapter(d),
-        sourceType: props.sourceType ?? 'novel',
+        sourceType: props.sourceType ?? "novel",
       },
       props.fileName,
       props.sourceName,
@@ -297,8 +299,8 @@ async function handleAddToShelf() {
       await saveChapters(result.id, cached);
     }
     onShelf.value = true;
-    message.success('已加入书架'); // 后台预缓存第一章正文（非阻塞，忽略错误）
-    if (chapters.value.length > 0 && props.sourceType !== 'comic') {
+    message.success("已加入书架"); // 后台预缓存第一章正文（非阻塞，忽略错误）
+    if (chapters.value.length > 0 && props.sourceType !== "comic") {
       const firstCh = chapters.value[0];
       const shelfId = result.id;
       (async () => {
@@ -307,7 +309,7 @@ async function handleAddToShelf() {
           await saveContent(
             shelfId,
             0,
-            typeof content === 'string' ? content : JSON.stringify(content),
+            typeof content === "string" ? content : JSON.stringify(content),
           );
         } catch {
           // 预缓存失败不影响主流程
@@ -424,7 +426,7 @@ async function handleAddToShelf() {
                   :disabled="onShelf"
                   @click="handleAddToShelf"
                 >
-                  {{ onShelf ? '已在书架' : '加入书架' }}
+                  {{ onShelf ? "已在书架" : "加入书架" }}
                 </AppButton>
               </div>
             </div>
@@ -434,11 +436,11 @@ async function handleAddToShelf() {
               <!-- 标题行：章节列表 + 排序按钮 -->
               <div class="bd-chapters__header">
                 <div class="bd-chapters__title">
-                  {{ hasGroups ? '选集' : '章节列表' }}
+                  {{ hasGroups ? "选集" : "章节列表" }}
                   ({{ displayChapters.length }})
                 </div>
                 <n-button text size="tiny" class="bd-chapters__sort-btn" @click="toggleSortOrder">
-                  {{ sortOrder === 'asc' ? '正序' : '倒序' }}
+                  {{ sortOrder === "asc" ? "正序" : "倒序" }}
                   <ArrowUp
                     :size="12"
                     :style="{
@@ -478,7 +480,7 @@ async function handleAddToShelf() {
                   @click="onClickChapter(ch, i)"
                 >
                   <span class="bd-chapter-item__index">{{
-                    sortOrder === 'asc' ? i + 1 : displayChapters.length - i
+                    sortOrder === "asc" ? i + 1 : displayChapters.length - i
                   }}</span>
                   <span class="bd-chapter-item__name">{{ ch.name }}</span>
                 </div>

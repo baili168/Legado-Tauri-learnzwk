@@ -1,6 +1,6 @@
-import type { ShelfBook } from '@/stores';
-import type { BuiltinCoverGeneratorDefinition } from './types';
-import { bookAuthor, bookKind, buildDataUrl, paletteFromBook, textSpans, wrapText } from './shared';
+import type { ShelfBook } from "@/stores";
+import type { BuiltinCoverGeneratorDefinition } from "./types";
+import { bookAuthor, bookKind, buildDataUrl, paletteFromBook, textSpans, wrapText } from "./shared";
 
 function generateTitleBlockCover(book: ShelfBook): string {
   const palette = paletteFromBook(book);
@@ -28,13 +28,13 @@ function generateTitleBlockCover(book: ShelfBook): string {
   </text>
   <rect x="72" y="628" width="168" height="8" rx="4" fill="#ffffff" opacity="0.72" />
   <text x="72" y="690" fill="#ffffff" font-size="56" font-weight="800">${bookAuthor(book)}</text>
-  <text x="72" y="734" fill="#ffffff" opacity="0.72" font-size="44">${bookKind(book, '现代封面')}</text>
+  <text x="72" y="734" fill="#ffffff" opacity="0.72" font-size="44">${bookKind(book, "现代封面")}</text>
 </svg>`);
 }
 
 export const titleBlockCoverGenerator: BuiltinCoverGeneratorDefinition = {
-  id: 'builtin:title-block',
-  name: '标题块封面',
-  description: '大字标题 + 渐变主题色，适合没有封面的纯文字书籍。',
+  id: "builtin:title-block",
+  name: "标题块封面",
+  description: "大字标题 + 渐变主题色，适合没有封面的纯文字书籍。",
   generate: generateTitleBlockCover,
 };

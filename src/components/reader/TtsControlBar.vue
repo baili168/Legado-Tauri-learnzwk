@@ -1,10 +1,14 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { SkipBack, Loader2, Pause, Play, SkipForward, X, Mic, Server } from 'lucide-vue-next';
-import { NSlider, NSelect, NPopover } from 'naive-ui';
-import { useTts } from '@/composables/useTts';
-import { TTS_ENGINE_OPTIONS, TTS_RATE_PRESETS } from '@/features/reader/settings/readerSettingsOptions';
-import type { TTSEngine } from '@/composables/useTts';
+import { computed, ref } from "vue";
+import { SkipBack, Loader2, Pause, Play, SkipForward, X, Mic, Server } from "lucide-vue-next";
+import { NSlider, NSelect, NPopover } from "naive-ui";
+import { useTts } from "@/composables/useTts";
+import { useTtsController } from "@/composables/useTtsController";
+import {
+  TTS_ENGINE_OPTIONS,
+  TTS_RATE_PRESETS,
+} from "@/features/reader/settings/readerSettingsOptions";
+import type { TTSEngine } from "@/composables/useTts";
 
 const props = defineProps<{
   visible: boolean;
@@ -13,21 +17,29 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'close'): void;
+  (e: "close"): void;
 }>();
 
 const tts = useTts();
+const ttsCtrl = useTtsController();
 
 const localRate = ref(tts.playbackRate.value);
 
+const isAnyReading = computed(
+  () =>
+    tts.isPlaying.value || tts.isLoading.value || ttsCtrl.isReading.value,
+);
+
+const isAnyPaused = computed(() => ttsCtrl.isPaused.value);
+
 const currentEngineLabel = computed(() => {
-  const option = TTS_ENGINE_OPTIONS.find(o => o.value === tts.activeEngine.value);
-  return option?.label ?? '未知';
+  const option = TTS_ENGINE_OPTIONS.find((o) => o.value === tts.activeEngine.value);
+  return option?.label ?? "未知";
 });
 
 const speedMarks = computed(() => {
   const marks: Record<number, string> = {};
-  TTS_RATE_PRESETS.forEach(p => {
+  TTS_RATE_PRESETS.forEach((p) => {
     marks[p.value] = p.label;
   });
   return marks;
@@ -36,10 +48,11 @@ const speedMarks = computed(() => {
 function handleRateChange(value: number) {
   localRate.value = value;
   tts.setPlaybackRate(value);
+  ttsCtrl.setPlaybackRate(value);
 }
 
 function handleEngineSwitch() {
-  const engines: TTSEngine[] = ['web-speech', 'piper'];
+  const engines: TTSEngine[] = ["web-speech", "piper"];
   const currentIdx = engines.indexOf(tts.activeEngine.value);
   const nextEngine = engines[(currentIdx + 1) % engines.length];
   tts.setEngine(nextEngine);
@@ -51,10 +64,19 @@ function handleVoiceChange(value: string) {
 
 function handleClose() {
   tts.stop();
-  emit('close');
+  ttsCtrl.stop();
+  emit("close");
 }
 
 function togglePlayPause() {
+  if (ttsCtrl.isReading.value) {
+    ttsCtrl.pause();
+    return;
+  }
+  if (ttsCtrl.isPaused.value) {
+    ttsCtrl.resume();
+    return;
+  }
   if (tts.isPlaying.value) {
     tts.pause();
   } else {
@@ -69,24 +91,24 @@ function togglePlayPause() {
       <div class="tts-control-bar__notice">朗读功能仅供测试，很多人反馈有问题</div>
 
       <span class="tts-control-bar__progress">
-        {{ progressText ?? '—' }}
+        {{ progressText ?? "—" }}
       </span>
 
-      <button class="tts-control-bar__btn" title="上一段" @click="tts.prevSegment()">
+      <button class="tts-control-bar__btn" title="上一段" @click="tts.prevSegment(); ttsCtrl.skipBack()">
         <SkipBack :size="18" />
       </button>
 
       <button
         class="tts-control-bar__btn tts-control-bar__btn--play"
-        :title="tts.isPlaying.value ? '暂停' : '播放'"
+        :title="isAnyReading ? '暂停' : '播放'"
         @click="togglePlayPause"
       >
         <Loader2 v-if="tts.isLoading.value" class="tts-control-bar__spin" :size="20" />
-        <Pause v-else-if="tts.isPlaying.value" :size="20" />
+        <Pause v-else-if="isAnyReading" :size="20" />
         <Play v-else :size="20" />
       </button>
 
-      <button class="tts-control-bar__btn" title="下一段" @click="tts.nextSegment()">
+      <button class="tts-control-bar__btn" title="下一段" @click="tts.nextSegment(); ttsCtrl.skipForward()">
         <SkipForward :size="18" />
       </button>
 
@@ -103,11 +125,7 @@ function togglePlayPause() {
         />
       </div>
 
-      <NPopover
-        trigger="click"
-        placement="top"
-        :disabled="!availableVoices?.length"
-      >
+      <NPopover trigger="click" placement="top" :disabled="!availableVoices?.length">
         <template #trigger>
           <button
             class="tts-control-bar__btn tts-control-bar__btn--engine"
@@ -119,10 +137,11 @@ function togglePlayPause() {
           </button>
         </template>
         <div class="tts-control-bar__engine-menu">
-          <div class="tts-control-bar__engine-hint">
-            当前引擎: {{ currentEngineLabel }}
-          </div>
-          <div v-if="tts.activeEngine.value === 'piper' && !tts.piperAvailable.value" class="tts-control-bar__piper-warning">
+          <div class="tts-control-bar__engine-hint">当前引擎: {{ currentEngineLabel }}</div>
+          <div
+            v-if="tts.activeEngine.value === 'piper' && !tts.piperAvailable.value"
+            class="tts-control-bar__piper-warning"
+          >
             Piper 未安装或模型不可用
           </div>
           <div v-if="availableVoices?.length" class="tts-control-bar__voice-select">

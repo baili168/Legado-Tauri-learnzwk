@@ -1,7 +1,7 @@
 <!-- BookSourceCodeEditor — 书源 JavaScript 代码编辑控件，统一复用高亮编辑器实现。 -->
 <script setup lang="ts">
-import { ref } from 'vue';
-import JavaScriptHighlightEditor from '@/components/base/JavaScriptHighlightEditor.vue';
+import { ref } from "vue";
+import JavaScriptHighlightEditor from "@/components/base/JavaScriptHighlightEditor.vue";
 
 withDefaults(
   defineProps<{
@@ -11,12 +11,12 @@ withDefaults(
   }>(),
   {
     autofocusKey: undefined,
-    placeholder: '书源 JavaScript 内容...',
+    placeholder: "书源 JavaScript 内容...",
   },
 );
 
 const emit = defineEmits<{
-  'update:modelValue': [value: string];
+  "update:modelValue": [value: string];
   save: [];
 }>();
 

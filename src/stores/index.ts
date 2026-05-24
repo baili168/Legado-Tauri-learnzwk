@@ -1,39 +1,55 @@
 /**
  * src/stores/index.ts — Pinia Store 统一导出入口
  */
-export { useNavigationStore } from './navigation';
-export { useBookSourceStore } from './bookSource';
+export { useNavigationStore } from "./navigation";
+export { useBookSourceStore } from "./bookSource";
 export {
   useBookshelfStore,
   LOCAL_TXT_FILE_NAME,
   LOCAL_TXT_SOURCE_NAME,
+  LOCAL_CBZ_FILE_NAME,
+  LOCAL_CBZ_SOURCE_NAME,
   isLocalTxtBook,
-} from './bookshelf';
-export { useAppConfigStore } from './appConfig';
-export { usePreferencesStore } from './preferences';
-export { usePrivacyModeStore } from './privacyMode';
-export { usePrefetchStore } from './prefetch';
-export { useAiSessionsStore } from './aiSessions';
-export { useScriptBridgeStore } from './scriptBridge';
-export { useFrontendPluginsStore } from './frontendPlugins';
-export { useShellStatusStore } from './shellStatus';
-export { useBackStackStore } from './backStack';
-export { useBookshelfUiStore } from '@/features/bookshelf/stores/bookshelfUi';
-export { useBookshelfReaderStore } from '@/features/bookshelf/stores/bookshelfReader';
-export { useReaderSessionStore } from '@/features/reader/stores/readerSession';
-export { useReaderUiStore } from '@/features/reader/stores/readerUi';
-export { useReaderSettingsStore } from '@/features/reader/stores/readerSettings';
-export { useReaderActionsStore } from '@/features/reader/stores/readerActions';
-export { useReaderViewStore } from '@/features/reader/stores/readerView';
-export { useReaderBookmarksStore } from '@/features/reader/stores/readerBookmarks';
-export type { BookmarkEntry } from '@/features/reader/stores/readerBookmarks';
-export { useMusicPlayerStore } from './musicPlayer';
-export type { PlayerTrack, PlayerBookContext, PlayMode } from './musicPlayer';
-export type { BackHandler } from './backStack';
+} from "./bookshelf";
+export { useAppConfigStore } from "./appConfig";
+export { usePreferencesStore } from "./preferences";
+export { usePrivacyModeStore } from "./privacyMode";
+export { usePrefetchStore } from "./prefetch";
+export { useAiSessionsStore } from "./aiSessions";
+export { useScriptBridgeStore } from "./scriptBridge";
+export { useFrontendPluginsStore } from "./frontendPlugins";
+export { useShellStatusStore } from "./shellStatus";
+export { useWebDAVConfigStore } from "./webdavConfig";
+export type { WebDAVBackupConfig } from "./webdavConfig";
+export { useBackStackStore } from "./backStack";
+export { useBookshelfUiStore } from "@/features/bookshelf/stores/bookshelfUi";
+export { useBookshelfReaderStore } from "@/features/bookshelf/stores/bookshelfReader";
+export { useReaderSessionStore } from "@/features/reader/stores/readerSession";
+export { useReaderUiStore } from "@/features/reader/stores/readerUi";
+export { useReaderSettingsStore } from "@/features/reader/stores/readerSettings";
+export { useReaderActionsStore } from "@/features/reader/stores/readerActions";
+export { useReaderViewStore } from "@/features/reader/stores/readerView";
+export { useReaderBookmarksStore } from "@/features/reader/stores/readerBookmarks";
+export type { BookmarkEntry } from "@/features/reader/stores/readerBookmarks";
+export { useAnnotationsStore } from "./annotations";
+export type { Annotation } from "./annotations";
+export { useShelfGroupsStore } from "./shelfGroups";
+export type { BookTag, BookTagRelation } from "@/types/shelfGroup";
+export { useSmartGroupsStore } from "./smartGroups";
+export type { SmartGroupType, SmartGroup } from "./smartGroups";
+export { useMusicPlayerStore } from "./musicPlayer";
+export type { PlayerTrack, PlayerBookContext, PlayMode } from "./musicPlayer";
+export { useUpdateFeedStore } from "./updateFeed";
+export type { UpdateEvent } from "./updateFeed";
+export { useAchievementsStore } from "./achievements";
+export type { Achievement } from "./achievements";
+export { useReadingRecordsStore } from "./readingRecords";
+export type { ReadingSession, DailyRecord } from "./readingRecords";
+export type { BackHandler } from "./backStack";
 
 // 重新导出常用类型，方便组件直接从 stores 引入
-export type { AiSession, AiDraft } from './aiSessions';
-export type { PrefetchPayload } from './prefetch';
+export type { AiSession, AiDraft } from "./aiSessions";
+export type { PrefetchPayload } from "./prefetch";
 export type {
   ScriptLog,
   ScriptUiEvent,
@@ -42,16 +58,16 @@ export type {
   BookDetail,
   ChapterItem,
   ChapterGroup,
-} from './scriptBridge';
-export type { ShellTaskItem, ShellLogItem, ShellLogLevel, TaskStatus } from './shellStatus';
-export { groupChapters } from './scriptBridge';
+} from "./scriptBridge";
+export type { ShellTaskItem, ShellLogItem, ShellLogLevel, TaskStatus } from "./shellStatus";
+export { groupChapters } from "./scriptBridge";
 export type {
   ReaderPreferences,
   ViewDensityMode,
   ViewDensityPreferences,
   SearchPreferences,
   TocAutoUpdatePreferences,
-} from './preferences';
+} from "./preferences";
 // ShelfBook 类型（组件/视图直接从 stores 引入）
 export type {
   ShelfBook,
@@ -60,9 +76,9 @@ export type {
   EpisodeProgress,
   UpdateShelfBookPayload,
   PatchShelfBookPayload,
-} from '../composables/useBookshelf';
+} from "../composables/useBookshelf";
 // useFrontendPlugins 的类型（通过 frontendPlugins store 透传）
 export type {
   PluginSettingValue,
   ResolvedPluginSettingField,
-} from '../composables/useFrontendPlugins';
+} from "../composables/useFrontendPlugins";

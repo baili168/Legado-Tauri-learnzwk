@@ -12,7 +12,7 @@
 // ==/UserScript==
 
 legado.registerPlugin({
-  id: 'bookshelf-export-notes',
+  id: "bookshelf-export-notes",
   setup: function (api) {
     function formatNotes(notes) {
       var lines = [];
@@ -21,14 +21,14 @@ legado.registerPlugin({
         if (!Array.isArray(items) || items.length === 0) {
           return;
         }
-        lines.push('--- ' + url + ' ---');
+        lines.push("--- " + url + " ---");
         items.forEach(function (note) {
           var d = new Date(note.time ?? 0).toLocaleString();
-          lines.push('[' + d + '] ' + note.text);
+          lines.push("[" + d + "] " + note.text);
         });
-        lines.push('');
+        lines.push("");
       });
-      return lines.join('\n');
+      return lines.join("\n");
     }
 
     function totalCount(notes) {
@@ -38,23 +38,23 @@ legado.registerPlugin({
     }
 
     async function runExport(book) {
-      var notes = api.storage.readJson('notes', {});
+      var notes = api.storage.readJson("notes", {});
       var count = totalCount(notes);
       var formatted = formatNotes(notes);
 
       var values = await api.ui.prompt({
-        title: '笔记',
-        message: (book ? book.name + ' ' : '') + '共有 ' + count + ' 条笔记',
+        title: "笔记",
+        message: (book ? book.name + " " : "") + "共有 " + count + " 条笔记",
         fields: [
           {
-            type: 'info',
-            label: '笔记内容',
-            description: count > 0 ? formatted : '（暂无笔记）',
+            type: "info",
+            label: "笔记内容",
+            description: count > 0 ? formatted : "（暂无笔记）",
           },
-          { type: 'switch', key: 'copy', label: '复制到剪贴板' },
+          { type: "switch", key: "copy", label: "复制到剪贴板" },
         ],
-        submitText: '确定',
-        cancelText: '取消',
+        submitText: "确定",
+        cancelText: "取消",
       });
 
       if (!values) {
@@ -63,21 +63,21 @@ legado.registerPlugin({
       if (values.copy && count > 0) {
         try {
           await navigator.clipboard.writeText(formatted);
-          api.ui.toast('笔记已复制到剪贴板', 'success');
+          api.ui.toast("笔记已复制到剪贴板", "success");
         } catch (e) {
-          api.log('[export-notes] 复制失败', e);
-          api.ui.toast('复制失败，请检查浏览器权限', 'error');
+          api.log("[export-notes] 复制失败", e);
+          api.ui.toast("复制失败，请检查浏览器权限", "error");
         }
       } else if (values.copy && count === 0) {
-        api.ui.toast('没有笔记可复制', 'warning');
+        api.ui.toast("没有笔记可复制", "warning");
       }
     }
 
     return {
       bookshelfActions: [
         {
-          id: 'export-notes',
-          name: '导出阅读笔记',
+          id: "export-notes",
+          name: "导出阅读笔记",
           when: function () {
             return true;
           },
@@ -87,56 +87,56 @@ legado.registerPlugin({
         },
       ],
       slots: {
-        'overlay-top-right': function (container) {
-          var btn = document.createElement('button');
-          btn.textContent = '✏';
-          btn.title = '添加笔记';
+        "overlay-top-right": function (container) {
+          var btn = document.createElement("button");
+          btn.textContent = "✏";
+          btn.title = "添加笔记";
           btn.style.cssText = [
-            'position:absolute',
-            'top:8px',
-            'right:8px',
-            'width:32px',
-            'height:32px',
-            'border:none',
-            'border-radius:50%',
-            'background:rgba(0,0,0,0.4)',
-            'color:#fff',
-            'font-size:15px',
-            'cursor:pointer',
-            'display:flex',
-            'align-items:center',
-            'justify-content:center',
-            'padding:0',
-          ].join(';');
+            "position:absolute",
+            "top:8px",
+            "right:8px",
+            "width:32px",
+            "height:32px",
+            "border:none",
+            "border-radius:50%",
+            "background:rgba(0,0,0,0.4)",
+            "color:#fff",
+            "font-size:15px",
+            "cursor:pointer",
+            "display:flex",
+            "align-items:center",
+            "justify-content:center",
+            "padding:0",
+          ].join(";");
 
-          btn.addEventListener('click', async function () {
+          btn.addEventListener("click", async function () {
             var session = api.reader.getSession();
-            var chapterUrl = session ? session.chapterUrl : '';
+            var chapterUrl = session ? session.chapterUrl : "";
 
             var values = await api.ui.prompt({
-              title: '添加笔记',
+              title: "添加笔记",
               fields: [
                 {
-                  type: 'textarea',
-                  key: 'note',
-                  label: '笔记内容',
+                  type: "textarea",
+                  key: "note",
+                  label: "笔记内容",
                   rows: 4,
                 },
               ],
-              submitText: '保存',
+              submitText: "保存",
             });
 
             if (!values?.note || !String(values.note).trim()) {
               return;
             }
 
-            var notes = api.storage.readJson('notes', {});
+            var notes = api.storage.readJson("notes", {});
             if (!Array.isArray(notes[chapterUrl])) {
               notes[chapterUrl] = [];
             }
             notes[chapterUrl].push({ text: String(values.note).trim(), time: Date.now() });
-            api.storage.writeJson('notes', notes);
-            api.ui.toast('笔记已保存', 'success');
+            api.storage.writeJson("notes", notes);
+            api.ui.toast("笔记已保存", "success");
           });
 
           container.appendChild(btn);

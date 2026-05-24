@@ -1,53 +1,63 @@
 <script setup lang="ts">
-import { darkTheme, type GlobalTheme, type GlobalThemeOverrides } from 'naive-ui';
-import { storeToRefs } from 'pinia';
-import { ref, computed, defineAsyncComponent, watch, reactive, onMounted, onUnmounted } from 'vue';
-import type { NavItem } from '@/types';
-import packageJson from '../package.json';
-import tauriConfig from '../src-tauri/tauri.conf.json';
-import GlobalFeedbackMirror from './components/GlobalFeedbackMirror.vue';
-import BottomNav from './components/layout/BottomNav.vue';
-import LogWindowPanel from './components/layout/LogWindowPanel.vue';
-import MainContent from './components/layout/MainContent.vue';
-import NavigationRail from './components/layout/NavigationRail.vue';
-import TaskCenterDrawer from './components/layout/TaskCenterDrawer.vue';
-import TitleBar from './components/layout/TitleBar.vue';
-import LegadoDeepLinkDialog from './components/LegadoDeepLinkDialog.vue';
-import MiniPlayerBar from './components/music/MiniPlayerBar.vue';
-import MusicPlayerOverlay from './components/music/MusicPlayerOverlay.vue';
-import { isTauri, hasNativeTransport, platform, initPlatformFromRust } from './composables/useEnv';
+import { darkTheme, type GlobalTheme, type GlobalThemeOverrides } from "naive-ui";
+import { storeToRefs } from "pinia";
+import { ref, computed, defineAsyncComponent, watch, reactive, onMounted, onUnmounted } from "vue";
+import type { NavItem } from "@/types";
+import packageJson from "../package.json";
+import tauriConfig from "../src-tauri/tauri.conf.json";
+import GlobalFeedbackMirror from "./components/GlobalFeedbackMirror.vue";
+import AppLockScreen from "./components/layout/AppLockScreen.vue";
+import BottomNav from "./components/layout/BottomNav.vue";
+import LogWindowPanel from "./components/layout/LogWindowPanel.vue";
+import MainContent from "./components/layout/MainContent.vue";
+import NavigationRail from "./components/layout/NavigationRail.vue";
+import TaskCenterDrawer from "./components/layout/TaskCenterDrawer.vue";
+import TitleBar from "./components/layout/TitleBar.vue";
+import LegadoDeepLinkDialog from "./components/LegadoDeepLinkDialog.vue";
+import MiniPlayerBar from "./components/music/MiniPlayerBar.vue";
+import MusicPlayerOverlay from "./components/music/MusicPlayerOverlay.vue";
+import { isTauri, hasNativeTransport, platform, initPlatformFromRust } from "./composables/useEnv";
 const isMobile = true;
-import { eventEmit } from './composables/useEventBus';
-import { installGlobalFocusNavigation } from './composables/useFocusNavigation';
-import { useInputMode } from './composables/useInputMode';
-import { useLogZonePref } from './composables/useLogZonePref';
-import { useResponsiveControl } from './composables/useResponsiveControl';
-import { installSyncClientStateListener, useSync } from './composables/useSync';
-import { useVConsole } from './composables/useVConsole';
+import { eventEmit } from "./composables/useEventBus";
+import { installGlobalFocusNavigation } from "./composables/useFocusNavigation";
+import { useInputMode } from "./composables/useInputMode";
+import { useLogZonePref } from "./composables/useLogZonePref";
+import { useResponsiveControl } from "./composables/useResponsiveControl";
+import { installSyncClientStateListener, useSync } from "./composables/useSync";
+import { useAppLock } from "./composables/useAppLock";
+import { useBlueLightFilter } from "./composables/useBlueLightFilter";
+import { useVConsole } from "./composables/useVConsole";
 import {
   useAppConfigStore,
   useBackStackStore,
   useNavigationStore,
   usePrivacyModeStore,
   useShellStatusStore,
-} from './stores';
+  useUpdateFeedStore,
+} from "./stores";
 // ScriptDialog 按需懒加载：仅在 Boa 引擎触发弹窗时才加载，不阻塞首屏
-const ScriptDialog = defineAsyncComponent(() => import('./components/ScriptDialog.vue'));
+const ScriptDialog = defineAsyncComponent(() => import("./components/ScriptDialog.vue"));
 const FrontendPluginDialog = defineAsyncComponent(
-  () => import('./components/FrontendPluginDialog.vue'),
+  () => import("./components/FrontendPluginDialog.vue"),
 );
 // WsConnectDialog：非 Tauri 环境下后端连接失败时弹出地址输入框
-const WsConnectDialog = defineAsyncComponent(() => import('./components/WsConnectDialog.vue'));
-import PrefetchProgressBar from './components/PrefetchProgressBar.vue';
+const WsConnectDialog = defineAsyncComponent(() => import("./components/WsConnectDialog.vue"));
+// OnboardingWizard：首次使用引导
+const OnboardingWizard = defineAsyncComponent(() => import("./views/OnboardingWizard.vue"));
+import PrefetchProgressBar from "./components/PrefetchProgressBar.vue";
 
 // ── 主窗口视图 ───────────────────────────────────────────────────────────
 
-const BookshelfView = defineAsyncComponent(() => import('./views/BookshelfView.vue'));
-const ExploreView = defineAsyncComponent(() => import('./views/ExploreView.vue'));
-const SearchView = defineAsyncComponent(() => import('./views/SearchView.vue'));
-const BookSourceView = defineAsyncComponent(() => import('./views/BookSourceView.vue'));
-const ExtensionsView = defineAsyncComponent(() => import('./views/ExtensionsView.vue'));
-const SettingsView = defineAsyncComponent(() => import('./views/SettingsView.vue'));
+const BookshelfView = defineAsyncComponent(() => import("./views/BookshelfView.vue"));
+const ExploreView = defineAsyncComponent(() => import("./views/ExploreView.vue"));
+const SearchView = defineAsyncComponent(() => import("./views/SearchView.vue"));
+const BookSourceView = defineAsyncComponent(() => import("./views/BookSourceView.vue"));
+const ExtensionsView = defineAsyncComponent(() => import("./views/ExtensionsView.vue"));
+const SettingsView = defineAsyncComponent(() => import("./views/SettingsView.vue"));
+const UpdateFeedView = defineAsyncComponent(() => import("./views/UpdateFeedView.vue"));
+const AchievementsView = defineAsyncComponent(() => import("./views/AchievementsView.vue"));
+const ReadingHistoryView = defineAsyncComponent(() => import("./views/ReadingHistoryView.vue"));
+const ThemeMarketView = defineAsyncComponent(() => import("./views/ThemeMarketView.vue"));
 
 const viewMap: Record<string, ReturnType<typeof defineAsyncComponent>> = {
   bookshelf: BookshelfView,
@@ -56,21 +66,25 @@ const viewMap: Record<string, ReturnType<typeof defineAsyncComponent>> = {
   booksource: BookSourceView,
   extensions: ExtensionsView,
   settings: SettingsView,
+  updateFeed: UpdateFeedView,
+  achievements: AchievementsView,
+  readingHistory: ReadingHistoryView,
+  themeMarket: ThemeMarketView,
 };
 
 /** 底部导航项（精简六项） */
 const mobileNavItems: NavItem[] = [
-  { id: 'bookshelf', icon: 'bookshelf', label: '书架' },
-  { id: 'explore', icon: 'explore', label: '发现' },
-  { id: 'search', icon: 'search', label: '搜索' },
-  { id: 'booksource', icon: 'booksource', label: '书源' },
-  { id: 'extensions', icon: 'extensions', label: '扩展' },
-  { id: 'settings', icon: 'settings', label: '设置' },
+  { id: "bookshelf", icon: "bookshelf", label: "书架" },
+  { id: "explore", icon: "explore", label: "发现" },
+  { id: "search", icon: "search", label: "搜索" },
+  { id: "booksource", icon: "booksource", label: "书源" },
+  { id: "extensions", icon: "extensions", label: "扩展" },
+  { id: "settings", icon: "settings", label: "设置" },
 ];
 
 const navItems = mobileNavItems;
 const activeNavLabel = computed(
-  () => navItems.find((n) => n.id === navigationStore.activeView)?.label ?? '',
+  () => navItems.find((n) => n.id === navigationStore.activeView)?.label ?? "",
 );
 
 // ── 视图缓存（惰性加载 + 保持挂载）────────────────────────────────────────
@@ -82,8 +96,13 @@ const appConfigStore = useAppConfigStore();
 const { setupAutoExit: setupPrivacyModeAutoExit } = usePrivacyModeStore();
 const shellStatusStore = useShellStatusStore();
 const backStackStore = useBackStackStore();
+const updateFeedStore = useUpdateFeedStore();
+const { unreadCount } = storeToRefs(updateFeedStore);
 useInputMode();
+const appLock = useAppLock();
 const { breakpoint: responsiveBreakpoint, densityMode: density } = useResponsiveControl();
+const { effectiveEnabled: blueLightEnabled, cssIntensity: blueLightIntensity } =
+  useBlueLightFilter();
 
 // 兼容原有代码对 appConfig 的直接访问
 const appConfig = computed(() => appConfigStore.config);
@@ -97,15 +116,22 @@ const resolvedViews = reactive(new Set<string>());
 
 /** 移动端加载遮罩状态 */
 const showLoadingMask = ref(false);
+
+/** 首次使用引导状态 */
+const showOnboarding = ref(false);
+
+function onOnboardingComplete() {
+  showOnboarding.value = false;
+}
 let _maskMinElapsed = false;
-let _pendingViewId = '';
+let _pendingViewId = "";
 let _maskTimer: ReturnType<typeof setTimeout> | null = null;
 let _maskSafetyTimer: ReturnType<typeof setTimeout> | null = null;
 
 function onSuspenseResolve(viewId: string) {
   resolvedViews.add(viewId);
   if (showLoadingMask.value && viewId === _pendingViewId) {
-    _pendingViewId = '';
+    _pendingViewId = "";
     if (_maskMinElapsed) {
       showLoadingMask.value = false;
     }
@@ -139,8 +165,8 @@ watch(
       // 安全兜底：最长 15s 后强制移除遮罩，防止异步组件加载失败导致永久转圈
       _maskSafetyTimer = setTimeout(() => {
         if (showLoadingMask.value) {
-          console.warn('[App] 视图加载超时，强制移除遮罩:', _pendingViewId);
-          _pendingViewId = '';
+          console.warn("[App] 视图加载超时，强制移除遮罩:", _pendingViewId);
+          _pendingViewId = "";
           showLoadingMask.value = false;
         }
       }, 15000);
@@ -153,8 +179,8 @@ const sync = useSync();
 // 监听系统静态主题偏好
 // 初始化时尝试读取，不支持的环境则回落false
 const systemPrefersDark = ref(
-  typeof window !== 'undefined' && window.matchMedia
-    ? window.matchMedia('(prefers-color-scheme: dark)').matches
+  typeof window !== "undefined" && window.matchMedia
+    ? window.matchMedia("(prefers-color-scheme: dark)").matches
     : false,
 );
 
@@ -165,12 +191,12 @@ function _onMqChange(e: MediaQueryListEvent) {
   systemPrefersDark.value = e.matches;
 }
 function _onVisibilityChange() {
-  const event = document.visibilityState === 'visible' ? 'resume' : 'background';
+  const event = document.visibilityState === "visible" ? "resume" : "background";
   void sync.notifyLifecycle(event).catch(() => {});
 }
 
 function dispatchSyntheticOutsideClick(): boolean {
-  if (typeof document === 'undefined' || !document.body) {
+  if (typeof document === "undefined" || !document.body) {
     return false;
   }
   const init = {
@@ -179,15 +205,15 @@ function dispatchSyntheticOutsideClick(): boolean {
     composed: true,
     view: window,
   };
-  document.body.dispatchEvent(new MouseEvent('mousedown', init));
-  document.body.dispatchEvent(new MouseEvent('mouseup', init));
-  document.body.dispatchEvent(new MouseEvent('click', init));
+  document.body.dispatchEvent(new MouseEvent("mousedown", init));
+  document.body.dispatchEvent(new MouseEvent("mouseup", init));
+  document.body.dispatchEvent(new MouseEvent("click", init));
   return true;
 }
 
 function closeTopOverlay(): boolean {
   const overlayCloseBtn = document.querySelector<HTMLElement>(
-    '.n-modal .n-base-close, .n-drawer .n-base-close, .n-popover .n-base-close, .lw-panel .lw-ctrl-btn--close, .tc-panel .tc-close',
+    ".n-modal .n-base-close, .n-drawer .n-base-close, .n-popover .n-base-close, .lw-panel .lw-ctrl-btn--close, .tc-panel .tc-close",
   );
   if (overlayCloseBtn) {
     overlayCloseBtn.click();
@@ -195,7 +221,7 @@ function closeTopOverlay(): boolean {
   }
 
   const topMask = document.querySelector<HTMLElement>(
-    '.n-modal-mask, .n-drawer-mask, .app-sheet-backdrop, .lw-backdrop, .tc-backdrop, .reader-top-bar__overlay, .reader-toc__overlay',
+    ".n-modal-mask, .n-drawer-mask, .app-sheet-backdrop, .lw-backdrop, .tc-backdrop, .reader-top-bar__overlay, .reader-toc__overlay",
   );
   if (topMask) {
     topMask.click();
@@ -203,7 +229,7 @@ function closeTopOverlay(): boolean {
   }
 
   const floatingOverlay = document.querySelector<HTMLElement>(
-    '.n-popover, .n-dropdown-menu, .n-base-select-menu',
+    ".n-popover, .n-dropdown-menu, .n-base-select-menu",
   );
   if (floatingOverlay) {
     return dispatchSyntheticOutsideClick();
@@ -224,8 +250,8 @@ function handleGlobalDismiss(): boolean {
   if (closeTopOverlay()) {
     return true;
   }
-  if (navigationStore.activeView !== 'bookshelf') {
-    navigationStore.setActiveView('bookshelf');
+  if (navigationStore.activeView !== "bookshelf") {
+    navigationStore.setActiveView("bookshelf");
     return true;
   }
   return false;
@@ -250,36 +276,42 @@ onMounted(() => {
   // [BOOT] App 首屏 mounted 打点，配合 main.ts 的 _bootT0 计算前端首帧耗时
   console.log(`[BOOT][Frontend] App.vue onMounted t=${Date.now()}`);
   void ensureAppConfig();
+  // 检查是否需要显示首次使用引导
+  if (!localStorage.getItem("onboarding_complete")) {
+    showOnboarding.value = true;
+  }
   void shellStatusStore.install();
   // 全局移动端返回（Android/Tauri/Harmony 映射到 popstate）与 Esc/BrowserBack 共用同一套关闭链
-  window.addEventListener('popstate', _onPopState);
+  window.addEventListener("popstate", _onPopState);
   _uninstallGlobalFocus = installGlobalFocusNavigation({
     onBack: handleGlobalBack,
     onEscape: handleGlobalBack,
   });
-  if (typeof window !== 'undefined' && window.matchMedia) {
-    _mq = window.matchMedia('(prefers-color-scheme: dark)');
-    _mq.addEventListener('change', _onMqChange);
+  if (typeof window !== "undefined" && window.matchMedia) {
+    _mq = window.matchMedia("(prefers-color-scheme: dark)");
+    _mq.addEventListener("change", _onMqChange);
   }
   setupPrivacyModeAutoExit();
   _unlistenSyncClientState = installSyncClientStateListener();
   appConfigStore.installChangedListener();
-  void sync.syncNow('sync').catch(() => {});
+  void sync.syncNow("sync").catch(() => {});
   // 通知 Rust 端应用已启动（触发 startup 同步策略）
-  void sync.notifyLifecycle('startup').catch(() => {});
+  void sync.notifyLifecycle("startup").catch(() => {});
   // 从 Rust 侧获取准确平台信息（修复 Android 被识别为 Linux 的问题）
   void initPlatformFromRust();
   // 监听页面可见性变化，通知 Rust 端 resume/background 生命周期事件
-  if (typeof document !== 'undefined') {
-    document.addEventListener('visibilitychange', _onVisibilityChange);
+  // 同时记录切后台时间，用于应用锁自动锁定
+  if (typeof document !== "undefined") {
+    document.addEventListener("visibilitychange", _onVisibilityChange);
+    appLock.recordVisibilityChange();
   }
 });
 onUnmounted(() => {
-  window.removeEventListener('popstate', _onPopState);
-  _mq?.removeEventListener('change', _onMqChange);
+  window.removeEventListener("popstate", _onPopState);
+  _mq?.removeEventListener("change", _onMqChange);
   _unlistenSyncClientState?.();
-  if (typeof document !== 'undefined') {
-    document.removeEventListener('visibilitychange', _onVisibilityChange);
+  if (typeof document !== "undefined") {
+    document.removeEventListener("visibilitychange", _onVisibilityChange);
   }
   _uninstallGlobalFocus?.();
   _uninstallGlobalFocus = null;
@@ -287,11 +319,11 @@ onUnmounted(() => {
 
 /** 当前实际生效的暗/亮状态 */
 const effectiveDark = computed(() => {
-  const mode = appConfig.value.ui_theme ?? 'auto';
-  if (mode === 'dark') {
+  const mode = appConfig.value.ui_theme ?? "auto";
+  if (mode === "dark") {
     return true;
   }
-  if (mode === 'light') {
+  if (mode === "light") {
     return false;
   }
   return systemPrefersDark.value;
@@ -304,65 +336,65 @@ const naiveTheme = computed<GlobalTheme | null>(() => (effectiveDark.value ? dar
 useVConsole(effectiveDark);
 
 function readCSSVar(name: string, fallback: string): string {
-  if (typeof document === 'undefined') return fallback
-  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim()
-  return value || fallback
+  if (typeof document === "undefined") return fallback;
+  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return value || fallback;
 }
 
 const naiveThemeOverrides = computed<GlobalThemeOverrides>(() => {
   if (effectiveDark.value) {
     return {
       common: {
-        primaryColor: readCSSVar('--md-sys-color-primary', '#818cf8'),
-        primaryColorHover: '#96a0ff',
-        primaryColorPressed: '#707af1',
-        primaryColorSuppl: readCSSVar('--md-sys-color-primary', '#818cf8'),
-        infoColor: readCSSVar('--md-sys-color-primary', '#818cf8'),
-        successColor: '#4ade80',
-        warningColor: '#fbbf24',
-        errorColor: readCSSVar('--md-sys-color-error', '#f87171'),
-        bodyColor: '#18181b',
-        cardColor: '#27272a',
-        modalColor: '#27272a',
-        popoverColor: '#27272a',
-        tableColor: '#27272a',
-        dividerColor: '#3f3f46',
-        borderColor: '#3f3f46',
-        inputColor: '#27272a',
-        actionColor: '#3f3f46',
-        hoverColor: 'rgba(255, 255, 255, 0.06)',
-        textColorBase: '#fafafa',
-        textColor1: '#fafafa',
-        textColor2: '#a1a1aa',
-        textColor3: '#71717a',
+        primaryColor: readCSSVar("--md-sys-color-primary", "#818cf8"),
+        primaryColorHover: "#96a0ff",
+        primaryColorPressed: "#707af1",
+        primaryColorSuppl: readCSSVar("--md-sys-color-primary", "#818cf8"),
+        infoColor: readCSSVar("--md-sys-color-primary", "#818cf8"),
+        successColor: "#4ade80",
+        warningColor: "#fbbf24",
+        errorColor: readCSSVar("--md-sys-color-error", "#f87171"),
+        bodyColor: "#18181b",
+        cardColor: "#27272a",
+        modalColor: "#27272a",
+        popoverColor: "#27272a",
+        tableColor: "#27272a",
+        dividerColor: "#3f3f46",
+        borderColor: "#3f3f46",
+        inputColor: "#27272a",
+        actionColor: "#3f3f46",
+        hoverColor: "rgba(255, 255, 255, 0.06)",
+        textColorBase: "#fafafa",
+        textColor1: "#fafafa",
+        textColor2: "#a1a1aa",
+        textColor3: "#71717a",
       },
     };
   }
 
   return {
     common: {
-      primaryColor: readCSSVar('--md-sys-color-primary', '#6366f1'),
-      primaryColorHover: '#5558ee',
-      primaryColorPressed: '#4f46e5',
-      primaryColorSuppl: readCSSVar('--md-sys-color-primary', '#6366f1'),
-      infoColor: readCSSVar('--md-sys-color-primary', '#6366f1'),
-      successColor: '#22c55e',
-      warningColor: '#f59e0b',
-      errorColor: readCSSVar('--md-sys-color-error', '#ef4444'),
-      bodyColor: '#f4f4f5',
-      cardColor: '#ffffff',
-      modalColor: '#ffffff',
-      popoverColor: '#ffffff',
-      tableColor: '#ffffff',
-      dividerColor: '#e4e4e7',
-      borderColor: '#e4e4e7',
-      inputColor: '#ffffff',
-      actionColor: '#eef2ff',
-      hoverColor: 'rgba(99, 102, 241, 0.08)',
-      textColorBase: '#18181b',
-      textColor1: '#18181b',
-      textColor2: '#52525b',
-      textColor3: '#71717a',
+      primaryColor: readCSSVar("--md-sys-color-primary", "#6366f1"),
+      primaryColorHover: "#5558ee",
+      primaryColorPressed: "#4f46e5",
+      primaryColorSuppl: readCSSVar("--md-sys-color-primary", "#6366f1"),
+      infoColor: readCSSVar("--md-sys-color-primary", "#6366f1"),
+      successColor: "#22c55e",
+      warningColor: "#f59e0b",
+      errorColor: readCSSVar("--md-sys-color-error", "#ef4444"),
+      bodyColor: "#f4f4f5",
+      cardColor: "#ffffff",
+      modalColor: "#ffffff",
+      popoverColor: "#ffffff",
+      tableColor: "#ffffff",
+      dividerColor: "#e4e4e7",
+      borderColor: "#e4e4e7",
+      inputColor: "#ffffff",
+      actionColor: "#eef2ff",
+      hoverColor: "rgba(99, 102, 241, 0.08)",
+      textColorBase: "#18181b",
+      textColor1: "#18181b",
+      textColor2: "#52525b",
+      textColor3: "#71717a",
     },
   };
 });
@@ -371,7 +403,7 @@ const naiveThemeOverrides = computed<GlobalThemeOverrides>(() => {
 watch(
   effectiveDark,
   (isDark) => {
-    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+    document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
   },
   { immediate: true },
 );
@@ -381,13 +413,17 @@ function onNavSelect(id: string) {
   navigationStore.setActiveView(id);
 }
 
-const vueVersion = computed(() => packageJson.version || '0.0.0');
+function onNotificationClick() {
+  navigationStore.setActiveView("updateFeed");
+}
+
+const vueVersion = computed(() => packageJson.version || "0.0.0");
 // Tauri 壳版本：仅在 Tauri 环境下传给 TaskBar；鸿蒙版本暂不对接
-const tauriVersion = computed(() => (isTauri ? tauriConfig.version || '' : ''));
+const tauriVersion = computed(() => (isTauri ? tauriConfig.version || "" : ""));
 const { logZoneEnabled: showLogZone } = useLogZonePref();
 const { breakpoint: bp } = useResponsiveControl();
-const isWideLayout = computed(() => bp.value === 'expanded' || bp.value === 'wide');
-const latestLogMessage = computed(() => shellStatusStore.latestLog?.message ?? '暂无日志');
+const isWideLayout = computed(() => bp.value === "expanded" || bp.value === "wide");
+const latestLogMessage = computed(() => shellStatusStore.latestLog?.message ?? "暂无日志");
 </script>
 
 <template>
@@ -399,15 +435,29 @@ const latestLogMessage = computed(() => shellStatusStore.latestLog?.message ?? '
     >
       <n-notification-provider>
         <n-dialog-provider>
+          <!-- 首次使用引导 -->
+          <Suspense>
+            <OnboardingWizard v-if="showOnboarding" @complete="onOnboardingComplete" />
+            <template #fallback>
+              <div class="view-loading">加载中…</div>
+            </template>
+          </Suspense>
           <!-- 主窗口布局 -->
-          <div class="app-layout" :class="{ 'app-layout--wide': isWideLayout }" :data-breakpoint="responsiveBreakpoint" :data-density="density">
+          <div
+            class="app-layout"
+            :class="{ 'app-layout--wide': isWideLayout }"
+            :data-breakpoint="responsiveBreakpoint"
+            :data-density="density"
+          >
             <TitleBar :title="activeNavLabel" />
             <NavigationRail
               v-if="isWideLayout"
               :items="navItems"
               :active-id="activeView"
               :version="vueVersion"
+              :unread-count="unreadCount"
               @select="onNavSelect"
+              @notification="onNotificationClick"
             />
             <MainContent>
               <!-- 移动端视图首次加载遮罩：仅覆盖内容区，不遮盖底部导航 -->
@@ -435,7 +485,9 @@ const latestLogMessage = computed(() => shellStatusStore.latestLog?.message ?? '
               v-if="!isWideLayout"
               :items="navItems"
               :active-id="activeView"
+              :unread-count="unreadCount"
               @select="onNavSelect"
+              @notification="onNotificationClick"
             />
           </div>
           <GlobalFeedbackMirror />
@@ -467,6 +519,14 @@ const latestLogMessage = computed(() => shellStatusStore.latestLog?.message ?? '
             @update:show="(v) => (shellStatusStore.state.showLogWindow = v)"
             @close="shellStatusStore.closeLogWindow"
           />
+          <!-- 夜间蓝光过滤覆盖层 -->
+          <div
+            v-if="blueLightEnabled"
+            class="blue-light-filter"
+            :style="{ '--filter-intensity': blueLightIntensity }"
+          />
+          <!-- 应用锁覆盖层 -->
+          <AppLockScreen v-if="appLock.isLocked" />
         </n-dialog-provider>
       </n-notification-provider>
     </n-message-provider>
@@ -507,9 +567,9 @@ const latestLogMessage = computed(() => shellStatusStore.latestLog?.message ?? '
 .app-layout {
   display: grid;
   grid-template-areas:
-    'title'
-    'main'
-    'bottomnav';
+    "title"
+    "main"
+    "bottomnav";
   grid-template-rows:
     var(--safe-area-inset-top, env(safe-area-inset-top, 0px))
     1fr calc(var(--bottomnav-h) + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));
@@ -521,8 +581,8 @@ const latestLogMessage = computed(() => shellStatusStore.latestLog?.message ?? '
 
 .app-layout--wide {
   grid-template-areas:
-    'navrail title'
-    'navrail main';
+    "navrail title"
+    "navrail main";
   grid-template-rows:
     var(--safe-area-inset-top, env(safe-area-inset-top, 0px))
     1fr;
@@ -545,5 +605,15 @@ const latestLogMessage = computed(() => shellStatusStore.latestLog?.message ?? '
   justify-content: center;
   color: var(--color-text-muted);
   font-size: 0.875rem;
+}
+
+.blue-light-filter {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  background-color: rgba(255, 180, 80, calc(var(--filter-intensity, 0.5)));
+  transition: opacity 1s ease;
 }
 </style>

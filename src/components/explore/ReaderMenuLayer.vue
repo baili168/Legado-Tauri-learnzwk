@@ -2,21 +2,22 @@
   阅读器菜单层，承载顶部栏、底部栏、目录、TTS 控制和换源入口。
 -->
 <script setup lang="ts">
-import { Bookmark } from 'lucide-vue-next';
-import { storeToRefs } from 'pinia';
-import { ref } from 'vue';
-import { useOverlayBackstack } from '@/composables/useOverlayBackstack';
-import ReaderSourceSwitchBridge from '@/features/reader/components/ReaderSourceSwitchBridge.vue';
+import { Bookmark } from "lucide-vue-next";
+import { storeToRefs } from "pinia";
+import { ref } from "vue";
+import { useOverlayBackstack } from "@/composables/useOverlayBackstack";
+import ReaderSourceSwitchBridge from "@/features/reader/components/ReaderSourceSwitchBridge.vue";
 import {
   useReaderActionsStore,
   useReaderSessionStore,
   useReaderUiStore,
   useReaderViewStore,
-} from '@/stores';
-import ReaderBottomBar from '../reader/ReaderBottomBar.vue';
-import ReaderTocPanel from '../reader/ReaderTocPanel.vue';
-import ReaderTopBar from '../reader/ReaderTopBar.vue';
-import TtsControlBar from '../reader/TtsControlBar.vue';
+} from "@/stores";
+import ReaderBottomBar from "../reader/ReaderBottomBar.vue";
+import ReaderTocPanel from "../reader/ReaderTocPanel.vue";
+import ReaderTopBar from "../reader/ReaderTopBar.vue";
+import TtsControlBar from "../reader/TtsControlBar.vue";
+import AnnotationsPanel from "../reader/AnnotationsPanel.vue";
 
 const readerActionsStore = useReaderActionsStore();
 const readerUiStore = useReaderUiStore();
@@ -52,8 +53,18 @@ const {
 } = storeToRefs(readerViewStore);
 const bottomBarRef = ref<InstanceType<typeof ReaderBottomBar> | null>(null);
 
+const showAnnotationsPanel = ref(false);
+
 function closeSettings() {
   bottomBarRef.value?.closeSettings();
+}
+
+function onAnnotationNavigate(data: { chapterIndex: number; offset: number }) {
+  showAnnotationsPanel.value = false;
+  readerUiStore.closeMenu();
+  if (data.chapterIndex !== readingChapterIndex.value) {
+    readerActionsStore.gotoChapter(data.chapterIndex);
+  }
 }
 
 function onOverlayClick() {
@@ -125,7 +136,7 @@ defineExpose({ closeSettings });
       @click="readerActionsStore.handleAddToShelf"
     >
       <Bookmark :size="16" aria-hidden="true" />
-      {{ addingToShelf ? '加入中…' : '加入书架' }}
+      {{ addingToShelf ? "加入中…" : "加入书架" }}
     </button>
   </Transition>
 
@@ -146,6 +157,7 @@ defineExpose({ closeSettings });
       @settings-visible="onSettingsVisibleChange($event)"
       @dump-pagination-layout="readerActionsStore.dumpPaginationLayoutDebug"
       @tts-toggle="readerActionsStore.onTtsToggle"
+      @toggle-annotations-panel="showAnnotationsPanel = !showAnnotationsPanel"
     />
   </Transition>
 
@@ -186,6 +198,14 @@ defineExpose({ closeSettings });
     @update:show="showSourceSwitchDialog = $event"
     @chapter-temp-switched="readerActionsStore.handleTemporaryChapterSourceSwitched"
     @whole-book-switched="readerActionsStore.handleWholeBookSourceSwitched"
+  />
+
+  <AnnotationsPanel
+    v-model:visible="showAnnotationsPanel"
+    :book-id="readerViewStore.bookUrl || fileName"
+    :chapter-names="chapters.map((c: any) => c.title || c.name || '')"
+    @navigate="onAnnotationNavigate"
+    @close="showAnnotationsPanel = false"
   />
 </template>
 

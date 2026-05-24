@@ -9,10 +9,10 @@
  * - `script_config`：脚本级键值持久化，按 scope 隔离
  */
 
-import { ref, computed, watch } from 'vue';
-import { eventListenSync } from './useEventBus';
-import { invokeWithTimeout } from './useInvoke';
-import { isTransportAvailable } from './useTransport';
+import { ref, computed, watch } from "vue";
+import { eventListenSync } from "./useEventBus";
+import { invokeWithTimeout } from "./useInvoke";
+import { isTransportAvailable } from "./useTransport";
 
 // ── 类型定义（与 Rust AppConfig 结构体对齐） ─────────────────────────────
 
@@ -47,7 +47,7 @@ export interface AppConfig {
   browser_probe_persist_profile: boolean;
   comic_cache_enabled: boolean;
   ui_theme: string;
-  ui_density: 'compact' | 'standard' | 'comfortable';
+  ui_density: "compact" | "standard" | "comfortable";
   ui_enable_aplus_tracking: boolean;
   /** 默认视频播放器："videojs" | "xgplayer" | "dplayer" */
   video_player_type: string;
@@ -122,8 +122,8 @@ export interface AppConfig {
 
 /** 内置默认 User-Agent（与 Rust BUILTIN_USER_AGENT 保持一致） */
 export const BUILTIN_USER_AGENT =
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
-  '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
+  "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
 // ── 全局状态（单例） ──────────────────────────────────────────────────────
 
@@ -132,50 +132,50 @@ const config = ref<AppConfig>({
   http_follow_redirects: true,
   http_connect_timeout_secs: 10,
   http_ignore_tls_errors: true,
-  http_doh_server: 'none',
-  proxy_mode: 'system',
-  proxy_type: 'http',
-  proxy_host: '',
+  http_doh_server: "none",
+  proxy_mode: "system",
+  proxy_type: "http",
+  proxy_host: "",
   proxy_port: 0,
-  proxy_username: '',
-  proxy_password: '',
+  proxy_username: "",
+  proxy_password: "",
   engine_timeout_secs: 30,
   booksource_watcher_enabled: false,
   browser_probe_enabled: true,
-  browser_probe_user_agent: '',
+  browser_probe_user_agent: "",
   browser_probe_timeout_secs: 0,
   browser_probe_visible_by_default: false,
   browser_probe_force_visible: false,
   browser_probe_persist_profile: true,
   comic_cache_enabled: true,
-  ui_theme: 'auto',
-  ui_density: 'standard',
+  ui_theme: "auto",
+  ui_density: "standard",
   ui_enable_aplus_tracking: true,
-  video_player_type: 'videojs',
+  video_player_type: "videojs",
   video_default_rate: 1.0,
   video_auto_next: true,
-  video_quality_prefer: 'auto',
+  video_quality_prefer: "auto",
   video_remember_progress: true,
   video_seek_step_secs: 10,
-  video_vjs_preload: 'auto',
+  video_vjs_preload: "auto",
   video_vjs_pip: true,
   video_xg_download: false,
   video_dp_danmaku: false,
-  video_dp_theme: '#00b1ff',
+  video_dp_theme: "#00b1ff",
   video_autoplay: false,
   web_server_enabled: false,
   web_server_port: 7688,
-  web_server_dist_path: '',
+  web_server_dist_path: "",
   request_min_delay_ms: 300,
   cache_prefetch_count: 3,
   cache_prefetch_concurrency: 2,
   export_prefetch_concurrency: 3,
   sync_enabled: false,
-  sync_provider: 'webdav',
-  sync_profile_id: 'default',
-  sync_webdav_url: '',
-  sync_webdav_username: '',
-  sync_webdav_root_dir: 'legado-sync',
+  sync_provider: "webdav",
+  sync_profile_id: "default",
+  sync_webdav_url: "",
+  sync_webdav_username: "",
+  sync_webdav_root_dir: "legado-sync",
   sync_webdav_allow_http: false,
   sync_trigger_enabled: true,
   sync_timer_enabled: false,
@@ -200,7 +200,7 @@ const config = ref<AppConfig>({
   sync_mobile_pause_on_low_battery: true,
   sync_mobile_startup_delay_ms: 5000,
   sync_mobile_resume_delay_ms: 1500,
-  sync_baidu_app_name: 'legado-tauri',
+  sync_baidu_app_name: "legado-tauri",
 });
 
 /** 正在保存中的配置 key（用于 UI loading 状态） */
@@ -221,7 +221,7 @@ export function useAppConfig() {
       return config.value;
     }
 
-    const cfg = await invokeWithTimeout<AppConfig>('app_config_get_all', undefined, TIMEOUT);
+    const cfg = await invokeWithTimeout<AppConfig>("app_config_get_all", undefined, TIMEOUT);
     config.value = cfg;
     initialized = true;
     return cfg;
@@ -243,7 +243,7 @@ export function useAppConfig() {
   async function setConfig(key: string, value: string): Promise<void> {
     savingKey.value = key;
     try {
-      await invokeWithTimeout<void>('app_config_set', { key, value }, TIMEOUT);
+      await invokeWithTimeout<void>("app_config_set", { key, value }, TIMEOUT);
       await loadConfig();
     } finally {
       savingKey.value = null;
@@ -254,7 +254,7 @@ export function useAppConfig() {
   async function resetConfig(key: string): Promise<void> {
     savingKey.value = key;
     try {
-      await invokeWithTimeout<void>('app_config_reset', { key }, TIMEOUT);
+      await invokeWithTimeout<void>("app_config_reset", { key }, TIMEOUT);
       await loadConfig();
     } finally {
       savingKey.value = null;
@@ -278,7 +278,7 @@ export function useAppConfig() {
   const browserProbePersistProfile = computed(() => config.value.browser_probe_persist_profile);
   const comicCacheEnabled = computed(() => config.value.comic_cache_enabled);
   const uiTheme = computed(() => config.value.ui_theme);
-  const uiDensity = computed(() => config.value.ui_density ?? 'standard');
+  const uiDensity = computed(() => config.value.ui_density ?? "standard");
   const uiEnableAplusTracking = computed(() => config.value.ui_enable_aplus_tracking);
   const videoPlayerType = computed(() => config.value.video_player_type);
   const videoDefaultRate = computed(() => config.value.video_default_rate);
@@ -294,18 +294,18 @@ export function useAppConfig() {
   const videoAutoplay = computed(() => config.value.video_autoplay);
 
   const densityScaleMap: Record<string, string> = {
-    compact: '0.85',
-    standard: '1',
-    comfortable: '1.15',
+    compact: "0.85",
+    standard: "1",
+    comfortable: "1.15",
   };
 
   watch(
     () => config.value.ui_density,
     (density) => {
       const root = document.documentElement;
-      const scale = densityScaleMap[density] || '1';
-      root.style.setProperty('--density-scale', scale);
-      root.setAttribute('data-density', density);
+      const scale = densityScaleMap[density] || "1";
+      root.style.setProperty("--density-scale", scale);
+      root.setAttribute("data-density", density);
     },
     { immediate: true },
   );
@@ -357,7 +357,7 @@ export function useAppConfig() {
  * 应在应用启动时调用一次（App.vue onMounted）。
  */
 export function installAppConfigChangedListener(): () => void {
-  return eventListenSync('app_config:changed', () => {
+  return eventListenSync("app_config:changed", () => {
     const { loadConfig } = useAppConfig();
     void loadConfig();
   });

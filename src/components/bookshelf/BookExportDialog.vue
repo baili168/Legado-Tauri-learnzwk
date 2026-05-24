@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { X, Info, Loader2, CheckCircle2, AlertCircle } from 'lucide-vue-next';
-import { NModal, NCard, NButton, NProgress, NRadio, NRadioGroup } from 'naive-ui';
-import { storeToRefs } from 'pinia';
-import { ref, computed, watch, nextTick, onBeforeUnmount } from 'vue';
-import type { ShelfBook, CachedChapter } from '@/types';
-import { isHarmonyNative, isTauri, platform } from '@/composables/useEnv';
-import { invokeWithTimeout } from '@/composables/useInvoke';
-import { useOverlayBackstack } from '@/composables/useOverlayBackstack';
-import { usePrefetchStore, useAppConfigStore } from '@/stores';
-import { base64ToBytes, pickExportPath, writeExportFile } from '@/utils/exportFile';
+import { X, Info, Loader2, CheckCircle2, AlertCircle } from "lucide-vue-next";
+import { NModal, NCard, NButton, NProgress, NRadio, NRadioGroup } from "naive-ui";
+import { storeToRefs } from "pinia";
+import { ref, computed, watch, nextTick, onBeforeUnmount } from "vue";
+import type { ShelfBook, CachedChapter } from "@/types";
+import { isHarmonyNative, isTauri, platform } from "@/composables/useEnv";
+import { invokeWithTimeout } from "@/composables/useInvoke";
+import { useOverlayBackstack } from "@/composables/useOverlayBackstack";
+import { usePrefetchStore, useAppConfigStore } from "@/stores";
+import { base64ToBytes, pickExportPath, writeExportFile } from "@/utils/exportFile";
 
 const props = defineProps<{
   show: boolean;
@@ -17,16 +17,16 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'update:show', value: boolean): void;
+  (e: "update:show", value: boolean): void;
 }>();
 
-type ExportFormat = 'txt' | 'epub';
-type ExportPhase = 'idle' | 'picking' | 'caching' | 'exporting' | 'done' | 'error';
+type ExportFormat = "txt" | "epub";
+type ExportPhase = "idle" | "picking" | "caching" | "exporting" | "done" | "error";
 
-const format = ref<ExportFormat>('txt');
-const phase = ref<ExportPhase>('idle');
-const errorMsg = ref('');
-const savedPath = ref('');
+const format = ref<ExportFormat>("txt");
+const phase = ref<ExportPhase>("idle");
+const errorMsg = ref("");
+const savedPath = ref("");
 const cacheDone = ref(0);
 const cacheTotal = ref(0);
 const logLines = ref<string[]>([]);
@@ -49,13 +49,13 @@ const progressPercent = computed(() => {
 });
 
 const isRunning = computed(
-  () => phase.value === 'picking' || phase.value === 'caching' || phase.value === 'exporting',
+  () => phase.value === "picking" || phase.value === "caching" || phase.value === "exporting",
 );
 
 const canClose = computed(() => !isRunning.value);
 const isTauriMobile = computed(() => {
   const value = platform.value.toLowerCase();
-  return isTauri && (value === 'android' || value === 'ios');
+  return isTauri && (value === "android" || value === "ios");
 });
 
 useOverlayBackstack(
@@ -66,7 +66,7 @@ useOverlayBackstack(
 );
 
 function addLog(line: string) {
-  const timeStr = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+  const timeStr = new Date().toLocaleTimeString("zh-CN", { hour12: false });
   logLines.value.push(`[${timeStr}] ${line}`);
   if (logLines.value.length > 500) {
     logLines.value.splice(0, 50);
@@ -108,7 +108,7 @@ function waitForCachingComplete(bookId: string, chapters: CachedChapter[]): Prom
     _pollTimer = setInterval(async () => {
       try {
         const cached = await invokeWithTimeout<number[]>(
-          'bookshelf_get_cached_indices',
+          "bookshelf_get_cached_indices",
           { id: bookId },
           10000,
         );
@@ -127,7 +127,7 @@ function waitForCachingComplete(bookId: string, chapters: CachedChapter[]): Prom
     _timeoutTimer = setTimeout(
       () => {
         cleanupCompletion();
-        reject(new Error('缓存超时（30分钟），已有缓存章节将被导出'));
+        reject(new Error("缓存超时（30分钟），已有缓存章节将被导出"));
       },
       30 * 60 * 1000,
     );
@@ -135,7 +135,7 @@ function waitForCachingComplete(bookId: string, chapters: CachedChapter[]): Prom
 }
 
 function sanitizeFilename(name: string): string {
-  return name.replace(/[\\/:*?"<>|]/g, '_').trim() || 'book';
+  return name.replace(/[\\/:*?"<>|]/g, "_").trim() || "book";
 }
 
 async function startExport() {
@@ -144,23 +144,23 @@ async function startExport() {
   }
   const chapters = props.chapters;
   if (!chapters.length) {
-    errorMsg.value = '章节目录为空，请先打开书籍加载章节目录后再导出';
-    phase.value = 'error';
+    errorMsg.value = "章节目录为空，请先打开书籍加载章节目录后再导出";
+    phase.value = "error";
     return;
   }
 
-  errorMsg.value = '';
-  savedPath.value = '';
+  errorMsg.value = "";
+  savedPath.value = "";
   logLines.value = [];
   cacheTotal.value = chapters.length;
   cacheDone.value = 0;
 
   // Step 1: Pick save path via native dialog/user file picker.
-  let pickedPath = '';
+  let pickedPath = "";
   if (isTauri || isHarmonyNative) {
-    phase.value = 'picking';
+    phase.value = "picking";
     const ext = format.value;
-    const defaultName = sanitizeFilename(props.book.name) + '.' + ext;
+    const defaultName = sanitizeFilename(props.book.name) + "." + ext;
     try {
       const result = await pickExportPath({
         defaultName,
@@ -169,19 +169,19 @@ async function startExport() {
       });
       if (!result) {
         // User cancelled
-        phase.value = 'idle';
+        phase.value = "idle";
         return;
       }
       pickedPath = result;
     } catch (e: unknown) {
-      errorMsg.value = '选择保存路径失败: ' + (e instanceof Error ? e.message : String(e));
-      phase.value = 'error';
+      errorMsg.value = "选择保存路径失败: " + (e instanceof Error ? e.message : String(e));
+      phase.value = "error";
       return;
     }
   }
 
   // Step 2: Force cache all chapters
-  phase.value = 'caching';
+  phase.value = "caching";
   addLog(`开始缓存《${props.book.name}》共 ${chapters.length} 章...`);
 
   const completionPromise = waitForCachingComplete(props.book.id, chapters);
@@ -193,7 +193,7 @@ async function startExport() {
         fileName: props.book.fileName,
         bookUrl: props.book.bookUrl,
         bookName: props.book.name,
-        sourceType: props.book.sourceType ?? 'novel',
+        sourceType: props.book.sourceType ?? "novel",
         chapters: chapters.map((c) => ({
           index: c.index,
           name: c.name,
@@ -209,15 +209,15 @@ async function startExport() {
         const ch = chapters[chapterIndex];
         if (ch) {
           addLog(
-            `${progress.error ? '缓存失败' : '已处理'}：第 ${chapterIndex + 1} 章 ${ch.name}${progress.error ? `（${progress.error}）` : ''}`,
+            `${progress.error ? "缓存失败" : "已处理"}：第 ${chapterIndex + 1} 章 ${ch.name}${progress.error ? `（${progress.error}）` : ""}`,
           );
         }
       },
     );
   } catch (e: unknown) {
     cleanupCompletion();
-    errorMsg.value = '启动缓存失败: ' + (e instanceof Error ? e.message : String(e));
-    phase.value = 'error';
+    errorMsg.value = "启动缓存失败: " + (e instanceof Error ? e.message : String(e));
+    phase.value = "error";
     return;
   }
 
@@ -226,10 +226,10 @@ async function startExport() {
     await completionPromise;
   } catch (e: unknown) {
     // Timeout, but proceed with what we have
-    addLog(`注意：${e instanceof Error ? e.message : '部分章节可能未缓存'}`);
+    addLog(`注意：${e instanceof Error ? e.message : "部分章节可能未缓存"}`);
   }
 
-  if (phase.value !== 'caching') {
+  if (phase.value !== "caching") {
     // Was cancelled during wait
     return;
   }
@@ -238,7 +238,7 @@ async function startExport() {
   addLog(`缓存阶段完成（${cacheDone.value}/${chapters.length} 章），开始导出...`);
 
   // Step 3: Export
-  phase.value = 'exporting';
+  phase.value = "exporting";
   try {
     let actualPath = pickedPath;
     if (isTauriMobile.value) {
@@ -246,39 +246,39 @@ async function startExport() {
         fileName: string;
         mime: string;
         base64: string;
-      }>('bookshelf_export_book_data', { id: props.book.id, format: format.value }, 10 * 60 * 1000);
+      }>("bookshelf_export_book_data", { id: props.book.id, format: format.value }, 10 * 60 * 1000);
       await writeExportFile(pickedPath, { bytes: base64ToBytes(data.base64) });
     } else {
       actualPath = await invokeWithTimeout<string>(
-        'bookshelf_export_book',
+        "bookshelf_export_book",
         { id: props.book.id, format: format.value, savePath: pickedPath },
         10 * 60 * 1000,
       );
     }
     savedPath.value = actualPath;
-    addLog('导出完成！');
+    addLog("导出完成！");
     addLog(`文件位置：${actualPath}`);
-    phase.value = 'done';
+    phase.value = "done";
   } catch (e: unknown) {
-    errorMsg.value = '导出失败: ' + (e instanceof Error ? e.message : String(e));
-    phase.value = 'error';
+    errorMsg.value = "导出失败: " + (e instanceof Error ? e.message : String(e));
+    phase.value = "error";
   }
 }
 
 async function handleCancel() {
-  if (phase.value === 'caching') {
+  if (phase.value === "caching") {
     cleanupCompletion();
     await cancelManualPrefetch();
   }
-  phase.value = 'idle';
-  emit('update:show', false);
+  phase.value = "idle";
+  emit("update:show", false);
 }
 
 async function handleClose() {
   if (isRunning.value) {
     return;
   }
-  emit('update:show', false);
+  emit("update:show", false);
 }
 
 async function revealFile() {
@@ -286,7 +286,7 @@ async function revealFile() {
     return;
   }
   try {
-    await invokeWithTimeout('bookshelf_reveal_export_file', { path: savedPath.value }, 5000);
+    await invokeWithTimeout("bookshelf_reveal_export_file", { path: savedPath.value }, 5000);
   } catch {
     // ignore: may not be supported on all platforms
   }
@@ -307,13 +307,13 @@ watch(
   () => props.show,
   (show) => {
     if (show) {
-      phase.value = 'idle';
-      errorMsg.value = '';
-      savedPath.value = '';
+      phase.value = "idle";
+      errorMsg.value = "";
+      savedPath.value = "";
       logLines.value = [];
       cacheTotal.value = 0;
       cacheDone.value = 0;
-      format.value = 'txt';
+      format.value = "txt";
     } else {
       cleanupCompletion();
     }
@@ -655,7 +655,7 @@ onBeforeUnmount(() => {
   background: var(--color-code-bg, rgba(0, 0, 0, 0.08));
   border-radius: 6px;
   padding: 8px 10px;
-  font-family: var(--font-mono, 'Consolas', 'Menlo', monospace);
+  font-family: var(--font-mono, "Consolas", "Menlo", monospace);
   font-size: var(--fs-12);
   color: var(--color-text-muted);
   line-height: 1.6;

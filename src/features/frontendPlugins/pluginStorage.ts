@@ -7,14 +7,14 @@ import {
   removeFrontendStorageItem,
   setFrontendStorageItem,
   setFrontendStorageJson,
-} from '@/composables/useFrontendStorage';
-export type { PluginSettingValue } from './types';
+} from "@/composables/useFrontendStorage";
+export type { PluginSettingValue } from "./types";
 
 export const PLUGIN_STORAGE_KEYS = {
-  settings: '__settings__',
-  orderNamespace: 'frontend-plugins.order',
-  orderKey: 'fileNames',
-  legacyPluginStoragePrefix: 'legado_frontend_plugin_storage_v1:',
+  settings: "__settings__",
+  orderNamespace: "frontend-plugins.order",
+  orderKey: "fileNames",
+  legacyPluginStoragePrefix: "legado_frontend_plugin_storage_v1:",
 } as const;
 
 export interface PluginStorageApi {

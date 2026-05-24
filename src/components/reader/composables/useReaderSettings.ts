@@ -1,4 +1,4 @@
-import { useReaderSettingsStore } from '@/stores';
+import { useReaderSettingsStore } from "@/stores";
 
 export function useReaderSettings() {
   return useReaderSettingsStore();

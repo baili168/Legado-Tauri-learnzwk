@@ -1,7 +1,7 @@
-import { invokeWithTimeout } from './useInvoke';
-import { transportEmit } from './useTransport';
+import { invokeWithTimeout } from "./useInvoke";
+import { transportEmit } from "./useTransport";
 
-const STORAGE_EVENT = 'legado:frontend-storage-changed';
+const STORAGE_EVENT = "legado:frontend-storage-changed";
 const TIMEOUT = 10_000;
 
 /** 向日志窗口发送调试信息（同时保留 console.log） */
@@ -11,7 +11,7 @@ export function dbgLog(msg: string, warn = false) {
   } else {
     console.log(msg);
   }
-  void transportEmit('app:log', { message: msg }).catch(() => {});
+  void transportEmit("app:log", { message: msg }).catch(() => {});
 }
 
 type NamespaceCache = {
@@ -56,7 +56,7 @@ function getNamespaceState(namespace: string): NamespaceCache {
 }
 
 function emitStorageChange(namespace: string, key?: string) {
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return;
   }
   window.dispatchEvent(
@@ -69,7 +69,7 @@ function emitStorageChange(namespace: string, key?: string) {
 export function onFrontendStorageChange(
   listener: (payload: { namespace: string; key?: string }) => void,
 ) {
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return () => {};
   }
   const handler = (event: Event) => {
@@ -105,7 +105,7 @@ export function legacyLocalStorageRemove(key: string): void {
 }
 
 export function legacyLocalStorageEntries(prefix: string): Record<string, string> {
-  if (typeof localStorage === 'undefined') {
+  if (typeof localStorage === "undefined") {
     return {};
   }
   const result: Record<string, string> = {};
@@ -138,7 +138,7 @@ export async function ensureFrontendNamespaceLoaded(
   }
   state.loading ??= (async () => {
     const entries = await invokeWithTimeout<FrontendStorageEntry[]>(
-      'frontend_storage_list',
+      "frontend_storage_list",
       { namespace },
       TIMEOUT,
     ).catch(() => []);
@@ -152,7 +152,7 @@ export async function ensureFrontendNamespaceLoaded(
           state.values[key] = value;
           // 后端写入失败（如 Web 模式无 WS）不应阻断流程，数据已写入内存缓存
           await invokeWithTimeout<void>(
-            'frontend_storage_set',
+            "frontend_storage_set",
             { namespace, key, value },
             TIMEOUT,
           ).catch(() => {});
@@ -200,10 +200,10 @@ export async function setFrontendStorageItemAsync(
   state.values[key] = value;
   state.loaded = true;
   emitStorageChange(namespace, key);
-  const preview = value.length > 120 ? value.slice(0, 120) + '…' : value;
+  const preview = value.length > 120 ? value.slice(0, 120) + "…" : value;
   dbgLog(`[Storage] set ${namespace}/${key} = ${preview}`);
   try {
-    await invokeWithTimeout<void>('frontend_storage_set', { namespace, key, value }, TIMEOUT);
+    await invokeWithTimeout<void>("frontend_storage_set", { namespace, key, value }, TIMEOUT);
     dbgLog(`[Storage] set ${namespace}/${key}: 后端写入成功`);
   } catch (err) {
     if (hadPreviousValue) {
@@ -222,7 +222,7 @@ export function removeFrontendStorageItem(namespace: string, key: string): void 
   delete state.values[key];
   state.loaded = true;
   emitStorageChange(namespace, key);
-  void invokeWithTimeout<void>('frontend_storage_remove', { namespace, key }, TIMEOUT);
+  void invokeWithTimeout<void>("frontend_storage_remove", { namespace, key }, TIMEOUT);
 }
 
 export function listFrontendStorageNamespaceSync(namespace: string): Record<string, string> {
@@ -231,7 +231,7 @@ export function listFrontendStorageNamespaceSync(namespace: string): Record<stri
 
 export async function listFrontendStorageNamespaces(): Promise<FrontendStorageNamespaceSummary[]> {
   return invokeWithTimeout<FrontendStorageNamespaceSummary[]>(
-    'frontend_storage_list_namespaces',
+    "frontend_storage_list_namespaces",
     undefined,
     TIMEOUT,
   );
@@ -243,19 +243,19 @@ export async function listFrontendStorageNamespaces(): Promise<FrontendStorageNa
  */
 export async function initFrontendStorage(): Promise<void> {
   try {
-    console.log('[Storage] initFrontendStorage: 开始从后端拉取所有命名空间');
+    console.log("[Storage] initFrontendStorage: 开始从后端拉取所有命名空间");
     const namespaces = await invokeWithTimeout<FrontendStorageNamespaceSummary[]>(
-      'frontend_storage_list_namespaces',
+      "frontend_storage_list_namespaces",
       undefined,
       5_000,
     ).catch((err) => {
-      console.warn('[Storage] initFrontendStorage: list_namespaces 失败 →', String(err));
+      console.warn("[Storage] initFrontendStorage: list_namespaces 失败 →", String(err));
       return [] as FrontendStorageNamespaceSummary[];
     });
 
     console.log(
       `[Storage] initFrontendStorage: 共 ${namespaces.length} 个命名空间:`,
-      namespaces.map((n) => n.namespace).join(', ') || '（空）',
+      namespaces.map((n) => n.namespace).join(", ") || "（空）",
     );
 
     await Promise.all(
@@ -266,7 +266,7 @@ export async function initFrontendStorage(): Promise<void> {
           return;
         }
         const entries = await invokeWithTimeout<FrontendStorageEntry[]>(
-          'frontend_storage_list',
+          "frontend_storage_list",
           { namespace },
           5_000,
         ).catch((err) => {
@@ -277,18 +277,18 @@ export async function initFrontendStorage(): Promise<void> {
         state.loaded = true;
         console.log(
           `[Storage] ${namespace}: 加载完成，${entries.length} 条记录`,
-          entries.map((e) => e.key).join(', ') || '（空）',
+          entries.map((e) => e.key).join(", ") || "（空）",
         );
       }),
     );
-    dbgLog('[Storage] initFrontendStorage: 全部命名空间加载完毕');
+    dbgLog("[Storage] initFrontendStorage: 全部命名空间加载完毕");
   } catch (err) {
-    dbgLog('[Storage] initFrontendStorage: 意外错误 → ' + String(err), true);
+    dbgLog("[Storage] initFrontendStorage: 意外错误 → " + String(err), true);
   }
 }
 
 export async function loadStorageDebugDump(): Promise<StorageDebugDump> {
-  return invokeWithTimeout<StorageDebugDump>('storage_debug_dump', undefined, TIMEOUT);
+  return invokeWithTimeout<StorageDebugDump>("storage_debug_dump", undefined, TIMEOUT);
 }
 
 export function readFrontendStorageJson<T>(namespace: string, key: string, fallback: T): T {
@@ -308,7 +308,7 @@ export function setFrontendStorageJson(namespace: string, key: string, value: un
 }
 
 function structuredCloneFallback<T>(value: T): T {
-  if (typeof structuredClone === 'function') {
+  if (typeof structuredClone === "function") {
     return structuredClone(value);
   }
   return JSON.parse(JSON.stringify(value)) as T;

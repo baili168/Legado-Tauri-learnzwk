@@ -1,20 +1,20 @@
-import tailwindcss from '@tailwindcss/vite';
-import vue from '@vitejs/plugin-vue';
-import { fileURLToPath, URL } from 'node:url';
-import { defineConfig } from 'vite';
+import tailwindcss from "@tailwindcss/vite";
+import vue from "@vitejs/plugin-vue";
+import { fileURLToPath, URL } from "node:url";
+import { defineConfig } from "vite";
 // import Components from 'unplugin-vue-components/vite';
 // import AutoImport from 'unplugin-auto-import/vite';
 // import { NaiveUiResolver } from 'unplugin-vue-components/resolvers';
 
 const host = process.env.TAURI_DEV_HOST;
-const hasHost = typeof host === 'string' && host.length > 0;
-const devHost = hasHost ? host : '0.0.0.0';
+const hasHost = typeof host === "string" && host.length > 0;
+const devHost = hasHost ? host : "0.0.0.0";
 const buildTarget = process.env.LEGADO_BUILD_TARGET;
-const isHarmonyBuild = buildTarget === 'harmony';
+const isHarmonyBuild = buildTarget === "harmony";
 
 // https://vite.dev/config/
 export default defineConfig(() => ({
-  base: isHarmonyBuild ? './' : '/',
+  base: isHarmonyBuild ? "./" : "/",
   plugins: [
     tailwindcss(),
     vue(),
@@ -36,16 +36,16 @@ export default defineConfig(() => ({
   ],
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
   },
   optimizeDeps: {
     include: [
-      'vue',
-      '@tauri-apps/api/core',
-      '@tauri-apps/api/event',
-      '@tauri-apps/api/window',
-      '@tauri-apps/api/webviewWindow',
+      "vue",
+      "@tauri-apps/api/core",
+      "@tauri-apps/api/event",
+      "@tauri-apps/api/window",
+      "@tauri-apps/api/webviewWindow",
     ],
   },
   build: {
@@ -60,17 +60,17 @@ export default defineConfig(() => ({
           : function manualChunks(id: string): string | undefined {
               // vue + naive-ui 合并：naive 依赖 vue 内部 API，必须同 chunk 初始化
               if (
-                id.includes('node_modules/naive-ui') ||
-                id.includes('node_modules/vue') ||
-                id.includes('node_modules/@vue')
+                id.includes("node_modules/naive-ui") ||
+                id.includes("node_modules/vue") ||
+                id.includes("node_modules/@vue")
               ) {
-                return 'vendor-vue-naive';
+                return "vendor-vue-naive";
               }
-              if (id.includes('node_modules/@vicons')) {
-                return 'vendor-icons';
+              if (id.includes("node_modules/@vicons")) {
+                return "vendor-icons";
               }
-              if (id.includes('node_modules/@tauri-apps')) {
-                return 'vendor-tauri';
+              if (id.includes("node_modules/@tauri-apps")) {
+                return "vendor-tauri";
               }
               return undefined;
             },
@@ -85,28 +85,28 @@ export default defineConfig(() => ({
     host: devHost,
     hmr: hasHost
       ? {
-          protocol: 'ws',
+          protocol: "ws",
           host,
           port: 1421,
         }
       : undefined,
     warmup: {
       clientFiles: [
-        './src/main.ts',
-        './src/App.vue',
-        './src/views/**/*.vue',
-        './src/components/**/*.vue',
-        './src/composables/**/*.ts',
+        "./src/main.ts",
+        "./src/App.vue",
+        "./src/views/**/*.vue",
+        "./src/components/**/*.vue",
+        "./src/composables/**/*.ts",
       ],
     },
     watch: {
       // 3. tell Vite to ignore watching `src-tauri`
       ignored: [
-        '**/src-tauri/**',
-        '**/booksources/**',
-        '**/notes/**',
-        '**/scripts/**',
-        '**/dist/**',
+        "**/src-tauri/**",
+        "**/booksources/**",
+        "**/notes/**",
+        "**/scripts/**",
+        "**/dist/**",
       ],
     },
   },

@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 /* ============================================================
    CSS 设计令牌
@@ -90,7 +90,7 @@
       rgba(99, 102, 241, 0.02) 23px
     );
 
-  font-family: Inter, 'Noto Sans SC', system-ui, sans-serif;
+  font-family: Inter, "Noto Sans SC", system-ui, sans-serif;
   font-size: 16px;
   line-height: 1.5;
   font-synthesis: none;
@@ -100,7 +100,7 @@
 
 /* ── 暗色主题变量集 ────────────────────────────────────────────────────── */
 /* 1. 强制暗色：data-theme="dark" */
-:root[data-theme='dark'] {
+:root[data-theme="dark"] {
   --color-surface: #18181b;
   --color-surface-raised: #27272a;
   --color-surface-hover: #3f3f46;
@@ -159,7 +159,7 @@
 
 /* 2. 自动模式（data-theme="auto"）：跟随系统偏好 */
 @media (prefers-color-scheme: dark) {
-  :root[data-theme='auto'],
+  :root[data-theme="auto"],
   :root:not([data-theme]) {
     --color-surface: #18181b;
     --color-surface-raised: #27272a;
@@ -217,7 +217,7 @@
 
 /* 3. 强制亮色：data-theme="light" 时显式重置（覆盖系统暗色偏好） */
 @media (prefers-color-scheme: dark) {
-  :root[data-theme='light'] {
+  :root[data-theme="light"] {
     --color-surface: #f4f4f5;
     --color-surface-raised: #ffffff;
     --color-surface-hover: #e4e4e7;
@@ -589,7 +589,7 @@ button {
   /* 去除 Android 点击高亮 */
   button,
   a,
-  [role='button'] {
+  [role="button"] {
     -webkit-tap-highlight-color: transparent;
   }
 }

@@ -1,11 +1,11 @@
-import { nextTick, type ComputedRef, type Ref } from 'vue';
-import type { OpenChapterOptions } from '@/components/reader/composables/useReaderChapterOpen';
+import { nextTick, type ComputedRef, type Ref } from "vue";
+import type { OpenChapterOptions } from "@/components/reader/composables/useReaderChapterOpen";
 import type {
   TemporaryChapterSourceOverride,
   WholeBookSwitchedPayload,
-} from '@/components/reader/types';
+} from "@/components/reader/types";
 
-type SourceSwitchMode = 'whole-book' | 'chapter-temp';
+type SourceSwitchMode = "whole-book" | "chapter-temp";
 
 interface ReaderSourceSwitchMessage {
   warning(content: string): void;
@@ -31,15 +31,15 @@ interface ReaderSourceSwitchControllerOptions {
 export function createReaderSourceSwitchController(options: ReaderSourceSwitchControllerOptions) {
   function openWholeBookSourceSwitch() {
     if (!options.currentShelfId.value) {
-      options.message.warning('请先将书籍加入书架，再使用整本换源');
+      options.message.warning("请先将书籍加入书架，再使用整本换源");
       return;
     }
-    options.sourceSwitchMode.value = 'whole-book';
+    options.sourceSwitchMode.value = "whole-book";
     options.showSourceSwitchDialog.value = true;
   }
 
   function openTemporaryChapterSwitch() {
-    options.sourceSwitchMode.value = 'chapter-temp';
+    options.sourceSwitchMode.value = "chapter-temp";
     options.showSourceSwitchDialog.value = true;
   }
 
@@ -52,7 +52,7 @@ export function createReaderSourceSwitchController(options: ReaderSourceSwitchCo
     options.temporaryChapterOverrides.value = next;
     options.clearChapterRuntimeCache(options.readingChapterIndex.value);
     await options.openChapter(options.readingChapterIndex.value, { forceNetwork: true });
-    options.message.success('已恢复当前章节的原始正文');
+    options.message.success("已恢复当前章节的原始正文");
   }
 
   async function handleTemporaryChapterSourceSwitched(payload: TemporaryChapterSourceOverride) {
@@ -79,7 +79,7 @@ export function createReaderSourceSwitchController(options: ReaderSourceSwitchCo
       payload.matchedChapterIndex >= 0
         ? payload.matchedChapterIndex
         : options.readingChapterIndex.value,
-      { position: 'resume' },
+      { position: "resume" },
     );
   }
 

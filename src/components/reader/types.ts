@@ -2,7 +2,7 @@
  * 阅读器组件 — 公共类型定义
  * 完全独立于 Tauri，可在任何 Vue3 项目中使用
  */
-import type { CoverImageInput } from '@/utils/coverImage';
+import type { CoverImageInput } from "@/utils/coverImage";
 
 /* ============================================================
    书籍元数据（传入阅读器供目录/详情面板显示）
@@ -31,7 +31,7 @@ export interface ReaderBookInfo {
 /* ============================================================
    翻页模式
    ============================================================ */
-export type FlipMode = 'scroll' | 'slide' | 'simulation' | 'cover' | 'none';
+export type FlipMode = "scroll" | "slide" | "simulation" | "cover" | "none";
 
 /* ============================================================
    排版引擎
@@ -41,9 +41,9 @@ export type FlipMode = 'scroll' | 'slide' | 'simulation' | 'cover' | 'none';
  * - `dom`     真实 DOM 渲染测量（默认），天然支持系统字体缩放，兼容性最佳
  * - `pretext` Canvas + Pretext 精确排版，部分旧版 Android WebView 可能字间距异常
  */
-export type PaginationEngine = 'dom' | 'pretext';
+export type PaginationEngine = "dom" | "pretext";
 
-export type ReaderTapAction = 'prev' | 'next';
+export type ReaderTapAction = "prev" | "next";
 
 /* ============================================================
    字体/排版设置
@@ -66,11 +66,11 @@ export interface ReaderTypography {
   /** 字重 100-900 */
   fontWeight: number;
   /** 斜体 */
-  fontStyle: 'normal' | 'italic' | 'oblique';
+  fontStyle: "normal" | "italic" | "oblique";
   /** 文字对齐 */
-  textAlign: 'left' | 'center' | 'right' | 'justify';
+  textAlign: "left" | "center" | "right" | "justify";
   /** 文字装饰 */
-  textDecoration: 'none' | 'underline' | 'line-through';
+  textDecoration: "none" | "underline" | "line-through";
   /** 字体变体 */
   fontVariant: string;
   /** 文字描边宽度 px */
@@ -150,7 +150,7 @@ export interface ReaderSettings {
    * - 'bookshelf'：关闭阅读器停留在书架（默认）
    * - 'desktop'：最小化应用回到手机桌面
    */
-  backBehavior: 'bookshelf' | 'desktop';
+  backBehavior: "bookshelf" | "desktop";
   /** 移动端打开菜单时隐藏顶部栏 */
   hideTopBarOnMobile: boolean;
   /** 阅读时使用音量键翻页；默认关闭，避免抢占系统音量 */
@@ -201,12 +201,12 @@ export interface ReadingProgress {
    预设主题
    ============================================================ */
 export const PRESET_THEMES: ReaderTheme[] = [
-  { name: '默认白', backgroundColor: '#ffffff', textColor: '#1a1a1a', selectionColor: '#b3d4fc' },
-  { name: '护眼绿', backgroundColor: '#cce8cf', textColor: '#2d4a22', selectionColor: '#a3c99e' },
-  { name: '羊皮纸', backgroundColor: '#f5e6c8', textColor: '#5b4636', selectionColor: '#d4b896' },
-  { name: '暮光蓝', backgroundColor: '#1e293b', textColor: '#cbd5e1', selectionColor: '#475569' },
-  { name: '纯黑夜', backgroundColor: '#0a0a0a', textColor: '#d4d4d4', selectionColor: '#404040' },
-  { name: '柔粉色', backgroundColor: '#fde8e8', textColor: '#6b2c2c', selectionColor: '#f5b7b1' },
+  { name: "默认白", backgroundColor: "#ffffff", textColor: "#1a1a1a", selectionColor: "#b3d4fc" },
+  { name: "护眼绿", backgroundColor: "#cce8cf", textColor: "#2d4a22", selectionColor: "#a3c99e" },
+  { name: "羊皮纸", backgroundColor: "#f5e6c8", textColor: "#5b4636", selectionColor: "#d4b896" },
+  { name: "暮光蓝", backgroundColor: "#1e293b", textColor: "#cbd5e1", selectionColor: "#475569" },
+  { name: "纯黑夜", backgroundColor: "#0a0a0a", textColor: "#d4d4d4", selectionColor: "#404040" },
+  { name: "柔粉色", backgroundColor: "#fde8e8", textColor: "#6b2c2c", selectionColor: "#f5b7b1" },
 ];
 
 /* ============================================================
@@ -221,24 +221,24 @@ export const DEFAULT_TYPOGRAPHY: ReaderTypography = {
   paragraphSpacing: 12,
   textIndent: 2,
   fontWeight: 400,
-  fontStyle: 'normal',
-  textAlign: 'justify',
-  textDecoration: 'none',
-  fontVariant: 'normal',
+  fontStyle: "normal",
+  textAlign: "justify",
+  textDecoration: "none",
+  fontVariant: "normal",
   textStrokeWidth: 0,
-  textStrokeColor: 'transparent',
-  textShadow: 'none',
+  textStrokeColor: "transparent",
+  textShadow: "none",
 };
 
 /* ============================================================
    默认设置
    ============================================================ */
 export const DEFAULT_SETTINGS: ReaderSettings = {
-  flipMode: 'slide',
-  paginationEngine: 'pretext',
+  flipMode: "slide",
+  paginationEngine: "pretext",
   typography: { ...DEFAULT_TYPOGRAPHY },
   theme: { ...PRESET_THEMES[0] },
-  themePresetId: '',
+  themePresetId: "",
   padding: 24,
   pagePadding: {
     top: 24,
@@ -252,19 +252,19 @@ export const DEFAULT_SETTINGS: ReaderSettings = {
   animationDuration: 300,
   keepScreenOn: false,
   swipeThreshold: 50,
-  backgroundImage: '',
-  backgroundPresetId: '',
-  skinPresetId: '',
-  backBehavior: 'bookshelf',
+  backgroundImage: "",
+  backgroundPresetId: "",
+  skinPresetId: "",
+  backBehavior: "bookshelf",
   hideTopBarOnMobile: false,
   volumeKeyPageTurnEnabled: false,
   tapZoneLeft: 0.3,
   tapZoneRight: 0.7,
-  tapLeftAction: 'prev',
-  tapRightAction: 'next',
+  tapLeftAction: "prev",
+  tapRightAction: "next",
   highContrast: false,
-  highContrastTheme: 'hc-black',
-  dyslexiaFont: 'system-ui, sans-serif',
+  highContrastTheme: "hc-black",
+  dyslexiaFont: "system-ui, sans-serif",
   reduceMotion: false,
 };
 
@@ -272,7 +272,7 @@ export const DEFAULT_SETTINGS: ReaderSettings = {
    换源相关（ChapterReaderModal 与 ReaderMenuLayer 共用）
    ============================================================ */
 
-import type { ChapterItem, ShelfBook } from '@/stores';
+import type { ChapterItem, ShelfBook } from "@/stores";
 
 export interface WholeBookSwitchedPayload {
   shelfBook: ShelfBook;

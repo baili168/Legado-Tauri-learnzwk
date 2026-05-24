@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { Check, ChevronLeft, Pencil, Trash2, Upload } from 'lucide-vue-next';
-import { ref } from 'vue';
-import type { ReaderSettings, ReaderTypography } from '@/components/reader/types';
-import type { UserFontMeta } from '@/composables/useUserFonts';
+import { Check, ChevronLeft, Pencil, Trash2, Upload } from "lucide-vue-next";
+import { ref } from "vue";
+import type { ReaderSettings, ReaderTypography } from "@/components/reader/types";
+import type { UserFontMeta } from "@/composables/useUserFonts";
 
 defineProps<{
   settings: ReaderSettings;
@@ -13,10 +13,10 @@ defineProps<{
 
 const emit = defineEmits<{
   back: [];
-  'update-typography': [patch: Partial<ReaderTypography>];
-  'upload-font': [file: File];
-  'delete-font': [id: string];
-  'rename-font': [id: string, displayName: string];
+  "update-typography": [patch: Partial<ReaderTypography>];
+  "upload-font": [file: File];
+  "delete-font": [id: string];
+  "rename-font": [id: string, displayName: string];
 }>();
 
 const fileInput = ref<HTMLInputElement | null>(null);
@@ -24,7 +24,7 @@ const isDragOver = ref(false);
 
 // 内联重命名状态
 const renamingId = ref<string | null>(null);
-const renameValue = ref('');
+const renameValue = ref("");
 
 function triggerUpload() {
   fileInput.value?.click();
@@ -34,7 +34,7 @@ function processFiles(files: FileList | File[]) {
   const arr = Array.from(files);
   const valid = arr.filter((f) => /\.(ttf|otf|woff|woff2)$/i.test(f.name));
   for (const file of valid) {
-    emit('upload-font', file);
+    emit("upload-font", file);
   }
 }
 
@@ -44,7 +44,7 @@ function onFileChange(e: Event) {
     processFiles(files);
   }
   // 重置 input 以支持重复上传同一文件
-  (e.target as HTMLInputElement).value = '';
+  (e.target as HTMLInputElement).value = "";
 }
 
 function onDragOver(e: DragEvent) {
@@ -72,8 +72,8 @@ function startRename(font: UserFontMeta) {
 
 function commitRename(id: string) {
   const name = renameValue.value.trim();
-  if (name && name !== '') {
-    emit('rename-font', id, name);
+  if (name && name !== "") {
+    emit("rename-font", id, name);
   }
   renamingId.value = null;
 }

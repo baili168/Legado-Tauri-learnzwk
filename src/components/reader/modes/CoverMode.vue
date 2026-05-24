@@ -17,9 +17,9 @@
  * 触发翻页条件同 SlideMode：
  *   速度 > 0.3 px/ms  或  距离 > 30% 视口宽
  */
-import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue';
-import type { ReaderTypography } from '../types';
-import { usePagination } from '../composables/usePagination';
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from "vue";
+import type { ReaderTypography } from "../types";
+import { usePagination } from "../composables/usePagination";
 
 const props = defineProps<{
   content: string;
@@ -36,13 +36,13 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'tap', zone: 'left' | 'center' | 'right'): void;
-  (e: 'prev-chapter'): void;
-  (e: 'next-chapter'): void;
-  (e: 'progress', ratio: number): void;
+  (e: "tap", zone: "left" | "center" | "right"): void;
+  (e: "prev-chapter"): void;
+  (e: "next-chapter"): void;
+  (e: "progress", ratio: number): void;
 }>();
 
-type DragDir = 'left' | 'right' | null;
+type DragDir = "left" | "right" | null;
 
 /* ============================================================
    分页引擎
@@ -52,7 +52,7 @@ const { pages, currentPage, totalPages, paginate, nextPage, prevPage, goToPage }
 const containerRef = ref<HTMLElement | null>(null);
 
 // 仅在内容变化时应用 startFromEnd，避免 resize/排版调整时误跳末页
-let pendingInitialPage: 'first' | 'last' = props.startFromEnd ? 'last' : 'first';
+let pendingInitialPage: "first" | "last" = props.startFromEnd ? "last" : "first";
 
 function makeTitleHtml(title: string): string {
   return `<p class="reader-chapter-title">${title}</p>`;
@@ -64,15 +64,15 @@ async function doPaginate() {
     return;
   }
   const ip = pendingInitialPage;
-  pendingInitialPage = 'first';
-  const prefix = props.chapterTitle ? makeTitleHtml(props.chapterTitle) : '';
+  pendingInitialPage = "first";
+  const prefix = props.chapterTitle ? makeTitleHtml(props.chapterTitle) : "";
   await paginate(props.content, el, props.typography, props.padding, ip, prefix);
 }
 
 watch(
   () => props.content,
   () => {
-    pendingInitialPage = props.startFromEnd ? 'last' : 'first';
+    pendingInitialPage = props.startFromEnd ? "last" : "first";
   },
 );
 
@@ -99,9 +99,9 @@ onUnmounted(() => resizeOb?.disconnect());
 /* ============================================================
    页面内容
    ============================================================ */
-const prevPageHTML = computed(() => pages.value[currentPage.value - 1] ?? '');
-const currentPageHTML = computed(() => pages.value[currentPage.value] ?? '');
-const nextPageHTML = computed(() => pages.value[currentPage.value + 1] ?? '');
+const prevPageHTML = computed(() => pages.value[currentPage.value - 1] ?? "");
+const currentPageHTML = computed(() => pages.value[currentPage.value] ?? "");
+const nextPageHTML = computed(() => pages.value[currentPage.value + 1] ?? "");
 const pageInfo = computed(() => `${currentPage.value + 1}/${totalPages.value}`);
 
 /* ============================================================
@@ -123,7 +123,7 @@ function getW(): number {
  *   其他               → fg = 当前页
  */
 const fgHTML = computed(() =>
-  dragDir.value === 'right' ? prevPageHTML.value : currentPageHTML.value,
+  dragDir.value === "right" ? prevPageHTML.value : currentPageHTML.value,
 );
 
 /**
@@ -133,7 +133,7 @@ const fgHTML = computed(() =>
  */
 const fgTranslateX = computed<number>(() => {
   const w = getW();
-  const base = dragDir.value === 'right' ? -w : 0;
+  const base = dragDir.value === "right" ? -w : 0;
   return base + (isSnapping.value ? snapTarget.value : dragOffset.value);
 });
 
@@ -143,7 +143,7 @@ const fgTranslateX = computed<number>(() => {
  *   其他   → bg = 下一页（被当前页滑走揭开）
  */
 const bgHTML = computed(() =>
-  dragDir.value === 'right' ? currentPageHTML.value : nextPageHTML.value,
+  dragDir.value === "right" ? currentPageHTML.value : nextPageHTML.value,
 );
 
 /* ============================================================
@@ -161,13 +161,13 @@ const VELOCITY_THRESHOLD = 0.3;
 const DISTANCE_RATIO = 0.3;
 
 /* ── 边界提示 ── */
-const boundaryMsg = ref('');
+const boundaryMsg = ref("");
 let boundaryTimer = 0;
 function showBoundary(msg: string) {
   boundaryMsg.value = msg;
   clearTimeout(boundaryTimer);
   boundaryTimer = window.setTimeout(() => {
-    boundaryMsg.value = '';
+    boundaryMsg.value = "";
   }, 1500);
 }
 
@@ -179,8 +179,8 @@ function onPointerDown(e: MouseEvent | TouchEvent) {
   hasMoved = false;
   dirLocked = false;
   isHorizontal = false;
-  startX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-  startY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+  startX = "touches" in e ? e.touches[0].clientX : e.clientX;
+  startY = "touches" in e ? e.touches[0].clientY : e.clientY;
   startTime = Date.now();
   dragOffset.value = 0;
   dragDir.value = null;
@@ -190,8 +190,8 @@ function onPointerMove(e: MouseEvent | TouchEvent) {
   if (!dragging) {
     return;
   }
-  const x = 'touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
-  const y = 'touches' in e ? e.touches[0].clientY : (e as MouseEvent).clientY;
+  const x = "touches" in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
+  const y = "touches" in e ? e.touches[0].clientY : (e as MouseEvent).clientY;
   const dx = x - startX;
   const dy = y - startY;
 
@@ -199,13 +199,13 @@ function onPointerMove(e: MouseEvent | TouchEvent) {
     dirLocked = true;
     isHorizontal = Math.abs(dx) > Math.abs(dy);
     if (isHorizontal) {
-      dragDir.value = dx < 0 ? 'left' : 'right';
+      dragDir.value = dx < 0 ? "left" : "right";
     }
   }
   if (!isHorizontal) {
     return;
   }
-  if ('cancelable' in e && e.cancelable) {
+  if ("cancelable" in e && e.cancelable) {
     e.preventDefault();
   }
 
@@ -247,10 +247,10 @@ function onPointerUp(e: MouseEvent | TouchEvent) {
         finishSnap();
       });
     } else if (props.hasNext) {
-      emit('next-chapter');
+      emit("next-chapter");
       snapTo(-w, finishSnap);
     } else {
-      showBoundary('已经到最后一页了');
+      showBoundary("已经到最后一页了");
       snapTo(0, finishSnap);
     }
   } else if (shouldFlip && dx > 0) {
@@ -261,10 +261,10 @@ function onPointerUp(e: MouseEvent | TouchEvent) {
         finishSnap();
       });
     } else if (props.hasPrev) {
-      emit('prev-chapter');
+      emit("prev-chapter");
       snapTo(w, finishSnap);
     } else {
-      showBoundary('已经到最前了');
+      showBoundary("已经到最前了");
       snapTo(0, finishSnap);
     }
   } else {
@@ -281,7 +281,7 @@ async function handleClick(e: MouseEvent | TouchEvent) {
     return;
   }
   const rect = el.getBoundingClientRect();
-  const cx = 'changedTouches' in e ? e.changedTouches[0].clientX : (e as MouseEvent).clientX;
+  const cx = "changedTouches" in e ? e.changedTouches[0].clientX : (e as MouseEvent).clientX;
   const relX = (cx - rect.left) / rect.width;
 
   const leftRatio = props.tapZoneLeft ?? 0.3;
@@ -290,20 +290,20 @@ async function handleClick(e: MouseEvent | TouchEvent) {
     if (currentPage.value > 0) {
       await flipPrev();
     } else if (props.hasPrev) {
-      emit('prev-chapter');
+      emit("prev-chapter");
     } else {
-      showBoundary('已经到最前了');
+      showBoundary("已经到最前了");
     }
   } else if (relX > rightRatio) {
     if (currentPage.value < totalPages.value - 1) {
       await flipNext();
     } else if (props.hasNext) {
-      emit('next-chapter');
+      emit("next-chapter");
     } else {
-      showBoundary('已经到最后一页了');
+      showBoundary("已经到最后一页了");
     }
   } else {
-    emit('tap', 'center');
+    emit("tap", "center");
   }
 }
 
@@ -312,7 +312,7 @@ async function handleClick(e: MouseEvent | TouchEvent) {
  * 不需要预定位，直接从当前已展示的 translateX(0) 出发
  */
 async function flipNext() {
-  dragDir.value = 'left';
+  dragDir.value = "left";
   await nextTick();
   // 强制浏览器提交样式，使 CSS transition 有起始帧
   void containerRef.value?.offsetHeight;
@@ -327,7 +327,7 @@ async function flipNext() {
  * 需先将 fg 定位到 -W（无动画），再启动 transition
  */
 async function flipPrev() {
-  dragDir.value = 'right';
+  dragDir.value = "right";
   // 等 Vue 将 fgX = -W 渲染到 DOM
   await nextTick();
   // 强制浏览器提交，使 -W 成为 transition 的起始位置
@@ -353,7 +353,7 @@ function finishSnap() {
 
 watch(currentPage, (p) => {
   const ratio = totalPages.value <= 1 ? 1 : p / (totalPages.value - 1);
-  emit('progress', Math.min(1, Math.max(0, ratio)));
+  emit("progress", Math.min(1, Math.max(0, ratio)));
 });
 
 defineExpose({

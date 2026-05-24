@@ -25,26 +25,26 @@
  * ```
  */
 
-import { safeRandomUUID } from '@/utils/uuid';
-import { hasNativeTransport, isHarmonyNative, isTauri } from './useEnv';
+import { safeRandomUUID } from "@/utils/uuid";
+import { hasNativeTransport, isHarmonyNative, isTauri } from "./useEnv";
 
 // ── 自定义后端地址（URL 参数持久化） ─────────────────────────────────────
 
-const CUSTOM_WS_URL_PARAM = 'ws';
+const CUSTOM_WS_URL_PARAM = "ws";
 
 function readCustomWsUrlFromLocation(): string {
-  if (typeof window === 'undefined') {
-    return '';
+  if (typeof window === "undefined") {
+    return "";
   }
   try {
-    return new URL(window.location.href).searchParams.get(CUSTOM_WS_URL_PARAM) ?? '';
+    return new URL(window.location.href).searchParams.get(CUSTOM_WS_URL_PARAM) ?? "";
   } catch {
-    return '';
+    return "";
   }
 }
 
 function writeCustomWsUrlToLocation(url: string | null): void {
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return;
   }
   const nextUrl = new URL(window.location.href);
@@ -53,7 +53,7 @@ function writeCustomWsUrlToLocation(url: string | null): void {
   } else {
     nextUrl.searchParams.delete(CUSTOM_WS_URL_PARAM);
   }
-  window.history.replaceState({}, '', nextUrl.toString());
+  window.history.replaceState({}, "", nextUrl.toString());
 }
 
 /** 获取用户配置的自定义 WS 后端地址（空字符串表示未配置） */
@@ -87,7 +87,7 @@ export function resetWsProbe(): void {
 // ── 类型定义 ──────────────────────────────────────────────────────────────
 
 /** WebSocket 连接状态 */
-export type WsState = 'disconnected' | 'connecting' | 'connected' | 'error';
+export type WsState = "disconnected" | "connecting" | "connected" | "error";
 
 /** 事件监听回调 */
 export type EventHandler<T = unknown> = (event: { payload: T }) => void;
@@ -127,20 +127,20 @@ interface HarmonyNativeBridge {
 /** WebSocket 传输管理器（单例） */
 class WsTransport {
   private ws: WebSocket | null = null;
-  private state: WsState = 'disconnected';
+  private state: WsState = "disconnected";
   private pending = new Map<string, PendingRequest>();
   private eventHandlers = new Map<string, Set<EventHandler>>();
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 10;
   private baseReconnectDelay = 1000; // 1 秒
-  private wsUrl = '';
+  private wsUrl = "";
   private connectPromise: Promise<void> | null = null;
   private connectResolve: (() => void) | null = null;
 
   /** 初始化连接到指定 WS 地址 */
   connect(url: string): Promise<void> {
-    if (this.state === 'connected' && this.ws?.readyState === WebSocket.OPEN) {
+    if (this.state === "connected" && this.ws?.readyState === WebSocket.OPEN) {
       return Promise.resolve();
     }
 
@@ -169,20 +169,20 @@ class WsTransport {
       } catch {}
     }
 
-    this.state = 'connecting';
+    this.state = "connecting";
 
     try {
       this.ws = new WebSocket(this.wsUrl);
     } catch (e) {
-      console.error('[Transport] WebSocket 创建失败:', e);
-      this.state = 'error';
+      console.error("[Transport] WebSocket 创建失败:", e);
+      this.state = "error";
       this.scheduleReconnect();
       return;
     }
 
     this.ws.onopen = () => {
-      console.log('[Transport] WebSocket 已连接:', this.wsUrl);
-      this.state = 'connected';
+      console.log("[Transport] WebSocket 已连接:", this.wsUrl);
+      this.state = "connected";
       this.reconnectAttempts = 0;
 
       if (this.connectResolve) {
@@ -193,15 +193,15 @@ class WsTransport {
     };
 
     this.ws.onclose = (e) => {
-      console.warn('[Transport] WebSocket 断开:', e.code, e.reason);
-      this.state = 'disconnected';
-      this.rejectAllPending('WebSocket 连接断开');
+      console.warn("[Transport] WebSocket 断开:", e.code, e.reason);
+      this.state = "disconnected";
+      this.rejectAllPending("WebSocket 连接断开");
       this.scheduleReconnect();
     };
 
     this.ws.onerror = (e) => {
-      console.error('[Transport] WebSocket 错误:', e);
-      this.state = 'error';
+      console.error("[Transport] WebSocket 错误:", e);
+      this.state = "error";
     };
 
     this.ws.onmessage = (e) => {
@@ -223,11 +223,11 @@ class WsTransport {
     try {
       msg = JSON.parse(raw);
     } catch {
-      console.warn('[Transport] 无法解析 WS 消息:', raw.slice(0, 200));
+      console.warn("[Transport] 无法解析 WS 消息:", raw.slice(0, 200));
       return;
     }
 
-    if (msg.type === 'response' && msg.id) {
+    if (msg.type === "response" && msg.id) {
       // 命令响应
       const pending = this.pending.get(msg.id);
       if (pending) {
@@ -239,7 +239,7 @@ class WsTransport {
           pending.resolve(msg.data);
         }
       }
-    } else if (msg.type === 'event' && msg.event) {
+    } else if (msg.type === "event" && msg.event) {
       // 事件推送
       const handlers = this.eventHandlers.get(msg.event);
       if (handlers) {
@@ -258,7 +258,7 @@ class WsTransport {
   /** 发送命令调用并等待响应 */
   async invoke<T>(cmd: string, args?: Record<string, unknown>, timeoutMs = 35000): Promise<T> {
     // 确保已连接
-    if (this.state !== 'connected' || !this.ws || this.ws.readyState !== WebSocket.OPEN) {
+    if (this.state !== "connected" || !this.ws || this.ws.readyState !== WebSocket.OPEN) {
       await this.connect(this.wsUrl);
     }
 
@@ -277,7 +277,7 @@ class WsTransport {
       });
 
       const message = JSON.stringify({
-        type: 'invoke',
+        type: "invoke",
         id,
         cmd,
         args: args ?? {},
@@ -317,7 +317,7 @@ class WsTransport {
       return;
     }
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.error('[Transport] 已达最大重连次数，停止重连');
+      console.error("[Transport] 已达最大重连次数，停止重连");
       return;
     }
 
@@ -359,8 +359,8 @@ class WsTransport {
       this.ws.close();
       this.ws = null;
     }
-    this.state = 'disconnected';
-    this.rejectAllPending('主动断开连接');
+    this.state = "disconnected";
+    this.rejectAllPending("主动断开连接");
   }
 }
 
@@ -385,7 +385,7 @@ let wsProbePromise: Promise<boolean> | null = null;
 let harmonyBridgeRuntime: HarmonyUiBridgeRuntime | null = null;
 
 function getHarmonyNativeBridge(): HarmonyNativeBridge | null {
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return null;
   }
   return (
@@ -400,7 +400,7 @@ function ensureHarmonyBridgeRuntime(): HarmonyUiBridgeRuntime {
 
   const nativeBridge = getHarmonyNativeBridge();
   if (!nativeBridge) {
-    throw new Error('Harmony 原生桥接未注入');
+    throw new Error("Harmony 原生桥接未注入");
   }
 
   const pending = new Map<string, HarmonyPendingRequest>();
@@ -477,7 +477,7 @@ function ensureHarmonyBridgeRuntime(): HarmonyUiBridgeRuntime {
       if (ok) {
         pendingReq.resolve(data);
       } else {
-        pendingReq.reject(new Error(typeof data === 'string' ? data : JSON.stringify(data)));
+        pendingReq.reject(new Error(typeof data === "string" ? data : JSON.stringify(data)));
       }
     },
     event(name: string, payload: unknown) {
@@ -491,7 +491,7 @@ function ensureHarmonyBridgeRuntime(): HarmonyUiBridgeRuntime {
   try {
     nativeBridge.subscribe?.();
   } catch (error) {
-    console.warn('[Transport] Harmony 事件订阅失败:', error);
+    console.warn("[Transport] Harmony 事件订阅失败:", error);
   }
 
   harmonyBridgeRuntime = bridgeObj;
@@ -517,12 +517,12 @@ async function probeWsServer(): Promise<boolean> {
   wsProbePromise = new Promise<boolean>((resolve) => {
     // 优先使用 URL 参数中的自定义地址
     const customUrl = getCustomWsUrl();
-    const hostname = window.location.hostname || 'localhost';
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const hostname = window.location.hostname || "localhost";
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const defaultUrl = `${protocol}//${hostname}:7688/ws`;
     const url = customUrl || defaultUrl;
 
-    console.log('[Transport] 探测 WebSocket 服务:', url);
+    console.log("[Transport] 探测 WebSocket 服务:", url);
 
     const transport = getWsTransport();
 
@@ -531,7 +531,7 @@ async function probeWsServer(): Promise<boolean> {
       wsProbed = true;
       wsAvailable = false;
       wsProbePromise = null;
-      console.warn('[Transport] WebSocket 探测超时');
+      console.warn("[Transport] WebSocket 探测超时");
       resolve(false);
     }, 5000);
 
@@ -542,7 +542,7 @@ async function probeWsServer(): Promise<boolean> {
         wsProbed = true;
         wsAvailable = true;
         wsProbePromise = null;
-        console.log('[Transport] WebSocket 服务可用');
+        console.log("[Transport] WebSocket 服务可用");
         resolve(true);
       })
       .catch(() => {
@@ -550,7 +550,7 @@ async function probeWsServer(): Promise<boolean> {
         wsProbed = true;
         wsAvailable = false;
         wsProbePromise = null;
-        console.warn('[Transport] WebSocket 服务不可用');
+        console.warn("[Transport] WebSocket 服务不可用");
         resolve(false);
       });
   });
@@ -574,7 +574,7 @@ export async function transportInvoke<T>(
 ): Promise<T> {
   if (isTauri) {
     // Tauri 原生 IPC
-    const { invoke } = await import('@tauri-apps/api/core');
+    const { invoke } = await import("@tauri-apps/api/core");
     let timer: ReturnType<typeof setTimeout> | null = null;
     try {
       return await Promise.race([
@@ -620,7 +620,7 @@ export async function transportListen<T = unknown>(
   handler: EventHandler<T>,
 ): Promise<UnlistenFn> {
   if (isTauri) {
-    const { listen } = await import('@tauri-apps/api/event');
+    const { listen } = await import("@tauri-apps/api/event");
     return listen<T>(event, handler);
   }
 
@@ -649,17 +649,17 @@ export async function isTransportAvailable(): Promise<boolean> {
 /**
  * 获取传输层类型标识
  */
-export function getTransportType(): 'tauri' | 'harmony' | 'websocket' | 'none' {
+export function getTransportType(): "tauri" | "harmony" | "websocket" | "none" {
   if (isTauri) {
-    return 'tauri';
+    return "tauri";
   }
   if (isHarmonyNative) {
-    return 'harmony';
+    return "harmony";
   }
   if (wsAvailable) {
-    return 'websocket';
+    return "websocket";
   }
-  return 'none';
+  return "none";
 }
 
 /**
@@ -670,7 +670,7 @@ export function getTransportType(): 'tauri' | 'harmony' | 'websocket' | 'none' {
  */
 export async function transportEmit<T = unknown>(event: string, payload?: T): Promise<void> {
   if (isTauri) {
-    const { emit } = await import('@tauri-apps/api/event');
+    const { emit } = await import("@tauri-apps/api/event");
     return emit(event, payload);
   }
 
@@ -681,7 +681,7 @@ export async function transportEmit<T = unknown>(event: string, payload?: T): Pr
 
   // WS 模式：在本地事件处理器中广播
   const transport = getWsTransport();
-  const handlers = transport['eventHandlers'].get(event);
+  const handlers = transport["eventHandlers"].get(event);
   if (handlers) {
     const eventObj = { payload };
     for (const handler of handlers) {

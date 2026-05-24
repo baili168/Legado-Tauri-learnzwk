@@ -1,6 +1,9 @@
-import { registerPluginGlobalTheme, unregisterPluginGlobalTheme } from '@/composables/useMaterialYou';
-import type { CustomTheme } from '@/composables/useMaterialYou';
-import type { GlobalThemeDefinition } from './pluginTypes';
+import {
+  registerPluginGlobalTheme,
+  unregisterPluginGlobalTheme,
+} from "@/composables/useMaterialYou";
+import type { CustomTheme } from "@/composables/useMaterialYou";
+import type { GlobalThemeDefinition } from "./pluginTypes";
 
 const pluginStyleMap = new Map<string, HTMLElement>();
 
@@ -12,7 +15,7 @@ export function activatePluginThemes(themes: GlobalThemeDefinition[], pluginId: 
     const theme: CustomTheme = {
       id: pluginId ? `plugin:${pluginId}:${themeDef.id}` : themeDef.id,
       name: themeDef.name,
-      mode: 'plugin',
+      mode: "plugin",
       pluginId,
       colors: themeDef.colors,
       createdAt: Date.now(),
@@ -32,9 +35,11 @@ export function deactivatePluginThemes(themes: GlobalThemeDefinition[], pluginId
 }
 
 export function injectCSS(pluginId: string, css: string, options?: { styleId?: string }): string {
-  const styleId = options?.styleId ?? `plugin-css-${pluginId}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+  const styleId =
+    options?.styleId ??
+    `plugin-css-${pluginId}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
   removeCSS(styleId);
-  const styleEl = document.createElement('style');
+  const styleEl = document.createElement("style");
   styleEl.id = styleId;
   styleEl.dataset.pluginId = pluginId;
   styleEl.textContent = css;

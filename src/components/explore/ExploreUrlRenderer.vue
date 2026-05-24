@@ -9,7 +9,7 @@
  * - 直接加载外部 URL，不注入 bridge 脚本
  * - 允许页内自由导航（不限制 sandbox allow-same-origin）
  */
-import { ref, watch } from 'vue';
+import { ref, watch } from "vue";
 
 const props = defineProps<{
   /** 要加载的页面 URL */

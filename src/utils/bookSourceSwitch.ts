@@ -1,22 +1,22 @@
-import type { BookDetail, BookItem, ChapterItem, ShelfBook } from '@/stores';
-import type { ReaderBookInfo } from '../components/reader/types';
-import { getNormalizedLastChapter } from './bookMeta';
-import { getCoverImageUrl, type CoverImageInput } from './coverImage';
+import type { BookDetail, BookItem, ChapterItem, ShelfBook } from "@/stores";
+import type { ReaderBookInfo } from "../components/reader/types";
+import { getNormalizedLastChapter } from "./bookMeta";
+import { getCoverImageUrl, type CoverImageInput } from "./coverImage";
 
 export type MetadataFieldKey =
-  | 'author'
-  | 'coverUrl'
-  | 'intro'
-  | 'kind'
-  | 'status'
-  | 'wordCount'
-  | 'chapterCount'
-  | 'updateTime'
-  | 'lastChapter';
+  | "author"
+  | "coverUrl"
+  | "intro"
+  | "kind"
+  | "status"
+  | "wordCount"
+  | "chapterCount"
+  | "updateTime"
+  | "lastChapter";
 
 export interface DiffSegment {
   text: string;
-  kind: 'same' | 'removed' | 'added';
+  kind: "same" | "removed" | "added";
 }
 
 export interface DiffPair {
@@ -61,11 +61,11 @@ export const SWITCHABLE_METADATA_FIELDS: Array<{
   key: MetadataFieldKey;
   label: string;
 }> = [
-  { key: 'author', label: '作者' },
-  { key: 'coverUrl', label: '封面' },
-  { key: 'intro', label: '简介' },
-  { key: 'kind', label: '分类' },
-  { key: 'lastChapter', label: '最新章节' },
+  { key: "author", label: "作者" },
+  { key: "coverUrl", label: "封面" },
+  { key: "intro", label: "简介" },
+  { key: "kind", label: "分类" },
+  { key: "lastChapter", label: "最新章节" },
 ];
 
 const CHINESE_NUM_MAP: Record<string, number> = {
@@ -85,12 +85,12 @@ const CHINESE_NUM_MAP: Record<string, number> = {
 function stripNoise(value: string): string {
   return value
     .toLowerCase()
-    .replace(/\[[^\]]*]/g, '')
-    .replace(/（[^）]*）/g, '')
-    .replace(/\([^)]*\)/g, '')
-    .replace(/【[^】]*】/g, '')
-    .replace(/广告|求收藏|求订阅|最新网址|手机版|手机用户请到|ps[:：].*/g, '')
-    .replace(/[\s`~!@#$%^&*()_\-+=|\\:;"'<>,.?/，。！？、：；（）【】《》“”‘’]/g, '');
+    .replace(/\[[^\]]*]/g, "")
+    .replace(/（[^）]*）/g, "")
+    .replace(/\([^)]*\)/g, "")
+    .replace(/【[^】]*】/g, "")
+    .replace(/广告|求收藏|求订阅|最新网址|手机版|手机用户请到|ps[:：].*/g, "")
+    .replace(/[\s`~!@#$%^&*()_\-+=|\\:;"'<>,.?/，。！？、：；（）【】《》“”‘’]/g, "");
 }
 
 function toBigramSet(value: string): Set<string> {
@@ -132,19 +132,19 @@ function parseChineseNumber(raw: string): number | null {
   let total = 0;
   let current = 0;
   for (const char of raw) {
-    if (char === '十') {
+    if (char === "十") {
       current = current || 1;
       total += current * 10;
       current = 0;
       continue;
     }
-    if (char === '百') {
+    if (char === "百") {
       current = current || 1;
       total += current * 100;
       current = 0;
       continue;
     }
-    if (char === '千') {
+    if (char === "千") {
       current = current || 1;
       total += current * 1000;
       current = 0;
@@ -174,11 +174,11 @@ function extractChapterNumber(name: string): number | null {
 function basenameSignature(url: string): string {
   try {
     const parsed = new URL(url);
-    const path = parsed.pathname.split('/').filter(Boolean).pop() ?? '';
-    return path.replace(/\.[a-z0-9]+$/i, '').toLowerCase();
+    const path = parsed.pathname.split("/").filter(Boolean).pop() ?? "";
+    return path.replace(/\.[a-z0-9]+$/i, "").toLowerCase();
   } catch {
-    const parts = url.split('/').filter(Boolean);
-    return (parts[parts.length - 1] ?? '').replace(/\?.*$/, '').toLowerCase();
+    const parts = url.split("/").filter(Boolean);
+    return (parts[parts.length - 1] ?? "").replace(/\?.*$/, "").toLowerCase();
   }
 }
 
@@ -189,10 +189,10 @@ export function buildCurrentBookMeta(book: ShelfBook | ReaderBookInfo): Switchab
     coverUrl: book.coverUrl,
     intro: book.intro,
     kind: book.kind,
-    status: 'status' in book ? book.status : undefined,
-    wordCount: 'wordCount' in book ? book.wordCount : undefined,
-    chapterCount: 'chapterCount' in book ? book.chapterCount : undefined,
-    updateTime: 'updateTime' in book ? book.updateTime : undefined,
+    status: "status" in book ? book.status : undefined,
+    wordCount: "wordCount" in book ? book.wordCount : undefined,
+    chapterCount: "chapterCount" in book ? book.chapterCount : undefined,
+    updateTime: "updateTime" in book ? book.updateTime : undefined,
     lastChapter: getNormalizedLastChapter(book),
     bookUrl: book.bookUrl,
   };
@@ -218,25 +218,25 @@ export function buildCandidateBookMeta(
 }
 
 export function getMetadataValue(book: SwitchableBookMeta, key: MetadataFieldKey): string {
-  if (key === 'coverUrl') {
-    return getCoverImageUrl(book.coverUrl) ?? '';
+  if (key === "coverUrl") {
+    return getCoverImageUrl(book.coverUrl) ?? "";
   }
   const value = book[key] as unknown;
-  if (typeof value === 'number') {
+  if (typeof value === "number") {
     return String(value);
   }
-  return typeof value === 'string' ? value.trim() : '';
+  return typeof value === "string" ? value.trim() : "";
 }
 
-function buildSingleSegment(text: string, kind: DiffSegment['kind']): DiffSegment[] {
+function buildSingleSegment(text: string, kind: DiffSegment["kind"]): DiffSegment[] {
   return text ? [{ text, kind }] : [];
 }
 
 export function buildDiffPair(currentValue: string, candidateValue: string): DiffPair {
   if (currentValue === candidateValue) {
     return {
-      current: buildSingleSegment(currentValue, 'same'),
-      candidate: buildSingleSegment(candidateValue, 'same'),
+      current: buildSingleSegment(currentValue, "same"),
+      candidate: buildSingleSegment(candidateValue, "same"),
       changed: false,
     };
   }
@@ -262,23 +262,23 @@ export function buildDiffPair(currentValue: string, candidateValue: string): Dif
     suffix += 1;
   }
 
-  const currentPrefix = currentChars.slice(0, prefix).join('');
-  const currentMiddle = currentChars.slice(prefix, currentChars.length - suffix).join('');
-  const currentSuffix = currentChars.slice(currentChars.length - suffix).join('');
-  const candidatePrefix = candidateChars.slice(0, prefix).join('');
-  const candidateMiddle = candidateChars.slice(prefix, candidateChars.length - suffix).join('');
-  const candidateSuffix = candidateChars.slice(candidateChars.length - suffix).join('');
+  const currentPrefix = currentChars.slice(0, prefix).join("");
+  const currentMiddle = currentChars.slice(prefix, currentChars.length - suffix).join("");
+  const currentSuffix = currentChars.slice(currentChars.length - suffix).join("");
+  const candidatePrefix = candidateChars.slice(0, prefix).join("");
+  const candidateMiddle = candidateChars.slice(prefix, candidateChars.length - suffix).join("");
+  const candidateSuffix = candidateChars.slice(candidateChars.length - suffix).join("");
 
   return {
     current: [
-      ...buildSingleSegment(currentPrefix, 'same'),
-      ...buildSingleSegment(currentMiddle, 'removed'),
-      ...buildSingleSegment(currentSuffix, 'same'),
+      ...buildSingleSegment(currentPrefix, "same"),
+      ...buildSingleSegment(currentMiddle, "removed"),
+      ...buildSingleSegment(currentSuffix, "same"),
     ],
     candidate: [
-      ...buildSingleSegment(candidatePrefix, 'same'),
-      ...buildSingleSegment(candidateMiddle, 'added'),
-      ...buildSingleSegment(candidateSuffix, 'same'),
+      ...buildSingleSegment(candidatePrefix, "same"),
+      ...buildSingleSegment(candidateMiddle, "added"),
+      ...buildSingleSegment(candidateSuffix, "same"),
     ],
     changed: true,
   };
@@ -307,7 +307,7 @@ export function applyMetadataSelection(
       continue;
     }
     const candidateValue = candidate[key];
-    if (typeof candidateValue === 'string') {
+    if (typeof candidateValue === "string") {
       const trimmed = candidateValue.trim();
       if (trimmed) {
         (next as unknown as Record<string, unknown>)[key] = trimmed;
@@ -331,35 +331,35 @@ export function scoreBookCandidate(
   const titleSimilarity = jaccard(toBigramSet(base.name), toBigramSet(book.name));
   if (baseTitle && candidateTitle && baseTitle === candidateTitle) {
     score += 60;
-    reasons.push('书名完全一致');
+    reasons.push("书名完全一致");
   } else if (titleSimilarity >= 0.72) {
     score += Math.round(titleSimilarity * 60);
     reasons.push(`书名相似度 ${(titleSimilarity * 100).toFixed(0)}%`);
   }
 
-  const baseAuthor = stripNoise(base.author || '');
-  const candidateAuthor = stripNoise(book.author || '');
+  const baseAuthor = stripNoise(base.author || "");
+  const candidateAuthor = stripNoise(book.author || "");
   if (baseAuthor && candidateAuthor && baseAuthor === candidateAuthor) {
     score += 28;
-    reasons.push('作者一致');
+    reasons.push("作者一致");
   } else if (baseAuthor && candidateAuthor) {
     const authorSimilarity = jaccard(
-      toBigramSet(base.author || ''),
-      toBigramSet(book.author || ''),
+      toBigramSet(base.author || ""),
+      toBigramSet(book.author || ""),
     );
     if (authorSimilarity >= 0.7) {
       score += Math.round(authorSimilarity * 18);
-      reasons.push('作者接近');
+      reasons.push("作者接近");
     }
   }
 
   if (base.coverUrl && book.coverUrl) {
     score += 4;
-    reasons.push('存在封面信息');
+    reasons.push("存在封面信息");
   }
   if (base.intro && book.intro) {
     score += 4;
-    reasons.push('存在简介信息');
+    reasons.push("存在简介信息");
   }
 
   return { score, reasons };
@@ -398,8 +398,8 @@ export function rankChapterMatches(
   }
 
   const currentName = stripNoise(current.name);
-  const currentPrev = stripNoise(currentChapters[currentIndex - 1]?.name || '');
-  const currentNext = stripNoise(currentChapters[currentIndex + 1]?.name || '');
+  const currentPrev = stripNoise(currentChapters[currentIndex - 1]?.name || "");
+  const currentNext = stripNoise(currentChapters[currentIndex + 1]?.name || "");
   const currentNumber = extractChapterNumber(current.name);
   const currentSig = basenameSignature(current.url);
 
@@ -412,7 +412,7 @@ export function rankChapterMatches(
 
       if (currentName && chapterName && currentName === chapterName) {
         score += 70;
-        reasons.push('章节名完全一致');
+        reasons.push("章节名完全一致");
       } else if (titleSimilarity >= 0.65) {
         score += Math.round(titleSimilarity * 55);
         reasons.push(`章节名相似度 ${(titleSimilarity * 100).toFixed(0)}%`);
@@ -427,24 +427,24 @@ export function rankChapterMatches(
       const distance = Math.abs(index - currentIndex);
       score += Math.max(0, 18 - Math.min(distance, 18));
       if (distance <= 2) {
-        reasons.push('目录索引接近');
+        reasons.push("目录索引接近");
       }
 
-      const chapterPrev = stripNoise(candidateChapters[index - 1]?.name || '');
-      const chapterNext = stripNoise(candidateChapters[index + 1]?.name || '');
+      const chapterPrev = stripNoise(candidateChapters[index - 1]?.name || "");
+      const chapterNext = stripNoise(candidateChapters[index + 1]?.name || "");
       if (currentPrev && chapterPrev && currentPrev === chapterPrev) {
         score += 12;
-        reasons.push('上一章上下文吻合');
+        reasons.push("上一章上下文吻合");
       }
       if (currentNext && chapterNext && currentNext === chapterNext) {
         score += 12;
-        reasons.push('下一章上下文吻合');
+        reasons.push("下一章上下文吻合");
       }
 
       const candidateSig = basenameSignature(chapter.url);
       if (currentSig && candidateSig && currentSig === candidateSig) {
         score += 8;
-        reasons.push('URL 特征一致');
+        reasons.push("URL 特征一致");
       }
 
       return {

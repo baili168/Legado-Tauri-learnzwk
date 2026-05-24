@@ -1,8 +1,8 @@
-import { defineStore } from 'pinia';
-import { computed } from 'vue';
-import { useDynamicConfig } from '@/composables/useDynamicConfig';
+import { defineStore } from "pinia";
+import { computed } from "vue";
+import { useDynamicConfig } from "@/composables/useDynamicConfig";
 
-export type HighlightColor = 'yellow' | 'blue' | 'green' | 'pink';
+export type HighlightColor = "yellow" | "blue" | "green" | "pink";
 
 export interface BookmarkEntry {
   id: string;
@@ -37,16 +37,16 @@ interface BookmarksState {
   items: BookmarkItem[];
 }
 
-export const useReaderBookmarksStore = defineStore('readerBookmarks', () => {
+export const useReaderBookmarksStore = defineStore("readerBookmarks", () => {
   const config = useDynamicConfig<BookmarksState>({
-    namespace: 'reader-bookmarks',
+    namespace: "reader-bookmarks",
     version: 2,
     defaults: () => ({ items: [] }),
   });
 
   const bookmarks = computed(() => config.state.items as BookmarkEntry[]);
-  const highlights = computed(
-    () => config.state.items.filter((item): item is HighlightAnnotation => 'color' in item),
+  const highlights = computed(() =>
+    config.state.items.filter((item): item is HighlightAnnotation => "color" in item),
   );
 
   function getChapterBookmarks(
@@ -84,32 +84,24 @@ export const useReaderBookmarksStore = defineStore('readerBookmarks', () => {
     return highlights.value.find((h) => h.id === id);
   }
 
-  async function addBookmark(entry: Omit<BookmarkEntry, 'id' | 'createdAt'>): Promise<void> {
+  async function addBookmark(entry: Omit<BookmarkEntry, "id" | "createdAt">): Promise<void> {
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-    const items: BookmarkItem[] = [
-      ...config.state.items,
-      { ...entry, id, createdAt: Date.now() },
-    ];
+    const items: BookmarkItem[] = [...config.state.items, { ...entry, id, createdAt: Date.now() }];
     await config.replace({ items });
   }
 
-  async function addHighlight(
-    entry: Omit<HighlightAnnotation, 'id' | 'createdAt'>,
-  ): Promise<void> {
+  async function addHighlight(entry: Omit<HighlightAnnotation, "id" | "createdAt">): Promise<void> {
     const id = `hl-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-    const items: BookmarkItem[] = [
-      ...config.state.items,
-      { ...entry, id, createdAt: Date.now() },
-    ];
+    const items: BookmarkItem[] = [...config.state.items, { ...entry, id, createdAt: Date.now() }];
     await config.replace({ items });
   }
 
   async function updateHighlight(
     id: string,
-    patch: Partial<Pick<HighlightAnnotation, 'note' | 'tags' | 'color'>>,
+    patch: Partial<Pick<HighlightAnnotation, "note" | "tags" | "color">>,
   ): Promise<void> {
     const items = config.state.items.map((item) => {
-      if ('color' in item && item.id === id) {
+      if ("color" in item && item.id === id) {
         return { ...item, ...patch };
       }
       return item;
@@ -124,7 +116,7 @@ export const useReaderBookmarksStore = defineStore('readerBookmarks', () => {
 
   async function removeHighlight(id: string): Promise<void> {
     const items = config.state.items.filter((item) => {
-      if ('color' in item) return item.id !== id;
+      if ("color" in item) return item.id !== id;
       return true;
     });
     await config.replace({ items });
@@ -132,10 +124,10 @@ export const useReaderBookmarksStore = defineStore('readerBookmarks', () => {
 
   function getHighlightColorEmoji(color: HighlightColor): string {
     const emojiMap: Record<HighlightColor, string> = {
-      yellow: '🟡',
-      blue: '🔵',
-      green: '🟢',
-      pink: '🩷',
+      yellow: "🟡",
+      blue: "🔵",
+      green: "🟢",
+      pink: "🩷",
     };
     return emojiMap[color];
   }
@@ -143,13 +135,13 @@ export const useReaderBookmarksStore = defineStore('readerBookmarks', () => {
   async function exportHighlightsAsMarkdown(fileName: string): Promise<string> {
     const fileHighlights = highlights.value.filter((h) => h.fileName === fileName);
     if (fileHighlights.length === 0) {
-      return '';
+      return "";
     }
 
     const sorted = [...fileHighlights].sort((a, b) => a.chapterIndex - b.chapterIndex);
-    const lines: string[] = ['# 阅读笔记\n'];
+    const lines: string[] = ["# 阅读笔记\n"];
 
-    let currentChapter = '';
+    let currentChapter = "";
     for (const highlight of sorted) {
       if (highlight.chapterName !== currentChapter) {
         currentChapter = highlight.chapterName;
@@ -164,13 +156,13 @@ export const useReaderBookmarksStore = defineStore('readerBookmarks', () => {
       }
 
       if (highlight.tags && highlight.tags.length > 0) {
-        lines.push(`\n**标签:** ${highlight.tags.map((t) => `#${t}`).join(' ')}`);
+        lines.push(`\n**标签:** ${highlight.tags.map((t) => `#${t}`).join(" ")}`);
       }
 
-      lines.push('\n---\n');
+      lines.push("\n---\n");
     }
 
-    return lines.join('\n');
+    return lines.join("\n");
   }
 
   return {

@@ -5,7 +5,7 @@
  * 已确认会导致书源管理中的按钮、开关等交互控件失效。这里全局禁用该手势，
  * 保留调用接口，避免 BookSourceView / ExploreView 逐处改模板。
  */
-import { ref } from 'vue';
+import { ref } from "vue";
 
 interface MobileHorizontalSwipeOptions {
   threshold?: number;

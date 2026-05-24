@@ -6,16 +6,16 @@
  * 最近检测时间以 bookId 为 key 持久化在前端存储中。
  */
 
-import type { ShelfBook } from '@/composables/useBookshelf';
-import { LOCAL_TXT_FILE_NAME, useBookshelfStore } from '@/stores/bookshelf';
-import { usePreferencesStore } from '@/stores/preferences';
-import { useScriptBridgeStore } from '@/stores/scriptBridge';
-import { useDynamicConfig } from './useDynamicConfig';
+import type { ShelfBook } from "@/composables/useBookshelf";
+import { LOCAL_TXT_FILE_NAME, useBookshelfStore } from "@/stores/bookshelf";
+import { usePreferencesStore } from "@/stores/preferences";
+import { useScriptBridgeStore } from "@/stores/scriptBridge";
+import { useDynamicConfig } from "./useDynamicConfig";
 
 // ── 最近检测时间持久化（bookId → timestamp ms） ───────────────────────────
 
 const lastCheckConfig = useDynamicConfig<Record<string, number>>({
-  namespace: 'toc.lastCheckTimes',
+  namespace: "toc.lastCheckTimes",
   version: 1,
   defaults: () => ({}),
 });

@@ -1,45 +1,45 @@
-import type { ReaderBookInfo, ReaderTheme } from '@/components/reader/types';
-import type { PatchShelfBookPayload, ShelfBook } from '@/composables/useBookshelf';
-import type { PluginStorageApi } from './pluginStorage';
+import type { ReaderBookInfo, ReaderTheme } from "@/components/reader/types";
+import type { PatchShelfBookPayload, ShelfBook } from "@/composables/useBookshelf";
+import type { PluginStorageApi } from "./pluginStorage";
 
 export type ReaderPluginSlot =
-  | 'background'
-  | 'overlay-top-left'
-  | 'overlay-top-right'
-  | 'overlay-bottom-left'
-  | 'overlay-bottom-right';
+  | "background"
+  | "overlay-top-left"
+  | "overlay-top-right"
+  | "overlay-bottom-left"
+  | "overlay-bottom-right";
 
 export type ReaderContentHookStage =
-  | 'reader.content.raw'
-  | 'reader.content.cleaned'
-  | 'reader.content.beforePaginate'
-  | 'reader.content.beforeRender';
+  | "reader.content.raw"
+  | "reader.content.cleaned"
+  | "reader.content.beforePaginate"
+  | "reader.content.beforeRender";
 
 export type ReaderLifecycleHook =
-  | 'reader.session.enter'
-  | 'reader.session.exit'
-  | 'reader.session.pause'
-  | 'reader.session.resume'
-  | 'reader.chapter.change';
+  | "reader.session.enter"
+  | "reader.session.exit"
+  | "reader.session.pause"
+  | "reader.session.resume"
+  | "reader.chapter.change";
 
 export type FrontendPluginHookName = ReaderContentHookStage | ReaderLifecycleHook;
 
 export type PluginSettingScalar = string | number | boolean;
 export type PluginSettingValue = PluginSettingScalar | string[];
-export type ChineseConvertMode = 's2t' | 's2tw' | 's2hk' | 't2s' | 'tw2s' | 'hk2s';
+export type ChineseConvertMode = "s2t" | "s2tw" | "s2hk" | "t2s" | "tw2s" | "hk2s";
 export type PluginSettingInputType =
-  | 'text'
-  | 'textarea'
-  | 'password'
-  | 'number'
-  | 'switch'
-  | 'select'
-  | 'radio'
-  | 'color'
-  | 'slider'
-  | 'string-list'
-  | 'info'
-  | 'divider';
+  | "text"
+  | "textarea"
+  | "password"
+  | "number"
+  | "switch"
+  | "select"
+  | "radio"
+  | "color"
+  | "slider"
+  | "string-list"
+  | "info"
+  | "divider";
 
 export interface GlobalThemeDefinition {
   id: string;
@@ -470,7 +470,7 @@ export interface FrontendPluginRecord {
   category: string;
   enabled: boolean;
   order: number;
-  status: 'active' | 'disabled' | 'error';
+  status: "active" | "disabled" | "error";
   runtimeError: string;
   runtimeHooks: readonly FrontendPluginHookName[];
   runtimeSlots: readonly ReaderPluginSlot[];
@@ -544,10 +544,10 @@ export interface FrontendPluginApi {
     convertChinese: (text: string, mode: ChineseConvertMode) => string;
   };
   ui: {
-    toast: (message: string, type?: 'info' | 'success' | 'warning' | 'error') => Promise<void>;
+    toast: (message: string, type?: "info" | "success" | "warning" | "error") => Promise<void>;
     prompt: (options: PluginDialogOptions) => Promise<Record<string, PluginSettingValue> | null>;
     getAppTheme: () => string;
-    setAppTheme: (mode: 'auto' | 'light' | 'dark') => Promise<void>;
+    setAppTheme: (mode: "auto" | "light" | "dark") => Promise<void>;
     registerTheme: (theme: GlobalThemeDefinition) => void;
     unregisterTheme: (themeId: string) => void;
     injectCSS: (css: string, options?: { styleId?: string }) => string;

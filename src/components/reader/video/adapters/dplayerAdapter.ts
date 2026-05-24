@@ -4,11 +4,11 @@
  * 封装 DPlayer API，通过 hls.js 支持 HLS 流。
  */
 
-import type { DPlayerEvents } from 'dplayer';
-import type DPlayer from 'dplayer';
-import type Hls from 'hls.js';
-import type { IVideoPlayer, VideoPlayerEvent, VideoSource } from '../types';
-import { useAppConfig } from '../../../../composables/useAppConfig';
+import type { DPlayerEvents } from "dplayer";
+import type DPlayer from "dplayer";
+import type Hls from "hls.js";
+import type { IVideoPlayer, VideoPlayerEvent, VideoSource } from "../types";
+import { useAppConfig } from "../../../../composables/useAppConfig";
 
 export class DplayerAdapter implements IVideoPlayer {
   private player: DPlayer | null = null;
@@ -23,8 +23,8 @@ export class DplayerAdapter implements IVideoPlayer {
 
   private async initPlayer(source: VideoSource): Promise<void> {
     const [{ default: DPlayer }, hlsModule] = await Promise.all([
-      import('dplayer'),
-      import('hls.js'),
+      import("dplayer"),
+      import("hls.js"),
     ]);
 
     const Hls = hlsModule.default;
@@ -36,25 +36,25 @@ export class DplayerAdapter implements IVideoPlayer {
     const { videoDpDanmaku, videoDpTheme } = useAppConfig();
 
     // 创建播放器容器 div
-    const el = document.createElement('div');
+    const el = document.createElement("div");
     this.container.appendChild(el);
 
     const dpConfig: Record<string, unknown> = {
       container: el,
       autoplay: false,
       theme: videoDpTheme.value,
-      danmaku: videoDpDanmaku.value ? { id: 'legado-video', api: '' } : undefined,
+      danmaku: videoDpDanmaku.value ? { id: "legado-video", api: "" } : undefined,
       video: {
         url: source.url,
-        type: source.type === 'hls' ? 'customHls' : (source.type ?? 'auto'),
+        type: source.type === "hls" ? "customHls" : (source.type ?? "auto"),
       },
     };
 
     // HLS 自定义解码
-    if (source.type === 'hls' && Hls.isSupported()) {
+    if (source.type === "hls" && Hls.isSupported()) {
       dpConfig.video = {
         url: source.url,
-        type: 'customHls',
+        type: "customHls",
         customType: {
           customHls: (video: HTMLVideoElement) => {
             const hls = new Hls({
@@ -80,10 +80,10 @@ export class DplayerAdapter implements IVideoPlayer {
       const first = source.subtitles.find((s) => s.default) ?? source.subtitles[0];
       dpConfig.subtitle = {
         url: first.url,
-        type: 'webvtt',
-        fontSize: '24px',
-        bottom: '40px',
-        color: '#fff',
+        type: "webvtt",
+        fontSize: "24px",
+        bottom: "40px",
+        color: "#fff",
       };
     }
 
@@ -132,10 +132,10 @@ export class DplayerAdapter implements IVideoPlayer {
   }
 
   enterFullscreen(): void {
-    this.player?.fullScreen?.request('web');
+    this.player?.fullScreen?.request("web");
   }
   exitFullscreen(): void {
-    this.player?.fullScreen?.cancel('web');
+    this.player?.fullScreen?.cancel("web");
   }
   isFullscreen(): boolean {
     return !!document.fullscreenElement;
@@ -157,7 +157,7 @@ export class DplayerAdapter implements IVideoPlayer {
       if (videoEl) {
         try {
           videoEl.pause();
-          videoEl.removeAttribute('src');
+          videoEl.removeAttribute("src");
           videoEl.load();
         } catch {
           /* ignore */

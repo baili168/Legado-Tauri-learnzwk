@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { storeToRefs } from 'pinia';
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import { useAppConfigStore } from '@/stores';
-import type { IVideoPlayer, VideoPlayerType, VideoSource } from '../video/types';
-import { createVideoPlayer } from '../video/createPlayer';
-import { parseVideoSource } from '../video/types';
+import { storeToRefs } from "pinia";
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { useAppConfigStore } from "@/stores";
+import type { IVideoPlayer, VideoPlayerType, VideoSource } from "../video/types";
+import { createVideoPlayer } from "../video/createPlayer";
+import { parseVideoSource } from "../video/types";
 
 const props = defineProps<{
   /** chapterContent 返回的原始内容（JSON 或纯 URL） */
@@ -17,9 +17,9 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'progress', time: number, duration: number): void;
-  (e: 'ended'): void;
-  (e: 'next-chapter'): void;
+  (e: "progress", time: number, duration: number): void;
+  (e: "ended"): void;
+  (e: "next-chapter"): void;
 }>();
 
 const _appCfg = useAppConfigStore();
@@ -27,7 +27,7 @@ const { videoPlayerType, videoDefaultRate, videoAutoplay } = storeToRefs(_appCfg
 
 const playerContainer = ref<HTMLElement | null>(null);
 const playerReady = ref(false);
-const playerError = ref('');
+const playerError = ref("");
 /** 跟踪播放暂停状态（初始为暂停） */
 const isPausedState = ref(true);
 
@@ -57,14 +57,14 @@ async function initPlayer(content: string) {
       ? currentSource?.m3u8Content === newSource.m3u8Content
       : currentSource?.url === newSource.url);
   if (isSameSource) {
-    console.debug('[VideoMode] initPlayer skip: same source');
+    console.debug("[VideoMode] initPlayer skip: same source");
     return;
   }
 
   // 占用当前代次，后续所有异步检查点都必须验证代次一致
   const myGen = ++initGeneration;
   console.debug(
-    '[VideoMode] initPlayer start gen=%d type=%s url=%s',
+    "[VideoMode] initPlayer start gen=%d type=%s url=%s",
     myGen,
     videoPlayerType.value,
     newSource.url,
@@ -73,11 +73,11 @@ async function initPlayer(content: string) {
   // 清理旧实例
   destroyPlayer();
   playerReady.value = false;
-  playerError.value = '';
+  playerError.value = "";
   isPausedState.value = true;
 
   if (!content.trim() || !playerContainer.value) {
-    console.debug('[VideoMode] initPlayer abort gen=%d: empty content or no container', myGen);
+    console.debug("[VideoMode] initPlayer abort gen=%d: empty content or no container", myGen);
     return;
   }
 
@@ -89,7 +89,7 @@ async function initPlayer(content: string) {
     // 检查点 1：await createVideoPlayer 期间，可能组件已卸载或新的 initPlayer 已发起
     if (componentDestroyed || myGen !== initGeneration) {
       console.warn(
-        '[VideoMode] initPlayer discard gen=%d (destroyed=%s currentGen=%d): created player not used, destroying immediately',
+        "[VideoMode] initPlayer discard gen=%d (destroyed=%s currentGen=%d): created player not used, destroying immediately",
         myGen,
         componentDestroyed,
         initGeneration,
@@ -99,16 +99,16 @@ async function initPlayer(content: string) {
     }
 
     player = pendingPlayer;
-    console.debug('[VideoMode] initPlayer mounting gen=%d', myGen);
+    console.debug("[VideoMode] initPlayer mounting gen=%d", myGen);
 
     // await mount 确保内部播放器实例已创建，再注册事件
     // 若书源直接返回 m3u8 内容，创建 Blob URL 供播放器使用
     if (currentSource.m3u8Content) {
-      const blob = new Blob([currentSource.m3u8Content], { type: 'application/vnd.apple.mpegurl' });
+      const blob = new Blob([currentSource.m3u8Content], { type: "application/vnd.apple.mpegurl" });
       const blobUrl = URL.createObjectURL(blob);
       currentBlobUrl = blobUrl;
       currentSource = { ...currentSource, url: blobUrl };
-      console.debug('[VideoMode] created blob URL for inline m3u8 content');
+      console.debug("[VideoMode] created blob URL for inline m3u8 content");
     }
 
     await player.mount(playerContainer.value!, currentSource);
@@ -116,7 +116,7 @@ async function initPlayer(content: string) {
     // 检查点 2：mount 也是异步的，可能在此期间组件已卸载或代次已更新
     if (componentDestroyed || myGen !== initGeneration) {
       console.warn(
-        '[VideoMode] initPlayer discard after mount gen=%d (destroyed=%s currentGen=%d)',
+        "[VideoMode] initPlayer discard after mount gen=%d (destroyed=%s currentGen=%d)",
         myGen,
         componentDestroyed,
         initGeneration,
@@ -126,16 +126,16 @@ async function initPlayer(content: string) {
       return;
     }
 
-    console.debug('[VideoMode] initPlayer ready gen=%d', myGen);
+    console.debug("[VideoMode] initPlayer ready gen=%d", myGen);
 
     // 注册事件
-    player.on('play', onPlay);
-    player.on('pause', onPause);
-    player.on('loadedmetadata', onLoadedMetadata);
-    player.on('timeupdate', onTimeUpdate);
-    player.on('ended', onEnded);
-    player.on('error', onError);
-    player.on('canplay', onCanPlay);
+    player.on("play", onPlay);
+    player.on("pause", onPause);
+    player.on("loadedmetadata", onLoadedMetadata);
+    player.on("timeupdate", onTimeUpdate);
+    player.on("ended", onEnded);
+    player.on("error", onError);
+    player.on("canplay", onCanPlay);
 
     // 启动进度定时上报（每 15 秒）
     progressTimer = setInterval(reportProgress, 15_000);
@@ -143,7 +143,7 @@ async function initPlayer(content: string) {
     // 若已被更新代次抢占，不覆盖新实例的错误状态
     if (myGen === initGeneration) {
       playerError.value = `播放器初始化失败: ${err instanceof Error ? err.message : String(err)}`;
-      console.error('[VideoMode] initPlayer error gen=%d:', myGen, err);
+      console.error("[VideoMode] initPlayer error gen=%d:", myGen, err);
     }
   }
 }
@@ -161,20 +161,20 @@ function destroyPlayer() {
   if (player) {
     // 上报最终进度
     reportProgress();
-    console.debug('[VideoMode] destroyPlayer: unregistering events and destroying player');
-    player.off('play', onPlay);
-    player.off('pause', onPause);
-    player.off('loadedmetadata', onLoadedMetadata);
-    player.off('timeupdate', onTimeUpdate);
-    player.off('ended', onEnded);
-    player.off('error', onError);
-    player.off('canplay', onCanPlay);
+    console.debug("[VideoMode] destroyPlayer: unregistering events and destroying player");
+    player.off("play", onPlay);
+    player.off("pause", onPause);
+    player.off("loadedmetadata", onLoadedMetadata);
+    player.off("timeupdate", onTimeUpdate);
+    player.off("ended", onEnded);
+    player.off("error", onError);
+    player.off("canplay", onCanPlay);
     player.destroy();
     player = null;
   }
   // 清空容器
   if (playerContainer.value) {
-    playerContainer.value.innerHTML = '';
+    playerContainer.value.innerHTML = "";
   }
   playerReady.value = false;
   currentSource = null;
@@ -215,13 +215,13 @@ function onTimeUpdate() {
 
 function onEnded() {
   reportProgress();
-  emit('ended');
+  emit("ended");
   // auto-next 由父组件 VideoPlayerPage 负责（它拥有 hasNext prop）
 }
 
 function onError() {
-  playerError.value = '视频播放出错，请检查视频源是否有效';
-  console.error('[VideoMode] player error event, source url=%s', currentSource?.url);
+  playerError.value = "视频播放出错，请检查视频源是否有效";
+  console.error("[VideoMode] player error event, source url=%s", currentSource?.url);
 }
 
 function reportProgress() {
@@ -231,7 +231,7 @@ function reportProgress() {
   const time = player.getCurrentTime();
   const duration = player.getDuration();
   if (time > 0 && duration > 0) {
-    emit('progress', time, duration);
+    emit("progress", time, duration);
   }
 }
 
@@ -317,7 +317,7 @@ watch(
 
 // 播放器预加载（组件挂载即触发，动态 import 已缓存后后续切集更快）
 onMounted(() => {
-  import('../video/createPlayer')
+  import("../video/createPlayer")
     .then((m) => m.preloadPlayerModule?.(videoPlayerType.value as VideoPlayerType))
     .catch(() => {});
 });
@@ -326,7 +326,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   componentDestroyed = true;
-  console.debug('[VideoMode] onBeforeUnmount: destroying player');
+  console.debug("[VideoMode] onBeforeUnmount: destroying player");
   destroyPlayer();
 });
 </script>

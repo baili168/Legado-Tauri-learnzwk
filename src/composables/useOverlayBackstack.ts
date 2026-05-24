@@ -1,5 +1,5 @@
-import { onBeforeUnmount, watch } from 'vue';
-import { useBackStackStore } from '@/stores';
+import { onBeforeUnmount, watch } from "vue";
+import { useBackStackStore } from "@/stores";
 
 export function useOverlayBackstack(isActive: () => boolean, onClose: () => void) {
   const backStack = useBackStackStore();

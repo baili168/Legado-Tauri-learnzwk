@@ -1,5 +1,4 @@
-<script setup lang="ts">
-</script>
+<script setup lang="ts"></script>
 
 <template>
   <header class="title-bar title-bar--mobile" aria-hidden="true" />

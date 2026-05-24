@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { X, Palette, Download, Copy, Link2 } from 'lucide-vue-next';
-import { NModal, NCard, NButton, useMessage } from 'naive-ui';
-import { computed } from 'vue';
-import { useOverlayBackstack } from '@/composables/useOverlayBackstack';
+import { X, Palette, Download, Copy, Link2 } from "lucide-vue-next";
+import { NModal, NCard, NButton, useMessage } from "naive-ui";
+import { computed } from "vue";
+import { useOverlayBackstack } from "@/composables/useOverlayBackstack";
 
 const props = defineProps<{
   show: boolean;
@@ -12,7 +12,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'update:show', value: boolean): void;
+  (e: "update:show", value: boolean): void;
 }>();
 
 const message = useMessage();
@@ -26,19 +26,19 @@ const exportData = computed(() => ({
 const jsonStr = computed(() => JSON.stringify(exportData.value, null, 2));
 
 function handleClose() {
-  emit('update:show', false);
+  emit("update:show", false);
 }
 
 useOverlayBackstack(() => props.show, handleClose);
 
 function handleDownload() {
-  const safeName = props.themeName.replace(/\s/g, '_');
-  const blob = new Blob([jsonStr.value], { type: 'application/json' });
+  const safeName = props.themeName.replace(/\s/g, "_");
+  const blob = new Blob([jsonStr.value], { type: "application/json" });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
+  const a = document.createElement("a");
   a.href = url;
   a.download = `${safeName}.legado-theme.json`;
-  a.style.display = 'none';
+  a.style.display = "none";
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -48,9 +48,9 @@ function handleDownload() {
 async function handleCopyJson() {
   try {
     await navigator.clipboard.writeText(jsonStr.value);
-    message.success('已复制到剪贴板');
+    message.success("已复制到剪贴板");
   } catch {
-    message.error('复制失败');
+    message.error("复制失败");
   }
 }
 
@@ -59,19 +59,19 @@ async function handleCopyLink() {
     const base64 = btoa(unescape(encodeURIComponent(jsonStr.value)));
     const link = `legado://theme?data=${base64}`;
     await navigator.clipboard.writeText(link);
-    message.success('主题链接已复制到剪贴板');
+    message.success("主题链接已复制到剪贴板");
   } catch {
-    message.error('复制链接失败');
+    message.error("复制链接失败");
   }
 }
 
 const previewColors = computed(() => {
   const { primary, surface, error, secondary } = props.themeColors;
   return [
-    { label: 'primary', color: primary, value: primary || 'transparent' },
-    { label: 'surface', color: surface, value: surface || 'transparent' },
-    { label: 'error', color: error, value: error || 'transparent' },
-    { label: 'secondary', color: secondary, value: secondary || 'transparent' },
+    { label: "primary", color: primary, value: primary || "transparent" },
+    { label: "surface", color: surface, value: surface || "transparent" },
+    { label: "error", color: error, value: error || "transparent" },
+    { label: "secondary", color: secondary, value: secondary || "transparent" },
   ];
 });
 </script>
@@ -214,7 +214,7 @@ const previewColors = computed(() => {
   border-radius: 8px;
   overflow: auto;
   max-height: 280px;
-  font-family: var(--font-mono, 'Consolas', 'Menlo', 'Courier New', monospace);
+  font-family: var(--font-mono, "Consolas", "Menlo", "Courier New", monospace);
   font-size: var(--fs-12);
   line-height: 1.6;
   color: #cdd6f4;

@@ -1,7 +1,7 @@
-import type { ComputedRef, Ref } from 'vue';
-import type { OpenChapterOptions } from '@/components/reader/composables/useReaderChapterOpen';
+import type { ComputedRef, Ref } from "vue";
+import type { OpenChapterOptions } from "@/components/reader/composables/useReaderChapterOpen";
 
-type NavDirection = 'forward' | 'backward';
+type NavDirection = "forward" | "backward";
 
 interface ReaderNavigationControllerOptions {
   activeChapterIndex: Ref<number>;
@@ -18,8 +18,8 @@ export function createReaderNavigationController(options: ReaderNavigationContro
       return;
     }
     await options.saveDetailedProgress();
-    options.navDirection.value = 'backward';
-    await options.openChapter(options.activeChapterIndex.value - 1, { position: 'first' });
+    options.navDirection.value = "backward";
+    await options.openChapter(options.activeChapterIndex.value - 1, { position: "first" });
   }
 
   async function gotoNextChapter() {
@@ -27,8 +27,8 @@ export function createReaderNavigationController(options: ReaderNavigationContro
       return;
     }
     await options.saveDetailedProgress();
-    options.navDirection.value = 'forward';
-    await options.openChapter(options.activeChapterIndex.value + 1, { position: 'first' });
+    options.navDirection.value = "forward";
+    await options.openChapter(options.activeChapterIndex.value + 1, { position: "first" });
   }
 
   async function gotoPrevBoundary() {
@@ -36,8 +36,8 @@ export function createReaderNavigationController(options: ReaderNavigationContro
       return;
     }
     await options.saveDetailedProgress();
-    options.navDirection.value = 'backward';
-    await options.openChapter(options.activeChapterIndex.value - 1, { position: 'last' });
+    options.navDirection.value = "backward";
+    await options.openChapter(options.activeChapterIndex.value - 1, { position: "last" });
   }
 
   async function gotoNextBoundary() {
@@ -45,8 +45,8 @@ export function createReaderNavigationController(options: ReaderNavigationContro
       return;
     }
     await options.saveDetailedProgress();
-    options.navDirection.value = 'forward';
-    await options.openChapter(options.activeChapterIndex.value + 1, { position: 'first' });
+    options.navDirection.value = "forward";
+    await options.openChapter(options.activeChapterIndex.value + 1, { position: "first" });
   }
 
   async function gotoChapter(index: number) {
@@ -54,8 +54,8 @@ export function createReaderNavigationController(options: ReaderNavigationContro
       return;
     }
     await options.saveDetailedProgress();
-    options.navDirection.value = index < options.activeChapterIndex.value ? 'backward' : 'forward';
-    await options.openChapter(index, { position: 'first' });
+    options.navDirection.value = index < options.activeChapterIndex.value ? "backward" : "forward";
+    await options.openChapter(index, { position: "first" });
   }
 
   return {

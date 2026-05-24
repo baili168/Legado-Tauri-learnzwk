@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue';
-import type { ReaderTapAction } from '../types';
-import { useLandscapeDualPage } from '@/composables/useLandscapeDualPage';
+import { computed, nextTick, ref, watch } from "vue";
+import type { ReaderTapAction } from "../types";
+import { useLandscapeDualPage } from "@/composables/useLandscapeDualPage";
 
-type PagedModeVariant = 'slide' | 'cover' | 'simulation' | 'none';
-type FlipAction = 'next' | 'prev';
-type DragDir = 'left' | 'right' | null;
+type PagedModeVariant = "slide" | "cover" | "simulation" | "none";
+type FlipAction = "next" | "prev";
+type DragDir = "left" | "right" | null;
 
 const props = defineProps<{
   mode: PagedModeVariant;
@@ -26,16 +26,16 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'tap', zone: 'center'): void;
-  (e: 'update:currentPage', page: number): void;
-  (e: 'request-prev-chapter'): void;
-  (e: 'request-next-chapter'): void;
-  (e: 'progress', ratio: number): void;
+  (e: "tap", zone: "center"): void;
+  (e: "update:currentPage", page: number): void;
+  (e: "request-prev-chapter"): void;
+  (e: "request-next-chapter"): void;
+  (e: "progress", ratio: number): void;
 }>();
 
 const containerRef = ref<HTMLElement | null>(null);
 const isAnimating = ref(false);
-const boundaryMsg = ref('');
+const boundaryMsg = ref("");
 
 const { isDualPage, dualPageStyle, columnContainerClass } = useLandscapeDualPage();
 
@@ -49,7 +49,7 @@ let animationRunId = 0;
 let pendingRafId = 0;
 let cachedContainerWidth = 0;
 let rawPointerX = 0;
-let rawDragDir: Exclude<DragDir, null> = 'left';
+let rawDragDir: Exclude<DragDir, null> = "left";
 
 // simulation 阶段各层 DOM 引用
 const simulationRevealEl = ref<HTMLElement | null>(null);
@@ -66,6 +66,7 @@ let chapterChanging = false;
  * onPointerDown 通过比较时间戳差过滤掉这类合成事件。
  */
 let lastTouchTime = 0;
+let transitionEndFired = false;
 let activeAnimation: {
   action: FlipAction | null;
   commitOnFinish: boolean;
@@ -79,12 +80,12 @@ const hasPrevPage = computed(() => props.currentPage > 0);
 const hasNextPage = computed(() => props.currentPage < totalPages.value - 1);
 const leftRatio = computed(() => props.tapZoneLeft ?? 0.3);
 const rightRatio = computed(() => props.tapZoneRight ?? 0.7);
-const leftTapAction = computed<FlipAction>(() => props.tapLeftAction ?? 'prev');
-const rightTapAction = computed<FlipAction>(() => props.tapRightAction ?? 'next');
-const isLayeredMode = computed(() => props.mode === 'cover' || props.mode === 'simulation');
-const transitionDurationMs = computed(() => (props.mode === 'simulation' ? 360 : 260));
+const leftTapAction = computed<FlipAction>(() => props.tapLeftAction ?? "prev");
+const rightTapAction = computed<FlipAction>(() => props.tapRightAction ?? "next");
+const isLayeredMode = computed(() => props.mode === "cover" || props.mode === "simulation");
+const transitionDurationMs = computed(() => (props.mode === "simulation" ? 360 : 260));
 const centerRatio = computed(() => Math.max(0, rightRatio.value - leftRatio.value));
-const expandedTapZone = computed(() => props.mode === 'simulation');
+const expandedTapZone = computed(() => props.mode === "simulation");
 const menuZoneWidth = computed(() => {
   if (!expandedTapZone.value) {
     return centerRatio.value;
@@ -104,32 +105,32 @@ const tapMenuEnd = computed(() => {
   return rightRatio.value - Math.max(0, centerRatio.value - menuZoneWidth.value) / 2;
 });
 
-const currentPageHtml = computed(() => props.pages[props.currentPage] ?? '');
+const currentPageHtml = computed(() => props.pages[props.currentPage] ?? "");
 const prevPageHtml = computed(() => {
   const prev = props.pages[props.currentPage - 1];
   if (prev) {
     return prev;
   }
-  return !hasPrevPage.value ? (props.prevBoundaryPage ?? '') : '';
+  return !hasPrevPage.value ? (props.prevBoundaryPage ?? "") : "";
 });
 const nextPageHtml = computed(() => {
   const next = props.pages[props.currentPage + 1];
   if (next) {
     return next;
   }
-  return !hasNextPage.value ? (props.nextBoundaryPage ?? '') : '';
+  return !hasNextPage.value ? (props.nextBoundaryPage ?? "") : "";
 });
 
 const pageInfo = computed(() => {
   if (totalPages.value <= 0) {
-    return '';
+    return "";
   }
   return `${Math.min(props.currentPage + 1, totalPages.value)}/${totalPages.value}`;
 });
 
 const showAnyDebug = computed(() => !!props.layoutDebug || !!props.tapZoneDebug);
-const leftTapLabel = computed(() => (leftTapAction.value === 'prev' ? '上一页' : '下一页'));
-const rightTapLabel = computed(() => (rightTapAction.value === 'prev' ? '上一页' : '下一页'));
+const leftTapLabel = computed(() => (leftTapAction.value === "prev" ? "上一页" : "下一页"));
+const rightTapLabel = computed(() => (rightTapAction.value === "prev" ? "上一页" : "下一页"));
 const debugPrevWidth = computed(() => tapMenuStart.value);
 const debugCenterWidth = computed(() => Math.max(0, tapMenuEnd.value - tapMenuStart.value));
 const debugNextWidth = computed(() => Math.max(0, 1 - tapMenuEnd.value));
@@ -142,7 +143,7 @@ function showBoundary(message: string) {
   boundaryMsg.value = message;
   clearTimeout(boundaryTimer);
   boundaryTimer = window.setTimeout(() => {
-    boundaryMsg.value = '';
+    boundaryMsg.value = "";
   }, 1500);
 }
 
@@ -150,37 +151,37 @@ function canRunAction(action: FlipAction): boolean {
   if (props.busy || chapterChanging || totalPages.value <= 0) {
     return false;
   }
-  if (action === 'next') {
+  if (action === "next") {
     return hasNextPage.value || !!props.hasNextChapter;
   }
   return hasPrevPage.value || !!props.hasPrevChapter;
 }
 
 function emitAction(action: FlipAction) {
-  if (action === 'next') {
+  if (action === "next") {
     if (hasNextPage.value) {
-      emit('update:currentPage', props.currentPage + 1);
+      emit("update:currentPage", props.currentPage + 1);
       return;
     }
     if (props.hasNextChapter) {
       chapterChanging = true;
-      emit('request-next-chapter');
+      emit("request-next-chapter");
       return;
     }
-    showBoundary('已经到最后一页了');
+    showBoundary("已经到最后一页了");
     return;
   }
 
   if (hasPrevPage.value) {
-    emit('update:currentPage', props.currentPage - 1);
+    emit("update:currentPage", props.currentPage - 1);
     return;
   }
   if (props.hasPrevChapter) {
     chapterChanging = true;
-    emit('request-prev-chapter');
+    emit("request-prev-chapter");
     return;
   }
-  showBoundary('已经到最前了');
+  showBoundary("已经到最前了");
 }
 
 function clearAnimationTimer() {
@@ -191,7 +192,7 @@ function clearAnimationTimer() {
 }
 
 function animationStaysInCurrentChapter(action: FlipAction): boolean {
-  return action === 'next' ? hasNextPage.value : hasPrevPage.value;
+  return action === "next" ? hasNextPage.value : hasPrevPage.value;
 }
 
 function finishAnimation(commit = true) {
@@ -200,12 +201,40 @@ function finishAnimation(commit = true) {
 
   animationRunId += 1;
   clearAnimationTimer();
+  transitionEndFired = false;
   activeAnimation = {
     action: null,
     commitOnFinish: false,
   };
-  isAnimating.value = false;
-  resetVisualState();
+  requestAnimationFrame(() => {
+    isAnimating.value = false;
+    resetVisualState();
+  });
+
+  if (shouldCommit && action) {
+    emitAction(action);
+  }
+}
+
+function onAnimTransitionEnd() {
+  if (!isAnimating.value || transitionEndFired) {
+    return;
+  }
+  transitionEndFired = true;
+
+  const action = activeAnimation.action;
+  const shouldCommit = activeAnimation.commitOnFinish && action !== null;
+
+  animationRunId += 1;
+  clearAnimationTimer();
+  activeAnimation = {
+    action: null,
+    commitOnFinish: false,
+  };
+  requestAnimationFrame(() => {
+    isAnimating.value = false;
+    resetVisualState();
+  });
 
   if (shouldCommit && action) {
     emitAction(action);
@@ -215,7 +244,7 @@ function finishAnimation(commit = true) {
 function queueAction(action: FlipAction): boolean {
   if (!canRunAction(action)) {
     if (!props.busy && totalPages.value > 0) {
-      showBoundary(action === 'next' ? '已经到最后一页了' : '已经到最前了');
+      showBoundary(action === "next" ? "已经到最后一页了" : "已经到最前了");
     }
     return false;
   }
@@ -249,11 +278,13 @@ function queueAction(action: FlipAction): boolean {
 }
 
 function bounceBack(direction: DragDir) {
-  if (props.mode === 'none') {
+  if (props.mode === "none") {
     return;
   }
 
-  if (props.mode === 'slide') {
+  transitionEndFired = false;
+
+  if (props.mode === "slide") {
     slideSnapOffset.value = 0;
     activeAnimation = {
       action: null,
@@ -261,7 +292,7 @@ function bounceBack(direction: DragDir) {
     };
     isAnimating.value = true;
     clearAnimationTimer();
-    animationTimer = window.setTimeout(() => finishAnimation(false), transitionDurationMs.value);
+    animationTimer = window.setTimeout(() => finishAnimation(false), transitionDurationMs.value + 40);
     return;
   }
 
@@ -273,35 +304,37 @@ function bounceBack(direction: DragDir) {
   };
   isAnimating.value = true;
   clearAnimationTimer();
-  animationTimer = window.setTimeout(() => finishAnimation(false), transitionDurationMs.value);
+  animationTimer = window.setTimeout(() => finishAnimation(false), transitionDurationMs.value + 40);
 }
 
 async function runAction(action: FlipAction) {
   const runId = ++animationRunId;
 
   if (!canRunAction(action)) {
-    showBoundary(action === 'next' ? '已经到最后一页了' : '已经到最前了');
+    showBoundary(action === "next" ? "已经到最后一页了" : "已经到最前了");
     return;
   }
 
-  if (props.mode === 'none') {
+  if (props.mode === "none") {
     emitAction(action);
     return;
   }
 
-  if (props.mode === 'slide') {
-    slideSnapOffset.value = action === 'next' ? -getContainerWidth() : getContainerWidth();
+  transitionEndFired = false;
+
+  if (props.mode === "slide") {
+    slideSnapOffset.value = action === "next" ? -getContainerWidth() : getContainerWidth();
     activeAnimation = {
       action,
       commitOnFinish: true,
     };
     isAnimating.value = true;
     clearAnimationTimer();
-    animationTimer = window.setTimeout(() => finishAnimation(true), transitionDurationMs.value);
+    animationTimer = window.setTimeout(() => finishAnimation(true), transitionDurationMs.value + 40);
     return;
   }
 
-  dragDir.value = action === 'next' ? 'left' : 'right';
+  dragDir.value = action === "next" ? "left" : "right";
   layerDragOffset.value = 0;
   layerSnapTarget.value = 0;
   activeAnimation = {
@@ -314,22 +347,22 @@ async function runAction(action: FlipAction) {
     return;
   }
   void containerRef.value?.offsetHeight;
-  layerSnapTarget.value = action === 'next' ? -getContainerWidth() : getContainerWidth();
+  layerSnapTarget.value = action === "next" ? -getContainerWidth() : getContainerWidth();
   clearAnimationTimer();
-  animationTimer = window.setTimeout(() => finishAnimation(true), transitionDurationMs.value);
+  animationTimer = window.setTimeout(() => finishAnimation(true), transitionDurationMs.value + 40);
 }
 
 function flipNext() {
-  return queueAction('next');
+  return queueAction("next");
 }
 
 function flipPrev() {
-  return queueAction('prev');
+  return queueAction("prev");
 }
 
 function goToPage(page: number) {
   if (page >= 0 && page < totalPages.value) {
-    emit('update:currentPage', page);
+    emit("update:currentPage", page);
   }
 }
 
@@ -349,14 +382,14 @@ watch(
   () => [props.currentPage, totalPages.value] as const,
   ([page, total]) => {
     if (total <= 0) {
-      emit('progress', 0);
+      emit("progress", 0);
       return;
     }
     if (total === 1) {
-      emit('progress', 1);
+      emit("progress", 1);
       return;
     }
-    emit('progress', Math.min(1, Math.max(0, page / (total - 1))));
+    emit("progress", Math.min(1, Math.max(0, page / (total - 1))));
   },
   { immediate: true },
 );
@@ -404,15 +437,15 @@ const layerDragOffset = ref(0);
 const layerSnapTarget = ref(0);
 
 const fgHtml = computed(() =>
-  dragDir.value === 'right' ? prevPageHtml.value : currentPageHtml.value,
+  dragDir.value === "right" ? prevPageHtml.value : currentPageHtml.value,
 );
 const bgHtml = computed(() =>
-  dragDir.value === 'right' ? currentPageHtml.value : nextPageHtml.value,
+  dragDir.value === "right" ? currentPageHtml.value : nextPageHtml.value,
 );
 
 const coverTranslateX = computed(() => {
   const width = getContainerWidth();
-  const base = dragDir.value === 'right' ? -width : 0;
+  const base = dragDir.value === "right" ? -width : 0;
   return base + (isAnimating.value ? layerSnapTarget.value : layerDragOffset.value);
 });
 
@@ -445,7 +478,7 @@ function getProgressByVisualEdge(edgeX: number, width: number) {
 }
 
 function updateSimulationPointer(event: MouseEvent | TouchEvent) {
-  if (props.mode !== 'simulation') {
+  if (props.mode !== "simulation") {
     simulationPointerX.value = null;
     rawPointerX = 0;
     return;
@@ -469,7 +502,7 @@ function getSimulationProgressByPointer(
   direction: Exclude<DragDir, null>,
 ) {
   const edgeX =
-    direction === 'left' ? clamp(pointerX, 0, width) : clamp(width - pointerX, 0, width);
+    direction === "left" ? clamp(pointerX, 0, width) : clamp(width - pointerX, 0, width);
   return getProgressByVisualEdge(edgeX, width);
 }
 
@@ -491,7 +524,7 @@ function applySimulationDragStyles() {
   const curlScale = getCurlScale(progress);
   const edgeX = getVisualEdgeX(foldX, foldW, progress);
   const curlWidth =
-    direction === 'left' ? Math.max(0, foldX - edgeX) : Math.max(0, width - edgeX - foldW);
+    direction === "left" ? Math.max(0, foldX - edgeX) : Math.max(0, width - edgeX - foldW);
 
   const revealEl = simulationRevealEl.value;
   const currentEl = simulationCurrentEl.value;
@@ -503,30 +536,26 @@ function applySimulationDragStyles() {
   }
 
   revealEl.style.clipPath =
-    direction === 'left'
+    direction === "left"
       ? `inset(0 0 0 ${foldX}px)`
       : `inset(0 ${Math.max(0, width - foldW)}px 0 0)`;
 
   currentEl.style.clipPath =
-    direction === 'left' ? `inset(0 ${foldW}px 0 0)` : `inset(0 0 0 ${foldW}px)`;
+    direction === "left" ? `inset(0 ${foldW}px 0 0)` : `inset(0 0 0 ${foldW}px)`;
 
-  curlEl.style.left = `${direction === 'left' ? edgeX : foldW}px`;
+  curlEl.style.transform = `translateX(${direction === "left" ? edgeX : foldW}px)`;
   curlEl.style.width = `${curlWidth}px`;
-  curlEl.style.opacity = progress > 0 ? '1' : '0';
+  curlEl.style.opacity = progress > 0 ? "1" : "0";
 
-  if (direction === 'left') {
-    curlContentEl.style.left = `${width * curlScale + 8}px`;
-    curlContentEl.style.right = '';
-    curlContentEl.style.transform = `scaleX(${-curlScale})`;
-    curlContentEl.style.transformOrigin = 'left center';
+  if (direction === "left") {
+    curlContentEl.style.transform = `translateX(${width * curlScale + 8}px) scaleX(${-curlScale})`;
+    curlContentEl.style.transformOrigin = "left center";
   } else {
-    curlContentEl.style.right = `${width * curlScale + 8}px`;
-    curlContentEl.style.left = '';
-    curlContentEl.style.transform = `scaleX(${-curlScale})`;
-    curlContentEl.style.transformOrigin = 'right center';
+    curlContentEl.style.transform = `translateX(-${width * curlScale + 8}px) scaleX(${-curlScale})`;
+    curlContentEl.style.transformOrigin = "right center";
   }
 
-  shadowEl.style.left = `${direction === 'left' ? Math.max(0, foldX - 12) : Math.max(0, foldW)}px`;
+  shadowEl.style.transform = `translateX(${direction === "left" ? Math.max(0, foldX - 12) : Math.max(0, foldW)}px)${direction === "right" ? " scaleX(-1)" : ""}`;
   shadowEl.style.opacity = `${Math.min(0.38, progress * 0.38)}`;
 }
 
@@ -549,24 +578,24 @@ function clearSimulationDragStyles() {
   const curlContentEl = simulationCurlContentEl.value;
   const shadowEl = simulationShadowEl.value;
   if (revealEl) {
-    revealEl.style.cssText = '';
+    revealEl.style.cssText = "";
   }
   if (currentEl) {
-    currentEl.style.cssText = '';
+    currentEl.style.cssText = "";
   }
   if (curlEl) {
-    curlEl.style.cssText = '';
+    curlEl.style.cssText = "";
   }
   if (curlContentEl) {
-    curlContentEl.style.cssText = '';
+    curlContentEl.style.cssText = "";
   }
   if (shadowEl) {
-    shadowEl.style.cssText = '';
+    shadowEl.style.cssText = "";
   }
 }
 
 function syncSimulationOffsetFromPointer(direction: Exclude<DragDir, null>) {
-  if (props.mode !== 'simulation') {
+  if (props.mode !== "simulation") {
     simulationPointerX.value = null;
     rawPointerX = 0;
     return;
@@ -588,13 +617,13 @@ function syncSimulationOffsetFromPointer(direction: Exclude<DragDir, null>) {
   }
 
   const progress = getSimulationProgressByPointer(pointerX, width, direction);
-  layerDragOffset.value = (direction === 'left' ? -1 : 1) * width * progress;
+  layerDragOffset.value = (direction === "left" ? -1 : 1) * width * progress;
   simulationPointerX.value = null;
 }
 
 const simulationState = computed(() => {
   const width = getContainerWidth();
-  const direction: Exclude<DragDir, null> = dragDir.value === 'right' ? 'right' : 'left';
+  const direction: Exclude<DragDir, null> = dragDir.value === "right" ? "right" : "left";
   const offset = isAnimating.value ? layerSnapTarget.value : layerDragOffset.value;
   const progress =
     width <= 0
@@ -607,43 +636,41 @@ const simulationState = computed(() => {
   const curlScale = getCurlScale(progress);
   const edgeX = getVisualEdgeX(foldX, foldW, progress);
   const curlWidth =
-    direction === 'left' ? Math.max(0, foldX - edgeX) : Math.max(0, width - edgeX - foldW);
+    direction === "left" ? Math.max(0, foldX - edgeX) : Math.max(0, width - edgeX - foldW);
 
   return {
     direction,
-    revealHtml: direction === 'left' ? nextPageHtml.value : prevPageHtml.value,
+    revealHtml: direction === "left" ? nextPageHtml.value : prevPageHtml.value,
     revealStyle: {
       clipPath:
-        direction === 'left'
+        direction === "left"
           ? `inset(0 0 0 ${foldX}px)`
           : `inset(0 ${Math.max(0, width - foldW)}px 0 0)`,
     },
     currentStyle: {
-      clipPath: direction === 'left' ? `inset(0 ${foldW}px 0 0)` : `inset(0 0 0 ${foldW}px)`,
+      clipPath: direction === "left" ? `inset(0 ${foldW}px 0 0)` : `inset(0 0 0 ${foldW}px)`,
     },
     curlStyle: {
-      left: `${direction === 'left' ? edgeX : foldW}px`,
+      transform: `translateX(${direction === "left" ? edgeX : foldW}px)`,
       width: `${curlWidth}px`,
-      opacity: progress > 0 ? '1' : '0',
+      opacity: progress > 0 ? "1" : "0",
     },
     curlContentStyle:
-      direction === 'left'
+      direction === "left"
         ? {
-            left: `${width * curlScale + 8}px`,
             width: `${width}px`,
-            opacity: '1',
-            transform: `scaleX(${-curlScale})`,
-            transformOrigin: 'left center',
+            opacity: "1",
+            transform: `translateX(${width * curlScale + 8}px) scaleX(${-curlScale})`,
+            transformOrigin: "left center",
           }
         : {
-            right: `${width * curlScale + 8}px`,
             width: `${width}px`,
-            opacity: '1',
-            transform: `scaleX(${-curlScale})`,
-            transformOrigin: 'right center',
+            opacity: "1",
+            transform: `translateX(-${width * curlScale + 8}px) scaleX(${-curlScale})`,
+            transformOrigin: "right center",
           },
     shadowStyle: {
-      left: `${direction === 'left' ? Math.max(0, foldX - 12) : Math.max(0, foldW)}px`,
+      transform: `translateX(${direction === "left" ? Math.max(0, foldX - 12) : Math.max(0, foldW)}px)${direction === "right" ? " scaleX(-1)" : ""}`,
       opacity: `${Math.min(0.38, progress * 0.38)}`,
     },
   };
@@ -673,20 +700,20 @@ function resetVisualState() {
 }
 
 function getClientX(e: MouseEvent | TouchEvent): number {
-  if ('touches' in e && e.touches.length > 0) {
+  if ("touches" in e && e.touches.length > 0) {
     return e.touches[0].clientX;
   }
-  if ('changedTouches' in e && e.changedTouches.length > 0) {
+  if ("changedTouches" in e && e.changedTouches.length > 0) {
     return e.changedTouches[0].clientX;
   }
   return (e as MouseEvent).clientX;
 }
 
 function getClientY(e: MouseEvent | TouchEvent): number {
-  if ('touches' in e && e.touches.length > 0) {
+  if ("touches" in e && e.touches.length > 0) {
     return e.touches[0].clientY;
   }
-  if ('changedTouches' in e && e.changedTouches.length > 0) {
+  if ("changedTouches" in e && e.changedTouches.length > 0) {
     return e.changedTouches[0].clientY;
   }
   return (e as MouseEvent).clientY;
@@ -696,7 +723,7 @@ function onPointerDown(e: MouseEvent | TouchEvent) {
   if (props.busy || props.selectionMode) {
     return;
   }
-  if (!('touches' in e) && 'button' in e && e.button !== 0) {
+  if (!("touches" in e) && "button" in e && e.button !== 0) {
     return;
   }
   // 动画进行中拒绝新手势：避免 resetVisualState() 打断正在播放的 snap 动画导致视觉跳变
@@ -708,7 +735,7 @@ function onPointerDown(e: MouseEvent | TouchEvent) {
   // 真实触摸事件：TouchEvent（含 touches 属性）或 PointerEvent 且 pointerType='touch'
   // 合成鼠标事件：MouseEvent（不含 touches）且 pointerType 不为 'touch'
   const isTouch =
-    'touches' in e || ('pointerType' in e && (e as PointerEvent).pointerType === 'touch');
+    "touches" in e || ("pointerType" in e && (e as PointerEvent).pointerType === "touch");
   if (isTouch) {
     lastTouchTime = Date.now();
   } else if (Date.now() - lastTouchTime < 600) {
@@ -726,7 +753,7 @@ function onPointerDown(e: MouseEvent | TouchEvent) {
   cachedContainerWidth = containerRef.value?.clientWidth ?? window.innerWidth;
   resetVisualState();
   updateSimulationPointer(e);
-  if ('pointerId' in e) {
+  if ("pointerId" in e) {
     (e.currentTarget as HTMLElement | null)?.setPointerCapture?.((e as PointerEvent).pointerId);
   }
 }
@@ -752,13 +779,13 @@ function onPointerMove(e: MouseEvent | TouchEvent) {
     directionLocked = true;
     isHorizontal = Math.abs(dx) > Math.abs(dy);
     if (isHorizontal && isLayeredMode.value) {
-      dragDir.value = dx < 0 ? 'left' : 'right';
+      dragDir.value = dx < 0 ? "left" : "right";
     }
   }
 
-  if (props.mode === 'none') {
+  if (props.mode === "none") {
     hasMoved = Math.abs(dx) > 10 || Math.abs(dy) > 10;
-    if (isHorizontal && 'cancelable' in e && e.cancelable) {
+    if (isHorizontal && "cancelable" in e && e.cancelable) {
       e.preventDefault();
     }
     return;
@@ -768,7 +795,7 @@ function onPointerMove(e: MouseEvent | TouchEvent) {
     return;
   }
 
-  if ('cancelable' in e && e.cancelable) {
+  if ("cancelable" in e && e.cancelable) {
     e.preventDefault();
   }
 
@@ -780,14 +807,14 @@ function onPointerMove(e: MouseEvent | TouchEvent) {
   const offset =
     atPrevBoundary || atNextBoundary ? dx * 0.2 : Math.max(-width, Math.min(width, dx));
 
-  if (props.mode === 'slide') {
+  if (props.mode === "slide") {
     slideDragOffset.value = offset;
     return;
   }
 
   // simulation 模式：用 rAF 直接写 DOM，不走 Vue 响应式
-  if (props.mode === 'simulation') {
-    rawDragDir = dx < 0 ? 'left' : 'right';
+  if (props.mode === "simulation") {
+    rawDragDir = dx < 0 ? "left" : "right";
     scheduleSimulationFrame();
     return;
   }
@@ -818,7 +845,7 @@ function handleTap(e: MouseEvent | TouchEvent) {
     return;
   }
 
-  emit('tap', 'center');
+  emit("tap", "center");
 }
 
 function onPointerUp(e: MouseEvent | TouchEvent) {
@@ -832,7 +859,7 @@ function onPointerUp(e: MouseEvent | TouchEvent) {
   }
 
   dragging = false;
-  if ('pointerId' in e) {
+  if ("pointerId" in e) {
     (e.currentTarget as HTMLElement | null)?.releasePointerCapture?.((e as PointerEvent).pointerId);
   }
 
@@ -853,7 +880,7 @@ function onPointerUp(e: MouseEvent | TouchEvent) {
   const velocity = Math.abs(dx) / Math.max(duration, 1);
   const shouldFlip =
     velocity > VELOCITY_THRESHOLD || Math.abs(dx) > getContainerWidth() * DISTANCE_RATIO;
-  const direction: DragDir = dx < 0 ? 'left' : 'right';
+  const direction: DragDir = dx < 0 ? "left" : "right";
 
   syncSimulationOffsetFromPointer(direction);
 
@@ -862,22 +889,22 @@ function onPointerUp(e: MouseEvent | TouchEvent) {
     return;
   }
 
-  if (direction === 'left') {
-    if (!canRunAction('next')) {
-      showBoundary('已经到最后一页了');
+  if (direction === "left") {
+    if (!canRunAction("next")) {
+      showBoundary("已经到最后一页了");
       bounceBack(direction);
       return;
     }
-    runAction('next');
+    runAction("next");
     return;
   }
 
-  if (!canRunAction('prev')) {
-    showBoundary('已经到最前了');
+  if (!canRunAction("prev")) {
+    showBoundary("已经到最前了");
     bounceBack(direction);
     return;
   }
-  runAction('prev');
+  runAction("prev");
 }
 
 // ── TTS 高亮辅助 ─────────────────────────────────────────────────────────
@@ -888,16 +915,16 @@ function getActivePageEl(): Element | null {
   if (!root) {
     return null;
   }
-  if (props.mode === 'slide') {
+  if (props.mode === "slide") {
     // slide: 三列布局，中间列是当前页
-    const track = root.querySelector('.paged-mode__slide-track');
+    const track = root.querySelector(".paged-mode__slide-track");
     return track ? (track.children[1] ?? null) : null;
   }
-  if (props.mode === 'cover' || props.mode === 'simulation') {
-    return root.querySelector('.paged-mode__fg');
+  if (props.mode === "cover" || props.mode === "simulation") {
+    return root.querySelector(".paged-mode__fg");
   }
   // none 模式
-  return root.querySelector('.paged-mode__page--none');
+  return root.querySelector(".paged-mode__page--none");
 }
 
 /** 高亮当前页第 lineIdx 行（0-based），清除之前的高亮 */
@@ -905,8 +932,8 @@ function highlightLine(lineIdx: number): void {
   const root = containerRef.value;
   if (root) {
     root
-      .querySelectorAll<HTMLElement>('.reader-line.tts-playing')
-      .forEach((el) => el.classList.remove('tts-playing'));
+      .querySelectorAll<HTMLElement>(".reader-line.tts-playing")
+      .forEach((el) => el.classList.remove("tts-playing"));
   }
 
   const page = getActivePageEl();
@@ -914,15 +941,15 @@ function highlightLine(lineIdx: number): void {
     return;
   }
 
-  const lines = page.querySelectorAll<HTMLElement>('.reader-line');
-  lines[lineIdx]?.classList.add('tts-playing');
+  const lines = page.querySelectorAll<HTMLElement>(".reader-line");
+  lines[lineIdx]?.classList.add("tts-playing");
 }
 
 /** 清除所有 TTS 高亮 */
 function clearTtsHighlight(): void {
   containerRef.value
-    ?.querySelectorAll<HTMLElement>('.reader-line.tts-playing')
-    .forEach((el) => el.classList.remove('tts-playing'));
+    ?.querySelectorAll<HTMLElement>(".reader-line.tts-playing")
+    .forEach((el) => el.classList.remove("tts-playing"));
 }
 
 defineExpose({
@@ -967,6 +994,7 @@ defineExpose({
         class="paged-mode__slide-track"
         :class="{ 'paged-mode__slide-track--snapping': isAnimating }"
         :style="{ transform: `translateX(${slideTrackTranslateX}px)` }"
+        @transitionend="onAnimTransitionEnd"
       >
         <div
           class="paged-mode__page"
@@ -999,6 +1027,7 @@ defineExpose({
           'paged-mode__page--layout-debug': layoutDebug,
         }"
         :style="{ transform: `translateX(${coverTranslateX}px)` }"
+        @transitionend="onAnimTransitionEnd"
         v-html="fgHtml"
       />
     </template>
@@ -1010,6 +1039,7 @@ defineExpose({
           `paged-mode__simulation-stage--${simulationState.direction}`,
           { 'paged-mode__simulation-stage--snapping': isAnimating },
         ]"
+        @transitionend="onAnimTransitionEnd"
       >
         <div
           ref="simulationRevealEl"
@@ -1135,6 +1165,7 @@ defineExpose({
   width: 300%;
   height: 100%;
   will-change: transform;
+  backface-visibility: hidden;
 }
 
 .paged-mode__slide-track--snapping {
@@ -1153,6 +1184,9 @@ defineExpose({
   background-repeat: var(--reader-bg-repeat, no-repeat);
   background-attachment: var(--reader-bg-attachment, scroll);
   background-blend-mode: var(--reader-bg-blend-mode, normal);
+  backface-visibility: hidden;
+  contain: layout style paint;
+  transform: translateZ(0);
 }
 
 .paged-mode__slide-track .paged-mode__page {
@@ -1169,6 +1203,8 @@ defineExpose({
 .paged-mode__fg {
   z-index: 1;
   will-change: transform;
+  backface-visibility: hidden;
+  contain: layout style paint;
   box-shadow: 4px 0 20px rgba(0, 0, 0, 0.12);
 }
 
@@ -1184,22 +1220,28 @@ defineExpose({
 .paged-mode__simulation-reveal {
   z-index: 0;
   will-change: clip-path;
+  backface-visibility: hidden;
+  contain: layout style paint;
 }
 
 .paged-mode__simulation-current {
   z-index: 1;
   will-change: clip-path;
+  backface-visibility: hidden;
+  contain: layout style paint;
 }
 
 .paged-mode__simulation-curl {
   position: absolute;
   top: 0;
+  left: 0;
   height: 100%;
   z-index: 3;
   overflow: hidden;
   pointer-events: none;
   border-radius: 0 0 18px 0;
-  will-change: left, width, opacity;
+  will-change: transform, width, opacity;
+  backface-visibility: hidden;
   box-shadow:
     -8px 0 10px rgba(0, 0, 0, 0.08),
     inset 6px 0 8px rgba(0, 0, 0, 0.04);
@@ -1215,9 +1257,11 @@ defineExpose({
 .paged-mode__simulation-curl-page {
   position: absolute;
   top: 0;
+  left: 0;
   height: 100%;
   color: var(--reader-text-color, var(--color-text-primary));
   will-change: transform;
+  backface-visibility: hidden;
 }
 
 .paged-mode__simulation-curl-gloss {
@@ -1241,11 +1285,12 @@ defineExpose({
 .paged-mode__simulation-shadow {
   position: absolute;
   top: 0;
+  left: 0;
   width: 12px;
   height: 100%;
   z-index: 2;
   pointer-events: none;
-  will-change: left, opacity;
+  will-change: transform, opacity;
   background: linear-gradient(
     to left,
     rgba(0, 0, 0, 0.16) 0%,
@@ -1264,15 +1309,13 @@ defineExpose({
 .paged-mode__simulation-stage--snapping .paged-mode__simulation-shadow {
   transition:
     clip-path 0.36s cubic-bezier(0.2, 0.72, 0.18, 1),
-    left 0.36s cubic-bezier(0.2, 0.72, 0.18, 1),
+    transform 0.36s cubic-bezier(0.2, 0.72, 0.18, 1),
     width 0.36s cubic-bezier(0.2, 0.72, 0.18, 1),
     opacity 0.26s ease;
 }
 
 .paged-mode__simulation-stage--snapping .paged-mode__simulation-curl-page {
   transition:
-    left 0.36s cubic-bezier(0.2, 0.72, 0.18, 1),
-    right 0.36s cubic-bezier(0.2, 0.72, 0.18, 1),
     transform 0.36s cubic-bezier(0.2, 0.72, 0.18, 1),
     opacity 0.26s ease;
 }

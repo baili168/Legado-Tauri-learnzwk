@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { Menu, Sun, Moon, Volume2, Settings } from 'lucide-vue-next';
-import { ref, computed, watch } from 'vue';
-import { useReaderSettingsStore, type ChapterItem } from '@/stores';
-import { useResponsiveControl } from '@/composables/useResponsiveControl';
-import ReaderSettingsPanel from './ReaderSettingsPanel.vue';
-import { PRESET_THEMES } from './types';
+import { Menu, Sun, Moon, Volume2, Settings, PenLine } from "lucide-vue-next";
+import { ref, computed, watch } from "vue";
+import { useReaderSettingsStore, type ChapterItem } from "@/stores";
+import { useResponsiveControl } from "@/composables/useResponsiveControl";
+import ReaderSettingsPanel from "./ReaderSettingsPanel.vue";
+import { PRESET_THEMES } from "./types";
 
 const props = withDefaults(
   defineProps<{
@@ -22,20 +22,20 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{
-  (e: 'prev'): void;
-  (e: 'next'): void;
-  (e: 'goto', idx: number): void;
-  (e: 'open-toc'): void;
-  (e: 'settings-visible', val: boolean): void;
-  (e: 'dump-pagination-layout'): void;
-  (e: 'tts-toggle'): void;
+  (e: "prev"): void;
+  (e: "next"): void;
+  (e: "goto", idx: number): void;
+  (e: "open-toc"): void;
+  (e: "settings-visible", val: boolean): void;
+  (e: "dump-pagination-layout"): void;
+  (e: "tts-toggle"): void;
 }>();
 
 const settingsRef = ref<InstanceType<typeof ReaderSettingsPanel> | null>(null);
 const showSettings = ref(false);
 
 const { breakpoint: bp } = useResponsiveControl();
-const isWideLayout = computed(() => bp.value === 'expanded' || bp.value === 'wide');
+const isWideLayout = computed(() => bp.value === "expanded" || bp.value === "wide");
 
 function toggleSettings() {
   if (showSettings.value) {
@@ -49,7 +49,7 @@ function closeSettings() {
   showSettings.value = false;
 }
 
-watch(showSettings, (val) => emit('settings-visible', val));
+watch(showSettings, (val) => emit("settings-visible", val));
 
 defineExpose({ closeSettings });
 
@@ -58,7 +58,7 @@ const sliderValue = computed({
   set: (val: number) => {
     const idx = val - 1;
     if (idx !== props.currentIndex && idx >= 0 && idx < props.chapters.length) {
-      emit('goto', idx);
+      emit("goto", idx);
     }
   },
 });
@@ -69,8 +69,14 @@ const NIGHT_THEME = PRESET_THEMES[4];
 const DAY_THEME = PRESET_THEMES[0];
 
 /* ---- TTS 状态（仅用于高亮按钮） ---- */
-import { useTts } from '@/composables/useTts';
+import { useTts } from "@/composables/useTts";
+import { useTtsController } from "@/composables/useTtsController";
 const tts = useTts();
+const ttsCtrl = useTtsController();
+
+const isTtsActive = computed(
+  () => tts.isPlaying.value || tts.isLoading.value || ttsCtrl.isReading.value,
+);
 
 const isNight = computed(() => settings.theme.name === NIGHT_THEME.name);
 
@@ -126,17 +132,25 @@ function toggleDayNight() {
       <button class="reader-bottom-bar__action" @click="toggleDayNight">
         <Sun v-if="isNight" :size="20" />
         <Moon v-else :size="20" />
-        <span>{{ isNight ? '日间' : '夜间' }}</span>
+        <span>{{ isNight ? "日间" : "夜间" }}</span>
       </button>
       <!-- TTS 按钮：漫画/视频模式无文本，不显示 -->
       <button
         v-if="sourceType !== 'comic' && sourceType !== 'video'"
         class="reader-bottom-bar__action"
-        :class="{ 'reader-bottom-bar__action--active': tts.isPlaying.value || tts.isLoading.value }"
+        :class="{ 'reader-bottom-bar__action--active': isTtsActive }"
         @click="emit('tts-toggle')"
       >
         <Volume2 :size="20" />
         <span>朗读</span>
+      </button>
+
+      <button
+        class="reader-bottom-bar__action"
+        @click="emit('toggle-annotations-panel')"
+      >
+        <PenLine :size="20" />
+        <span>标注</span>
       </button>
 
       <button
@@ -233,8 +247,8 @@ function toggleDayNight() {
 /* 显隐过渡 */
 .reader-bottom-bar-new {
   transition:
-    opacity var(--dur-base) var(--ease-standard),
-    transform var(--dur-base) var(--ease-standard);
+    opacity 150ms var(--ease-standard),
+    transform 150ms var(--ease-standard);
 }
 
 .reader-bottom-bar--hidden {

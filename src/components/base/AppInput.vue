@@ -10,17 +10,17 @@ defineProps<{
 }>();
 
 const emit = defineEmits<{
-  'update:modelValue': [value: string];
+  "update:modelValue": [value: string];
   search: [value: string];
 }>();
 
 function onInput(event: Event) {
-  emit('update:modelValue', (event.target as HTMLInputElement).value);
+  emit("update:modelValue", (event.target as HTMLInputElement).value);
 }
 
 function onKeyDown(event: KeyboardEvent) {
-  if (event.key === 'Enter') {
-    emit('search', (event.target as HTMLInputElement).value);
+  if (event.key === "Enter") {
+    emit("search", (event.target as HTMLInputElement).value);
   }
 }
 </script>

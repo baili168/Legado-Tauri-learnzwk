@@ -7,10 +7,10 @@
  *   input — 带输入框，关闭时将输入值发回 Rust
  *   repl  — 嵌入式 JS REPL，可双向与 Boa 引擎交互
  */
-import { ref, computed, watch } from 'vue';
-import type { DialogRequest } from '@/stores';
-import { useOverlayBackstack } from '@/composables/useOverlayBackstack';
-import { useScriptBridgeStore } from '@/stores';
+import { ref, computed, watch } from "vue";
+import type { DialogRequest } from "@/stores";
+import { useOverlayBackstack } from "@/composables/useOverlayBackstack";
+import { useScriptBridgeStore } from "@/stores";
 
 const bridge = useScriptBridgeStore();
 
@@ -23,10 +23,10 @@ const visible = computed(() => current.value !== null);
 useOverlayBackstack(() => visible.value, handleClose);
 
 // ── input 模式 ──────────────────────────────────────────────────────────
-const inputValue = ref('');
+const inputValue = ref("");
 
 // ── repl 模式 ───────────────────────────────────────────────────────────
-const replCode = ref('');
+const replCode = ref("");
 const replOutput = ref<string[]>([]);
 const replRunning = ref(false);
 const replContextFile = ref<string | undefined>(undefined);
@@ -36,12 +36,12 @@ watch(current, (req) => {
   if (!req) {
     return;
   }
-  inputValue.value = '';
-  replCode.value = '';
+  inputValue.value = "";
+  replCode.value = "";
   replOutput.value = [];
   replContextFile.value = undefined;
   // 如果 content 是字符串，直接作为 repl 初始代码
-  if (req.kind === 'repl' && typeof req.content === 'string') {
+  if (req.kind === "repl" && typeof req.content === "string") {
     replCode.value = req.content;
   }
 });
@@ -51,7 +51,7 @@ function handleConfirm() {
   if (!current.value) {
     return;
   }
-  const returnValue = current.value.kind === 'input' ? inputValue.value : null;
+  const returnValue = current.value.kind === "input" ? inputValue.value : null;
   bridge.resolveDialog(current.value.id, returnValue);
 }
 
@@ -87,7 +87,7 @@ function clearOutput() {
 
 // 内容格式化：对象类型转 JSON 字符串
 function formatContent(content: unknown): string {
-  if (typeof content === 'string') {
+  if (typeof content === "string") {
     return content;
   }
   try {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ShellLogLevel } from '@/stores';
+import type { ShellLogLevel } from "@/stores";
 
 withDefaults(
   defineProps<{
@@ -14,18 +14,18 @@ withDefaults(
     showLogZone?: boolean;
   }>(),
   {
-    latestLogLevel: 'INFO',
-    latestLogMessage: '',
-    vueVersion: '0.0.0',
-    tauriVersion: '',
-    platformLabel: '-',
+    latestLogLevel: "INFO",
+    latestLogMessage: "",
+    vueVersion: "0.0.0",
+    tauriVersion: "",
+    platformLabel: "-",
     showLogZone: false,
   },
 );
 
 const emit = defineEmits<{
-  'toggle-log-window': [];
-  'open-about': [];
+  "toggle-log-window": [];
+  "open-about": [];
 }>();
 </script>
 
@@ -61,7 +61,7 @@ const emit = defineEmits<{
         :class="`task-bar__log-level--${latestLogLevel.toLowerCase()}`"
         >{{ latestLogLevel }}</span
       >
-      <span class="task-bar__log-msg">{{ latestLogMessage || '暂无日志' }}</span>
+      <span class="task-bar__log-msg">{{ latestLogMessage || "暂无日志" }}</span>
     </button>
   </footer>
 </template>

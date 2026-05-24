@@ -1,6 +1,7 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import {
   ChevronDown,
+  GripVertical,
   ListMusic,
   Pause,
   Play,
@@ -9,27 +10,20 @@ import {
   Shuffle,
   SkipBack,
   SkipForward,
+  Trash2,
+  Upload,
   Volume2,
   VolumeX,
-} from 'lucide-vue-next';
-/**
- * 全屏沉浸式音乐播放页
- *
- * 设计：
- * - 顶部：返回（最小化到 mini 条）+ 歌单/书名
- * - 中间：大封面（旋转动画）+ 标题/作者 + 进度条 + 时间
- * - 控制：随机/上一首/播放-暂停/下一首/循环模式
- * - 右下：歌单切换按钮（弹出抽屉显示曲目列表）
- *
- * 通过 Teleport 挂载到 body，并接入 useOverlayBackstack 兼容返回键/Esc。
- */
-import { storeToRefs } from 'pinia';
-import { computed, ref } from 'vue';
-import { useOverlayBackstack } from '@/composables/useOverlayBackstack';
-import { useMusicPlayerStore, type PlayMode } from '@/stores';
-import { getCoverImageUrl } from '@/utils/coverImage';
+} from "lucide-vue-next";
+import { storeToRefs } from "pinia";
+import { computed, ref } from "vue";
+import { useAudioPlaylist } from "@/composables/useAudioPlaylist";
+import { useOverlayBackstack } from "@/composables/useOverlayBackstack";
+import { useMusicPlayerStore, type PlayMode } from "@/stores";
+import { getCoverImageUrl } from "@/utils/coverImage";
 
 const player = useMusicPlayerStore();
+const audioPlaylist = useAudioPlaylist();
 const {
   showFullPlayer,
   hasSession,
@@ -50,6 +44,12 @@ const {
 const cover = computed(() => getCoverImageUrl(book.value?.coverUrl));
 const showQueue = ref(false);
 
+const isLocalSession = computed(() => book.value?.fileName === "local-playlist");
+const isLocalType = computed(() => {
+  if (!currentTrack.value?.audioUrl) return false;
+  return currentTrack.value.audioUrl.startsWith("blob:") || currentTrack.value.audioUrl.startsWith("file://");
+});
+
 const progressPct = computed(() => {
   if (!Number.isFinite(duration.value) || duration.value <= 0) {
     return 0;
@@ -59,12 +59,12 @@ const progressPct = computed(() => {
 
 function formatTime(secs: number): string {
   if (!Number.isFinite(secs) || secs <= 0) {
-    return '00:00';
+    return "00:00";
   }
   const total = Math.floor(secs);
   const m = Math.floor(total / 60);
   const s = total % 60;
-  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
 function close() {
@@ -110,18 +110,22 @@ function onProgressPointerUp(e: PointerEvent) {
 }
 
 // ── 控制 ────────────────────────────────────────────────────────────────
-const PLAY_MODE_CYCLE: PlayMode[] = ['order', 'list-loop', 'repeat-one', 'shuffle'];
+const PLAY_MODE_CYCLE: PlayMode[] = ["order", "list-loop", "repeat-one", "shuffle"];
 const PLAY_MODE_LABEL: Record<PlayMode, string> = {
-  order: '顺序播放',
-  'list-loop': '列表循环',
-  'repeat-one': '单曲循环',
-  shuffle: '随机播放',
+  order: "顺序播放",
+  "list-loop": "列表循环",
+  "repeat-one": "单曲循环",
+  shuffle: "随机播放",
 };
 
 function togglePlayMode() {
   const current = PLAY_MODE_CYCLE.indexOf(playMode.value);
   const next = PLAY_MODE_CYCLE[(current + 1) % PLAY_MODE_CYCLE.length];
-  player.setPlayMode(next);
+  if (isLocalSession.value) {
+    audioPlaylist.setLoopMode(next);
+  } else {
+    player.setPlayMode(next);
+  }
 }
 
 function onVolumeInput(e: Event) {
@@ -131,15 +135,147 @@ function onVolumeInput(e: Event) {
 
 function selectFromQueue(index: number) {
   showQueue.value = false;
-  void player.playIndex(index);
+  if (isLocalSession.value) {
+    void audioPlaylist.playLocalIndex(index);
+  } else {
+    void player.playIndex(index);
+  }
 }
+
+// ── 本地文件导入 ────────────────────────────────────────────────────────
+const fileInputRef = ref<HTMLInputElement | null>(null);
+const ACCEPTED_AUDIO = ".mp3,.flac,.m4a,.wav,.ogg,.aac,.opus,.wma,.ape";
+
+function openFilePicker() {
+  fileInputRef.value?.click();
+}
+
+async function onFilesSelected(e: Event) {
+  const input = e.target as HTMLInputElement;
+  const files = input.files;
+  if (!files || files.length === 0) return;
+  const audioFiles = Array.from(files).filter((f) => {
+    const ext = f.name.split(".").pop()?.toLowerCase() ?? "";
+    return ["mp3", "flac", "m4a", "wav", "ogg", "aac", "opus", "wma", "ape"].includes(ext);
+  });
+  if (audioFiles.length === 0) return;
+  audioPlaylist.addLocalFiles(audioFiles);
+  await audioPlaylist.refreshDurations();
+  if (!isPlaying.value) {
+    await audioPlaylist.playLocalIndex(0);
+  }
+  input.value = "";
+}
+
+// ── 播放列表拖拽排序 ────────────────────────────────────────────────────
+let dragFromIndex = -1;
+
+function onDragStart(e: DragEvent, index: number) {
+  dragFromIndex = index;
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", String(index));
+  }
+}
+
+function onDragOver(e: DragEvent) {
+  e.preventDefault();
+  if (e.dataTransfer) {
+    e.dataTransfer.dropEffect = "move";
+  }
+}
+
+function onDragEnd() {
+  dragFromIndex = -1;
+}
+
+function onDrop(e: DragEvent, toIndex: number) {
+  e.preventDefault();
+  if (dragFromIndex < 0 || dragFromIndex === toIndex) return;
+  if (isLocalSession.value) {
+    audioPlaylist.moveTrack(dragFromIndex, toIndex);
+    const rebuilt = audioPlaylist.playlist.value.map((t) => ({
+      chapterUrl: t.blobUrl,
+      name: t.name,
+      audioUrl: t.blobUrl,
+    }));
+    player.tracks = rebuilt;
+    player.currentIndex = audioPlaylist.currentIndex.value;
+  }
+  dragFromIndex = -1;
+}
+
+function removeFromQueue(e: Event, index: number) {
+  e.stopPropagation();
+  if (isLocalSession.value) {
+    const wasCurrent = index === audioPlaylist.currentIndex.value;
+    audioPlaylist.removeTrack(index);
+    if (audioPlaylist.playlist.value.length === 0) {
+      player.clearSession();
+      return;
+    }
+    const rebuilt = audioPlaylist.playlist.value.map((t) => ({
+      chapterUrl: t.blobUrl,
+      name: t.name,
+      audioUrl: t.blobUrl,
+    }));
+    player.tracks = rebuilt;
+    const newIdx = Math.min(audioPlaylist.currentIndex.value, rebuilt.length - 1);
+    player.currentIndex = newIdx;
+    if (wasCurrent) {
+      void player.playIndex(newIdx);
+    }
+  } else {
+    const newTracks = [...tracks.value];
+    newTracks.splice(index, 1);
+    if (newTracks.length === 0) {
+      player.clearSession();
+      return;
+    }
+    const newIdx =
+      index <= currentIndex.value && currentIndex.value > 0
+        ? currentIndex.value - 1
+        : Math.min(currentIndex.value, newTracks.length - 1);
+    player.tracks = newTracks;
+    player.currentIndex = newIdx;
+  }
+}
+
+// ── 获取当前显示曲目 ────────────────────────────────────────────────────
+function getQueueTracks() {
+  if (isLocalSession.value) {
+    return audioPlaylist.playlist.value.map((t, i) => ({
+      name: t.name,
+      index: i,
+      format: t.format,
+      duration: t.duration,
+    }));
+  }
+  return tracks.value.map((t, i) => ({ name: t.name, index: i }));
+}
+
+// ── waveform 动画条数量 ──────────────────────────────────────────────────
+const WAVEFORM_BARS = 32;
+const waveformBars = computed(() =>
+  Array.from({ length: WAVEFORM_BARS }, (_, i) => {
+    const variance = Math.sin((i / WAVEFORM_BARS) * Math.PI * 2) * 0.5 + 0.5;
+    return variance;
+  }),
+);
 </script>
 
 <template>
   <Teleport to="body">
+    <input
+      ref="fileInputRef"
+      type="file"
+      :accept="ACCEPTED_AUDIO"
+      multiple
+      style="display: none"
+      @change="onFilesSelected"
+    />
     <Transition name="full-player-fade">
       <div v-if="showFullPlayer && hasSession" class="full-player">
-        <!-- 模糊背景 -->
         <div
           class="full-player__bg"
           :style="{ backgroundImage: cover ? `url(${cover})` : 'none' }"
@@ -151,12 +287,17 @@ function selectFromQueue(index: number) {
             <ChevronDown :size="22" />
           </button>
           <div class="full-player__header-title">
-            <div class="full-player__header-album">{{ book?.name }}</div>
-            <div v-if="book?.sourceName" class="full-player__header-source">
+            <div class="full-player__header-album">
+              <span v-if="isLocalType" class="fp-local-badge">本地</span>
+              {{ isLocalSession ? "本地音乐" : book?.name }}
+            </div>
+            <div v-if="book?.sourceName && !isLocalSession" class="full-player__header-source">
               来自 {{ book.sourceName }}
             </div>
+            <div v-else-if="isLocalSession" class="full-player__header-source">
+              {{ audioPlaylist.playlist.value.length }} 首本地曲目
+            </div>
           </div>
-          <!-- 仅移动端显示歌单按钮 -->
           <button
             type="button"
             class="fp-icon-btn fp-icon-btn--mobile-only"
@@ -165,7 +306,6 @@ function selectFromQueue(index: number) {
           >
             <ListMusic :size="20" />
           </button>
-          <!-- 桌面端占位 -->
           <div class="fp-icon-btn fp-icon-btn--desktop-only" style="visibility: hidden" />
         </header>
 
@@ -184,9 +324,11 @@ function selectFromQueue(index: number) {
 
             <div class="full-player__controls-card">
               <div class="full-player__info">
-                <h2 class="full-player__title">{{ currentTrack?.name || '未播放' }}</h2>
+                <h2 class="full-player__title">
+                  {{ currentTrack?.name || "未播放" }}
+                </h2>
                 <p class="full-player__artist">
-                  {{ book?.author || book?.name }}
+                  {{ isLocalSession ? "本地文件" : book?.author || book?.name }}
                 </p>
                 <p v-if="errorText" class="full-player__error">{{ errorText }}</p>
               </div>
@@ -205,9 +347,27 @@ function selectFromQueue(index: number) {
                   @pointerup="onProgressPointerUp"
                 >
                   <div class="full-player__progress-track">
-                    <div class="full-player__progress-fill" :style="{ width: progressPct + '%' }" />
+                    <div
+                      class="full-player__progress-fill"
+                      :style="{ width: progressPct + '%' }"
+                    />
+                    <div class="full-player__progress-waveform">
+                      <span
+                        v-for="(v, i) in waveformBars"
+                        :key="i"
+                        class="full-player__progress-wavebar"
+                        :class="{ 'full-player__progress-wavebar--active': isPlaying }"
+                        :style="{
+                          height: (20 + v * 60) + '%',
+                          animationDelay: (i * 0.04) + 's',
+                        }"
+                      />
+                    </div>
                   </div>
-                  <div class="full-player__progress-thumb" :style="{ left: progressPct + '%' }" />
+                  <div
+                    class="full-player__progress-thumb"
+                    :style="{ left: progressPct + '%' }"
+                  />
                 </div>
                 <span class="full-player__time">{{ formatTime(duration) }}</span>
               </div>
@@ -233,7 +393,7 @@ function selectFromQueue(index: number) {
                   class="fp-ctrl-btn"
                   aria-label="上一首"
                   :disabled="tracks.length <= 1"
-                  @click="player.prev()"
+                  @click="isLocalSession ? audioPlaylist.playPrev() : player.prev()"
                 >
                   <SkipBack :size="28" />
                 </button>
@@ -252,7 +412,7 @@ function selectFromQueue(index: number) {
                   class="fp-ctrl-btn"
                   aria-label="下一首"
                   :disabled="tracks.length <= 1"
-                  @click="player.next()"
+                  @click="isLocalSession ? audioPlaylist.playNext() : player.next()"
                 >
                   <SkipForward :size="28" />
                 </button>
@@ -278,30 +438,70 @@ function selectFromQueue(index: number) {
                 />
               </div>
             </div>
-            <!-- /.full-player__controls-card -->
           </main>
 
-          <!-- 右侧歌单面板（桌面端常驻，移动端隐藏） -->
+          <!-- 右侧歌单面板（桌面端常驻） -->
           <aside class="full-player__sidebar">
             <div class="fp-queue__header">
               <div class="fp-queue__title">
                 播放列表
                 <span class="fp-queue__count">（{{ tracks.length }}）</span>
               </div>
+              <button
+                type="button"
+                class="fp-queue__import-btn"
+                title="导入本地音频 (MP3/FLAC/M4A)"
+                @click="openFilePicker"
+              >
+                <Upload :size="15" />
+                <span>导入</span>
+              </button>
             </div>
             <ul class="fp-queue__list">
               <li
-                v-for="(t, i) in tracks"
-                :key="t.chapterUrl + ':' + i"
+                v-for="(t, i) in getQueueTracks()"
+                :key="i"
                 class="fp-queue__item"
-                :class="{ 'fp-queue__item--active': i === currentIndex }"
+                :class="{
+                  'fp-queue__item--active': i === currentIndex,
+                  'fp-queue__item--dragging': dragFromIndex === i,
+                }"
+                draggable="true"
                 @click="selectFromQueue(i)"
+                @dragstart="onDragStart($event, i)"
+                @dragover="onDragOver"
+                @dragend="onDragEnd"
+                @drop="onDrop($event, i)"
               >
+                <span class="fp-queue__grip" @click.stop>
+                  <GripVertical :size="13" />
+                </span>
                 <span class="fp-queue__index">{{ i + 1 }}</span>
                 <span class="fp-queue__name">{{ t.name }}</span>
-                <Play v-if="i === currentIndex && isPlaying" class="fp-queue__playing" :size="14" />
+                <span v-if="t.format" class="fp-queue__fmt">{{ t.format.toUpperCase() }}</span>
+                <span v-if="t.duration" class="fp-queue__dur">{{ formatTime(t.duration) }}</span>
+                <Play
+                  v-if="i === currentIndex && isPlaying"
+                  class="fp-queue__playing"
+                  :size="13"
+                />
+                <button
+                  type="button"
+                  class="fp-queue__remove"
+                  aria-label="移除"
+                  @click.stop="removeFromQueue($event, i)"
+                >
+                  <Trash2 :size="13" />
+                </button>
               </li>
             </ul>
+            <div v-if="getQueueTracks().length === 0" class="fp-queue__empty">
+              播放列表为空
+              <button type="button" class="fp-queue__empty-import" @click="openFilePicker">
+                <Upload :size="14" />
+                导入本地音频
+              </button>
+            </div>
           </aside>
         </div>
 
@@ -314,25 +514,55 @@ function selectFromQueue(index: number) {
                   播放列表
                   <span class="fp-queue__count">（{{ tracks.length }}）</span>
                 </div>
+                <button
+                  type="button"
+                  class="fp-queue__import-btn"
+                  title="导入本地音频"
+                  @click="openFilePicker"
+                >
+                  <Upload :size="15" />
+                  <span>导入</span>
+                </button>
                 <button class="fp-icon-btn" aria-label="关闭" @click="showQueue = false">
                   <ChevronDown :size="20" />
                 </button>
               </div>
               <ul class="fp-queue__list">
                 <li
-                  v-for="(t, i) in tracks"
-                  :key="t.chapterUrl + ':' + i"
+                  v-for="(t, i) in getQueueTracks()"
+                  :key="i"
                   class="fp-queue__item"
-                  :class="{ 'fp-queue__item--active': i === currentIndex }"
+                  :class="{
+                    'fp-queue__item--active': i === currentIndex,
+                    'fp-queue__item--dragging': dragFromIndex === i,
+                  }"
+                  draggable="true"
                   @click="selectFromQueue(i)"
+                  @dragstart="onDragStart($event, i)"
+                  @dragover="onDragOver"
+                  @dragend="onDragEnd"
+                  @drop="onDrop($event, i)"
                 >
+                  <span class="fp-queue__grip" @click.stop>
+                    <GripVertical :size="13" />
+                  </span>
                   <span class="fp-queue__index">{{ i + 1 }}</span>
                   <span class="fp-queue__name">{{ t.name }}</span>
+                  <span v-if="t.format" class="fp-queue__fmt">{{ t.format.toUpperCase() }}</span>
+                  <span v-if="t.duration" class="fp-queue__dur">{{ formatTime(t.duration) }}</span>
                   <Play
                     v-if="i === currentIndex && isPlaying"
                     class="fp-queue__playing"
-                    :size="14"
+                    :size="13"
                   />
+                  <button
+                    type="button"
+                    class="fp-queue__remove"
+                    aria-label="移除"
+                    @click.stop="removeFromQueue($event, i)"
+                  >
+                    <Trash2 :size="13" />
+                  </button>
                 </li>
               </ul>
             </div>
@@ -348,11 +578,9 @@ function selectFromQueue(index: number) {
    Design tokens — dark (default) / light via [data-theme='light']
    ══════════════════════════════════════════════════════════════ */
 .full-player {
-  /* text */
   --fp-text: #fff;
   --fp-text-soft: rgba(255, 255, 255, 0.7);
   --fp-text-muted: rgba(255, 255, 255, 0.44);
-  /* background layers */
   --fp-mask: linear-gradient(
     180deg,
     rgba(0, 0, 0, 0.16) 0%,
@@ -364,40 +592,34 @@ function selectFromQueue(index: number) {
     transparent 32%,
     rgba(0, 0, 0, 0.38) 100%
   );
-  /* glass card */
   --fp-card-bg: rgba(255, 255, 255, 0.055);
   --fp-card-border: rgba(255, 255, 255, 0.1);
   --fp-card-shadow: 0 8px 32px rgba(0, 0, 0, 0.42), 0 1px 0 rgba(255, 255, 255, 0.06) inset;
-  /* buttons */
   --fp-btn-bg: rgba(255, 255, 255, 0.09);
   --fp-btn-hover: rgba(255, 255, 255, 0.17);
-  /* play button */
   --fp-play-bg: #fff;
   --fp-play-color: #111;
   --fp-play-shadow: 0 4px 20px rgba(255, 255, 255, 0.22), 0 1px 4px rgba(0, 0, 0, 0.22);
-  /* progress */
   --fp-track-bg: rgba(255, 255, 255, 0.16);
   --fp-fill-bg: rgba(255, 255, 255, 0.9);
   --fp-thumb-bg: #fff;
-  /* cover */
   --fp-cover-shadow:
     0 28px 64px rgba(0, 0, 0, 0.65), 0 4px 16px rgba(0, 0, 0, 0.38),
     0 0 0 1px rgba(255, 255, 255, 0.1);
-  /* queue */
   --fp-sidebar-bg: rgba(0, 0, 0, 0.28);
   --fp-sidebar-sep: rgba(255, 255, 255, 0.07);
   --fp-item-hover: rgba(255, 255, 255, 0.07);
   --fp-item-active: #6ee7b7;
   --fp-sheet-bg: rgba(18, 18, 24, 0.96);
   --fp-sheet-sep: rgba(255, 255, 255, 0.08);
-  /* misc */
   --fp-inactive: rgba(255, 255, 255, 0.35);
   --fp-error: #fca5a5;
   --fp-header-grad: linear-gradient(to bottom, rgba(0, 0, 0, 0.14), transparent);
+  --fp-wavebar-bg: rgba(255, 255, 255, 0.25);
 }
 
 /* Light mode */
-:root[data-theme='light'] .full-player {
+:root[data-theme="light"] .full-player {
   --fp-text: rgba(14, 16, 26, 0.94);
   --fp-text-soft: rgba(14, 16, 26, 0.64);
   --fp-text-muted: rgba(14, 16, 26, 0.42);
@@ -434,12 +656,13 @@ function selectFromQueue(index: number) {
   --fp-inactive: rgba(14, 16, 26, 0.3);
   --fp-error: #dc2626;
   --fp-header-grad: linear-gradient(to bottom, rgba(255, 252, 248, 0.18), transparent);
+  --fp-wavebar-bg: rgba(14, 16, 26, 0.18);
 }
 
 /* System light (auto / unset) */
 @media (prefers-color-scheme: light) {
   :root:not([data-theme]) .full-player,
-  :root[data-theme='auto'] .full-player {
+  :root[data-theme="auto"] .full-player {
     --fp-text: rgba(14, 16, 26, 0.94);
     --fp-text-soft: rgba(14, 16, 26, 0.64);
     --fp-text-muted: rgba(14, 16, 26, 0.42);
@@ -476,6 +699,7 @@ function selectFromQueue(index: number) {
     --fp-inactive: rgba(14, 16, 26, 0.3);
     --fp-error: #dc2626;
     --fp-header-grad: linear-gradient(to bottom, rgba(255, 252, 248, 0.18), transparent);
+    --fp-wavebar-bg: rgba(14, 16, 26, 0.18);
   }
 }
 
@@ -501,16 +725,14 @@ function selectFromQueue(index: number) {
   transform: scale(1.15);
 }
 
-/* Layer 1: directional gradient */
 .full-player__bg-mask {
   position: absolute;
   inset: 0;
   background: var(--fp-mask);
 }
 
-/* Layer 2: edge vignette */
 .full-player__bg-mask::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background: var(--fp-vignette);
@@ -548,6 +770,22 @@ function selectFromQueue(index: number) {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.fp-local-badge {
+  font-size: 9px;
+  font-weight: 600;
+  padding: 0 5px;
+  height: 16px;
+  line-height: 16px;
+  border-radius: 3px;
+  background: var(--fp-play-bg);
+  color: var(--fp-play-color);
+  flex-shrink: 0;
 }
 
 .full-player__header-source {
@@ -629,6 +867,27 @@ function selectFromQueue(index: number) {
 
 .fp-icon-btn:active {
   transform: scale(0.92);
+}
+
+/* ── Import button ────────────────────────────────────────── */
+.fp-queue__import-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: 1px solid var(--fp-sidebar-sep);
+  border-radius: 6px;
+  background: var(--fp-btn-bg);
+  color: var(--fp-text-soft);
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+  white-space: nowrap;
+}
+
+.fp-queue__import-btn:hover {
+  background: var(--fp-btn-hover);
+  color: var(--fp-text);
 }
 
 /* ── Cover ───────────────────────────────────────────────── */
@@ -731,7 +990,7 @@ function selectFromQueue(index: number) {
   line-height: 1.5;
 }
 
-/* ── 进度条 ──────────────────────────────────────────────────────────── */
+/* ── 进度条 + waveform ───────────────────────────────────────────── */
 .full-player__progress {
   display: flex;
   align-items: center;
@@ -751,7 +1010,7 @@ function selectFromQueue(index: number) {
 .full-player__progress-bar {
   position: relative;
   flex: 1;
-  height: 16px;
+  height: 28px;
   display: flex;
   align-items: center;
   cursor: pointer;
@@ -763,25 +1022,71 @@ function selectFromQueue(index: number) {
   height: 3px;
   background: rgba(255, 255, 255, 0.18);
   border-radius: 2px;
-  overflow: hidden;
+  overflow: visible;
+  position: relative;
 }
 
 .full-player__progress-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
   height: 100%;
   background: #fff;
+  border-radius: 2px;
   transition: width 0.1s linear;
+  z-index: 2;
+}
+
+/* waveform bars layer inside progress track */
+.full-player__progress-waveform {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 20px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2px;
+  padding: 0 1px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.full-player__progress-wavebar {
+  flex: 1;
+  min-height: 20%;
+  border-radius: 1px;
+  background: var(--fp-wavebar-bg);
+  transition: height 0.3s ease;
+}
+
+.full-player__progress-wavebar--active {
+  animation: fp-wave 1.4s ease-in-out infinite alternate;
+}
+
+@keyframes fp-wave {
+  0% {
+    transform: scaleY(0.6);
+  }
+  100% {
+    transform: scaleY(1.4);
+  }
 }
 
 .full-player__progress-thumb {
   position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
   width: 12px;
   height: 12px;
   border-radius: 50%;
   background: #fff;
-  transform: translate(-50%, 0);
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.15s ease;
+  z-index: 3;
 }
 
 .full-player__progress-bar:hover .full-player__progress-thumb {
@@ -859,7 +1164,7 @@ function selectFromQueue(index: number) {
   align-items: center;
 }
 
-.full-player__volume input[type='range'] {
+.full-player__volume input[type="range"] {
   width: 100%;
   accent-color: #fff;
 }
@@ -868,7 +1173,7 @@ function selectFromQueue(index: number) {
 .fp-queue__header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 8px;
   padding: 14px 16px;
   border-bottom: 1px solid var(--fp-sidebar-sep);
   flex-shrink: 0;
@@ -879,6 +1184,7 @@ function selectFromQueue(index: number) {
   font-weight: 700;
   letter-spacing: 0.01em;
   color: var(--fp-text);
+  flex: 1;
 }
 
 .fp-queue__count {
@@ -899,7 +1205,7 @@ function selectFromQueue(index: number) {
 .fp-queue__item {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   padding: 9px 16px;
   cursor: pointer;
   font-size: 13px;
@@ -920,8 +1226,24 @@ function selectFromQueue(index: number) {
   color: var(--fp-item-active);
 }
 
+.fp-queue__item--dragging {
+  opacity: 0.35;
+}
+
+.fp-queue__grip {
+  flex-shrink: 0;
+  cursor: grab;
+  color: var(--fp-text-muted);
+  display: flex;
+  align-items: center;
+}
+
+.fp-queue__grip:active {
+  cursor: grabbing;
+}
+
 .fp-queue__index {
-  width: 26px;
+  width: 24px;
   text-align: center;
   font-variant-numeric: tabular-nums;
   color: var(--fp-text-muted);
@@ -936,9 +1258,82 @@ function selectFromQueue(index: number) {
   text-overflow: ellipsis;
 }
 
+.fp-queue__fmt {
+  font-size: 9px;
+  color: var(--fp-text-muted);
+  padding: 0 4px;
+  border: 1px solid var(--fp-text-muted);
+  border-radius: 3px;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.fp-queue__dur {
+  font-size: 10px;
+  color: var(--fp-text-muted);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
 .fp-queue__playing {
   flex: 0 0 14px;
   color: var(--fp-item-active);
+}
+
+.fp-queue__remove {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--fp-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.12s, background 0.12s;
+}
+
+.fp-queue__item:hover .fp-queue__remove {
+  opacity: 1;
+}
+
+.fp-queue__remove:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+
+.fp-queue__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--fp-text-muted);
+}
+
+.fp-queue__empty-import {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 1px solid var(--fp-sidebar-sep);
+  border-radius: 8px;
+  background: var(--fp-btn-bg);
+  color: var(--fp-text-soft);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.fp-queue__empty-import:hover {
+  background: var(--fp-btn-hover);
+  color: var(--fp-text);
 }
 
 /* ── 移动端歌单抽屉 overlay ─────────────────────────────────────────── */

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ChevronLeft, ChevronRight, Check } from 'lucide-vue-next';
-import type { ReaderSettings, ReaderTypography } from '@/components/reader/types';
+import { ChevronLeft, ChevronRight, Check } from "lucide-vue-next";
+import type { ReaderSettings, ReaderTypography } from "@/components/reader/types";
 
 defineProps<{
   settings: ReaderSettings;
@@ -9,10 +9,10 @@ defineProps<{
 
 const emit = defineEmits<{
   back: [];
-  'update-typography': [patch: Partial<ReaderTypography>];
-  navigate: [target: 'customFont' | 'uploadedFont'];
-  'load-system-fonts': [];
-  'load-user-fonts': [];
+  "update-typography": [patch: Partial<ReaderTypography>];
+  navigate: [target: "customFont" | "uploadedFont"];
+  "load-system-fonts": [];
+  "load-user-fonts": [];
 }>();
 </script>
 

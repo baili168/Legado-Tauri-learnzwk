@@ -30,4 +30,4 @@ export type {
   ReaderPluginSlot,
   ReaderSessionSnapshot,
   ReaderTextSelectionContext,
-} from './pluginTypes';
+} from "./pluginTypes";

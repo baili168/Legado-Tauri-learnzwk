@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ChevronLeft } from 'lucide-vue-next';
-import type { ReaderSettings, ReaderTypography } from '@/components/reader/types';
+import { ChevronLeft } from "lucide-vue-next";
+import type { ReaderSettings, ReaderTypography } from "@/components/reader/types";
 
 defineProps<{
   settings: ReaderSettings;
@@ -8,7 +8,7 @@ defineProps<{
 
 const emit = defineEmits<{
   back: [];
-  'update-typography': [patch: Partial<ReaderTypography>];
+  "update-typography": [patch: Partial<ReaderTypography>];
 }>();
 </script>
 

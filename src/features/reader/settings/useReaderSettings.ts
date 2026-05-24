@@ -10,7 +10,7 @@
  *   3. 阅读期间所有修改实时更新全局偏好快照 + 当前书籍设置
  *   4. 关闭阅读器时调用 deactivateBookSettings()
  */
-import { reactive, ref, watch, toRefs, type WatchStopHandle } from 'vue';
+import { reactive, ref, watch, toRefs, type WatchStopHandle } from "vue";
 import {
   type ReaderSettings,
   type ReaderPagePadding,
@@ -19,25 +19,25 @@ import {
   type FlipMode,
   type PaginationEngine,
   DEFAULT_SETTINGS,
-} from '@/components/reader/types';
-import { useDynamicConfig } from '@/composables/useDynamicConfig';
+} from "@/components/reader/types";
+import { useDynamicConfig } from "@/composables/useDynamicConfig";
 import {
   ensureFrontendNamespaceLoaded,
   getFrontendStorageItem,
   legacyLocalStorageGet,
   legacyLocalStorageRemove,
   setFrontendStorageItem,
-} from '@/composables/useFrontendStorage';
+} from "@/composables/useFrontendStorage";
 
-const LEGACY_STORAGE_KEY = 'legado-reader-settings';
-const BOOK_STORAGE_PREFIX = 'legado-reader-settings-book-';
-const BOOK_STORAGE_NAMESPACE = 'reader.book-settings';
+const LEGACY_STORAGE_KEY = "legado-reader-settings";
+const BOOK_STORAGE_PREFIX = "legado-reader-settings-book-";
+const BOOK_STORAGE_NAMESPACE = "reader.book-settings";
 const TAP_ZONE_DEBUG_AUTO_CLOSE_MS = 1200;
-const READER_DEFAULTS_NAMESPACE = 'reader.defaults.lastEffective';
+const READER_DEFAULTS_NAMESPACE = "reader.defaults.lastEffective";
 const READER_DEFAULTS_STORAGE_NAMESPACE = `dynamic-config.${READER_DEFAULTS_NAMESPACE}`;
-const READER_DEFAULTS_STATE_KEY = 'state';
+const READER_DEFAULTS_STATE_KEY = "state";
 const READER_DEFAULTS_VERSION = 1;
-const BOOK_LEVEL_GLOBAL_FIELDS: (keyof ReaderSettings)[] = ['paginationEngine'];
+const BOOK_LEVEL_GLOBAL_FIELDS: (keyof ReaderSettings)[] = ["paginationEngine"];
 
 type StoredReaderSettings = Partial<ReaderSettings> & {
   debugMode?: boolean;
@@ -76,7 +76,7 @@ function resolvePagePadding(
   base: ReaderPagePadding,
   partial: StoredReaderSettings,
 ): ReaderPagePadding {
-  const legacyPadding = typeof partial.padding === 'number' ? partial.padding : undefined;
+  const legacyPadding = typeof partial.padding === "number" ? partial.padding : undefined;
   return {
     top: partial.pagePadding?.top ?? legacyPadding ?? base.top,
     right: partial.pagePadding?.right ?? legacyPadding ?? base.right,
@@ -94,13 +94,13 @@ function mergeSettings(base: ReaderSettings, partial: StoredReaderSettings): Rea
     theme: { ...base.theme, ...partial.theme },
     pagePadding,
     layoutDebugMode:
-      typeof partial.layoutDebugMode === 'boolean'
+      typeof partial.layoutDebugMode === "boolean"
         ? partial.layoutDebugMode
-        : typeof partial.debugMode === 'boolean'
+        : typeof partial.debugMode === "boolean"
           ? partial.debugMode
           : base.layoutDebugMode,
     padding:
-      typeof partial.padding === 'number'
+      typeof partial.padding === "number"
         ? partial.padding
         : Math.round(
             (pagePadding.top + pagePadding.right + pagePadding.bottom + pagePadding.left) / 4,
@@ -110,21 +110,21 @@ function mergeSettings(base: ReaderSettings, partial: StoredReaderSettings): Rea
   delete merged.debugMode;
   // 迁移旧 paginationEngine 值：'auto'/'simple' → 'pretext'
   if (
-    merged.paginationEngine === ('auto' as string) ||
-    merged.paginationEngine === ('simple' as string)
+    merged.paginationEngine === ("auto" as string) ||
+    merged.paginationEngine === ("simple" as string)
   ) {
-    merged.paginationEngine = 'pretext';
+    merged.paginationEngine = "pretext";
   }
   return merged;
 }
 
 function extractStoredReaderSettings(raw: unknown): StoredReaderSettings | null {
-  if (!raw || typeof raw !== 'object') {
+  if (!raw || typeof raw !== "object") {
     return null;
   }
   const record = raw as Record<string, unknown>;
   const source =
-    record.values && typeof record.values === 'object'
+    record.values && typeof record.values === "object"
       ? (record.values as Record<string, unknown>)
       : record;
   const next = { ...source } as StoredReaderSettings & { version?: unknown; updatedAt?: unknown };
@@ -273,7 +273,8 @@ function applySettings(target: ReaderSettings, next: ReaderSettings) {
 export function useReaderSettings() {
   const readerDefaultsStore = getReaderDefaultsStore();
 
-  const systemPrefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+  const systemPrefersReducedMotion =
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 
   async function persistSettingsSnapshot(nextSettings: ReaderSettings) {
     await readerDefaultsStore.replace(createReaderDefaultsSnapshot(nextSettings));
@@ -337,7 +338,7 @@ export function useReaderSettings() {
   /** 切换主题 */
   function setTheme(theme: ReaderTheme) {
     Object.assign(settings.theme, theme);
-    settings.themePresetId = '';
+    settings.themePresetId = "";
   }
 
   /** 切换翻页模式 */
@@ -444,37 +445,37 @@ export function useReaderSettings() {
     const t = settings.typography;
     const effectiveReduceMotion = settings.reduceMotion || systemPrefersReducedMotion;
     return {
-      '--reader-font-family': settings.dyslexiaFont || t.fontFamily,
-      '--reader-font-size': `${t.fontSize}px`,
-      '--reader-line-height': `${t.lineHeight}`,
-      '--reader-letter-spacing': `${t.letterSpacing}px`,
-      '--reader-word-spacing': `${t.wordSpacing}px`,
-      '--reader-paragraph-spacing': `${t.paragraphSpacing}px`,
-      '--reader-text-indent': `${t.textIndent}em`,
-      '--reader-font-weight': `${t.fontWeight}`,
-      '--reader-font-style': t.fontStyle,
-      '--reader-text-align': t.textAlign,
-      '--reader-text-decoration': t.textDecoration,
-      '--reader-font-variant': t.fontVariant,
-      '--reader-text-stroke-width': `${t.textStrokeWidth}px`,
-      '--reader-text-stroke-color': t.textStrokeColor,
-      '--reader-text-shadow': t.textShadow,
-      '--reader-bg-color': settings.theme.backgroundColor,
-      '--reader-text-color': settings.theme.textColor,
-      '--reader-selection-color': settings.theme.selectionColor,
-      '--reader-padding-top': `${settings.pagePadding.top}px`,
-      '--reader-padding-right': `${settings.pagePadding.right}px`,
-      '--reader-padding-bottom': `${settings.pagePadding.bottom}px`,
-      '--reader-padding-left': `${settings.pagePadding.left}px`,
-      '--reader-padding': `${settings.pagePadding.top}px ${settings.pagePadding.right}px ${settings.pagePadding.bottom}px ${settings.pagePadding.left}px`,
-      '--reader-brightness': `${settings.brightness}%`,
-      '--reader-bg-image': settings.backgroundImage || 'none',
-      '--reader-bg-size': 'auto',
-      '--reader-bg-position': '0 0',
-      '--reader-bg-repeat': 'repeat',
-      '--reader-bg-attachment': 'scroll',
-      '--reader-bg-blend-mode': 'normal',
-      '--reader-reduce-motion': effectiveReduceMotion ? 'true' : 'false',
+      "--reader-font-family": settings.dyslexiaFont || t.fontFamily,
+      "--reader-font-size": `${t.fontSize}px`,
+      "--reader-line-height": `${t.lineHeight}`,
+      "--reader-letter-spacing": `${t.letterSpacing}px`,
+      "--reader-word-spacing": `${t.wordSpacing}px`,
+      "--reader-paragraph-spacing": `${t.paragraphSpacing}px`,
+      "--reader-text-indent": `${t.textIndent}em`,
+      "--reader-font-weight": `${t.fontWeight}`,
+      "--reader-font-style": t.fontStyle,
+      "--reader-text-align": t.textAlign,
+      "--reader-text-decoration": t.textDecoration,
+      "--reader-font-variant": t.fontVariant,
+      "--reader-text-stroke-width": `${t.textStrokeWidth}px`,
+      "--reader-text-stroke-color": t.textStrokeColor,
+      "--reader-text-shadow": t.textShadow,
+      "--reader-bg-color": settings.theme.backgroundColor,
+      "--reader-text-color": settings.theme.textColor,
+      "--reader-selection-color": settings.theme.selectionColor,
+      "--reader-padding-top": `${settings.pagePadding.top}px`,
+      "--reader-padding-right": `${settings.pagePadding.right}px`,
+      "--reader-padding-bottom": `${settings.pagePadding.bottom}px`,
+      "--reader-padding-left": `${settings.pagePadding.left}px`,
+      "--reader-padding": `${settings.pagePadding.top}px ${settings.pagePadding.right}px ${settings.pagePadding.bottom}px ${settings.pagePadding.left}px`,
+      "--reader-brightness": `${settings.brightness}%`,
+      "--reader-bg-image": settings.backgroundImage || "none",
+      "--reader-bg-size": "auto",
+      "--reader-bg-position": "0 0",
+      "--reader-bg-repeat": "repeat",
+      "--reader-bg-attachment": "scroll",
+      "--reader-bg-blend-mode": "normal",
+      "--reader-reduce-motion": effectiveReduceMotion ? "true" : "false",
     };
   }
 
@@ -482,14 +483,14 @@ export function useReaderSettings() {
   function getAccessibilityAttrs(): Record<string, string> {
     const attrs: Record<string, string> = {};
     if (settings.highContrast && settings.highContrastTheme) {
-      attrs['data-reader-high-contrast'] = settings.highContrastTheme;
+      attrs["data-reader-high-contrast"] = settings.highContrastTheme;
     }
-    if (settings.dyslexiaFont && settings.dyslexiaFont !== 'system-ui, sans-serif') {
-      const fontPart = settings.dyslexiaFont.split(',')[0].trim();
-      attrs['data-reader-dyslexia-font'] = fontPart;
+    if (settings.dyslexiaFont && settings.dyslexiaFont !== "system-ui, sans-serif") {
+      const fontPart = settings.dyslexiaFont.split(",")[0].trim();
+      attrs["data-reader-dyslexia-font"] = fontPart;
     }
     const effectiveReduceMotion = settings.reduceMotion || systemPrefersReducedMotion;
-    attrs['data-reader-reduce-motion'] = effectiveReduceMotion ? 'true' : 'false';
+    attrs["data-reader-reduce-motion"] = effectiveReduceMotion ? "true" : "false";
     return attrs;
   }
 

@@ -1,5 +1,5 @@
 :root,
-[data-theme='light'] {
+[data-theme="light"] {
   color-scheme: light;
 
   --color-bg: var(--md-sys-color-surface, var(--gray-50));
@@ -31,7 +31,7 @@
   --color-active: rgba(22, 27, 38, 0.1);
 }
 
-[data-theme='dark'] {
+[data-theme="dark"] {
   color-scheme: dark;
 
   --color-bg: var(--md-sys-color-surface, var(--gray-950));
@@ -61,7 +61,7 @@
 }
 
 /* 阅读主题 */
-[data-reader-theme='paper'] {
+[data-reader-theme="paper"] {
   --reader-bg: #f7f3e9;
   --reader-text: #2c2a25;
   --reader-muted: #7a7468;
@@ -69,7 +69,7 @@
   --reader-toolbar-bg: rgba(247, 243, 233, 0.92);
 }
 
-[data-reader-theme='sepia'] {
+[data-reader-theme="sepia"] {
   --reader-bg: #efe1c5;
   --reader-text: #3a2b1d;
   --reader-muted: #7d684e;
@@ -77,7 +77,7 @@
   --reader-toolbar-bg: rgba(239, 225, 197, 0.92);
 }
 
-[data-reader-theme='graphite'] {
+[data-reader-theme="graphite"] {
   --reader-bg: #1d2430;
   --reader-text: #d8dde7;
   --reader-muted: #9aa4b5;
@@ -85,7 +85,7 @@
   --reader-toolbar-bg: rgba(29, 36, 48, 0.92);
 }
 
-[data-reader-theme='dark'] {
+[data-reader-theme="dark"] {
   --reader-bg: #080a0f;
   --reader-text: #d9dde7;
   --reader-muted: #8f98aa;

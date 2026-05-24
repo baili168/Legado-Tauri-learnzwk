@@ -1,8 +1,8 @@
-import { defineStore } from 'pinia';
-import { computed, ref } from 'vue';
-import { useDynamicConfig } from '@/composables/useDynamicConfig';
+import { defineStore } from "pinia";
+import { computed, ref } from "vue";
+import { useDynamicConfig } from "@/composables/useDynamicConfig";
 
-export type GoalType = 'minutes' | 'words';
+export type GoalType = "minutes" | "words";
 
 export interface ReadingGoalState {
   goalMinutes: number;
@@ -28,8 +28,8 @@ interface ReadingGoalConfig extends ReadingGoalState {
 function getTodayString(): string {
   const now = new Date();
   const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
 
@@ -37,23 +37,23 @@ function getYesterdayString(): string {
   const now = new Date();
   now.setDate(now.getDate() - 1);
   const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
 
-export const useReadingGoalStore = defineStore('readingGoal', () => {
+export const useReadingGoalStore = defineStore("readingGoal", () => {
   const config = useDynamicConfig<ReadingGoalConfig>({
-    namespace: 'reading-goal',
+    namespace: "reading-goal",
     version: 1,
     defaults: (): ReadingGoalConfig => ({
       goalMinutes: 30,
-      goalType: 'minutes',
+      goalType: "minutes",
       goalWords: 5000,
       todayMinutes: 0,
       todayWords: 0,
       streakDays: 0,
-      lastReadDate: '',
+      lastReadDate: "",
       streakHistory: [],
       dailyRecords: [],
     }),
@@ -71,7 +71,7 @@ export const useReadingGoalStore = defineStore('readingGoal', () => {
   const dailyRecords = computed(() => config.state.dailyRecords);
 
   const progressPercentage = computed(() => {
-    if (goalType.value === 'minutes') {
+    if (goalType.value === "minutes") {
       if (goalMinutes.value === 0) return 0;
       return Math.min(100, (todayMinutes.value / goalMinutes.value) * 100);
     } else {
@@ -158,7 +158,7 @@ export const useReadingGoalStore = defineStore('readingGoal', () => {
   }
 
   function isTodayGoalMet(): boolean {
-    if (goalType.value === 'minutes') {
+    if (goalType.value === "minutes") {
       return todayMinutes.value >= goalMinutes.value;
     } else {
       return todayWords.value >= goalWords.value;
@@ -170,7 +170,8 @@ export const useReadingGoalStore = defineStore('readingGoal', () => {
     const yesterday = getYesterdayString();
 
     if (!config.state.streakHistory.length) {
-      config.state.streakDays = config.state.todayMinutes > 0 || config.state.todayWords > 0 ? 1 : 0;
+      config.state.streakDays =
+        config.state.todayMinutes > 0 || config.state.todayWords > 0 ? 1 : 0;
       return;
     }
 
@@ -193,7 +194,10 @@ export const useReadingGoalStore = defineStore('readingGoal', () => {
     return config.state.dailyRecords.find((r) => r.date === date);
   }
 
-  function getMonthCalendar(year: number, month: number): {
+  function getMonthCalendar(
+    year: number,
+    month: number,
+  ): {
     date: string;
     hasRead: boolean;
     intensity: 0 | 1 | 2 | 3;
@@ -212,7 +216,7 @@ export const useReadingGoalStore = defineStore('readingGoal', () => {
     const daysInMonth = lastDay.getDate();
 
     for (let i = 0; i < startDayOfWeek; i++) {
-      result.push({ date: '', hasRead: false, intensity: 0, isStreak: false });
+      result.push({ date: "", hasRead: false, intensity: 0, isStreak: false });
     }
 
     const sortedHistory = [...config.state.streakHistory].sort();
@@ -220,13 +224,13 @@ export const useReadingGoalStore = defineStore('readingGoal', () => {
     let prevDate: Date | null = null;
 
     for (let day = 1; day <= daysInMonth; day++) {
-      const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
       const record = getDailyRecord(dateStr);
       const hasRead = !!record && (record.minutes > 0 || record.words > 0);
 
       let intensity: 0 | 1 | 2 | 3 = 0;
       if (hasRead && record) {
-        if (goalType.value === 'minutes') {
+        if (goalType.value === "minutes") {
           const minutes = record.minutes;
           if (minutes >= 30) intensity = 3;
           else if (minutes >= 16) intensity = 2;
@@ -270,7 +274,7 @@ export const useReadingGoalStore = defineStore('readingGoal', () => {
     const today = getTodayString();
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
-    const weekAgoStr = `${weekAgo.getFullYear()}-${String(weekAgo.getMonth() + 1).padStart(2, '0')}-${String(weekAgo.getDate()).padStart(2, '0')}`;
+    const weekAgoStr = `${weekAgo.getFullYear()}-${String(weekAgo.getMonth() + 1).padStart(2, "0")}-${String(weekAgo.getDate()).padStart(2, "0")}`;
 
     const weekRecords = config.state.dailyRecords.filter(
       (r) => r.date >= weekAgoStr && r.date <= today,
@@ -292,7 +296,7 @@ export const useReadingGoalStore = defineStore('readingGoal', () => {
     config.state.todayMinutes = 0;
     config.state.todayWords = 0;
     config.state.streakDays = 0;
-    config.state.lastReadDate = '';
+    config.state.lastReadDate = "";
     config.state.streakHistory = [];
     config.state.dailyRecords = [];
   }

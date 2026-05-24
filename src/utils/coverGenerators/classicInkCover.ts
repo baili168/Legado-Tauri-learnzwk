@@ -1,6 +1,6 @@
-import type { ShelfBook } from '@/stores';
-import type { BuiltinCoverGeneratorDefinition } from './types';
-import { bookAuthor, bookKind, buildDataUrl, textSpans, wrapText } from './shared';
+import type { ShelfBook } from "@/stores";
+import type { BuiltinCoverGeneratorDefinition } from "./types";
+import { bookAuthor, bookKind, buildDataUrl, textSpans, wrapText } from "./shared";
 
 function generateClassicInkCover(book: ShelfBook): string {
   const title = textSpans(wrapText(book.name, 6, 4), { x: 300, lineHeight: 96 });
@@ -19,14 +19,14 @@ function generateClassicInkCover(book: ShelfBook): string {
   <circle cx="455" cy="160" r="76" fill="#b94235" opacity="0.88" />
   <text x="300" y="278" text-anchor="middle" fill="#241b13" font-size="100" font-weight="900" font-family="'Noto Serif SC','Source Han Serif SC',serif">${title}</text>
   <text x="300" y="560" text-anchor="middle" fill="#5e4933" font-size="52" font-weight="700">${bookAuthor(book)}</text>
-  <text x="300" y="604" text-anchor="middle" fill="#7b6144" font-size="42">${bookKind(book, '古典文学')}</text>
+  <text x="300" y="604" text-anchor="middle" fill="#7b6144" font-size="42">${bookKind(book, "古典文学")}</text>
   <path d="M234 644H366" stroke="#b94235" stroke-width="7" stroke-linecap="round" />
 </svg>`);
 }
 
 export const classicInkCoverGenerator: BuiltinCoverGeneratorDefinition = {
-  id: 'builtin:classic-ink',
-  name: '古典水墨',
-  description: '宣纸、远山与朱印，适合古典文学、诗词、传统题材。',
+  id: "builtin:classic-ink",
+  name: "古典水墨",
+  description: "宣纸、远山与朱印，适合古典文学、诗词、传统题材。",
   generate: generateClassicInkCover,
 };

@@ -1,6 +1,6 @@
-import type { ShelfBook } from '@/stores';
-import type { BuiltinCoverGeneratorDefinition } from './types';
-import { bookAuthor, bookKind, buildDataUrl, textSpans, wrapText } from './shared';
+import type { ShelfBook } from "@/stores";
+import type { BuiltinCoverGeneratorDefinition } from "./types";
+import { bookAuthor, bookKind, buildDataUrl, textSpans, wrapText } from "./shared";
 
 function generateYouthCampusCover(book: ShelfBook): string {
   const title = textSpans(wrapText(book.name, 7, 4), { x: 72, lineHeight: 104 });
@@ -12,14 +12,14 @@ function generateYouthCampusCover(book: ShelfBook): string {
   <path d="M0 674C146 604 262 704 408 622C500 570 550 558 600 574V840H0Z" fill="#60a5fa" />
   <path d="M82 172H332" stroke="#2563eb" stroke-width="8" stroke-linecap="round" />
   <text x="72" y="256" fill="#1e3a8a" font-size="108" font-weight="900" font-family="'Noto Sans SC','Source Han Sans SC',sans-serif">${title}</text>
-  <text x="72" y="542" fill="#1d4ed8" font-size="48" font-weight="800">${bookKind(book, '青春校园')}</text>
+  <text x="72" y="542" fill="#1d4ed8" font-size="48" font-weight="800">${bookKind(book, "青春校园")}</text>
   <text x="72" y="698" fill="#ffffff" font-size="60" font-weight="900">${bookAuthor(book)}</text>
 </svg>`);
 }
 
 export const youthCampusCoverGenerator: BuiltinCoverGeneratorDefinition = {
-  id: 'builtin:youth-campus',
-  name: '青春校园',
-  description: '清爽蓝白和阳光曲线，适合校园、青春、成长题材。',
+  id: "builtin:youth-campus",
+  name: "青春校园",
+  description: "清爽蓝白和阳光曲线，适合校园、青春、成长题材。",
   generate: generateYouthCampusCover,
 };

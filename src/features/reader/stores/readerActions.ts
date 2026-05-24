@@ -1,11 +1,11 @@
-import { defineStore } from 'pinia';
-import { shallowRef } from 'vue';
+import { defineStore } from "pinia";
+import { shallowRef } from "vue";
 import type {
   TemporaryChapterSourceOverride,
   WholeBookSwitchedPayload,
-} from '@/components/reader/types';
+} from "@/components/reader/types";
 
-type ReaderTapZone = 'left' | 'center' | 'right';
+type ReaderTapZone = "left" | "center" | "right";
 type Asyncish = void | Promise<unknown>;
 
 export interface ReaderActionBindings {
@@ -54,7 +54,7 @@ function call<TArgs extends unknown[]>(
   return action(...args);
 }
 
-export const useReaderActionsStore = defineStore('readerActions', () => {
+export const useReaderActionsStore = defineStore("readerActions", () => {
   const bindings = shallowRef<ReaderActionBindings | null>(null);
 
   function bind(nextBindings: ReaderActionBindings) {

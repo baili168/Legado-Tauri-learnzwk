@@ -1,16 +1,16 @@
 /**
  * 负责阅读进度的本地保存、同步上报与冲突处理。
  */
-import type { DialogApi } from 'naive-ui';
-import type { ComputedRef, Ref } from 'vue';
-import type { ChapterItem } from '@/stores';
-import type { AppConfig } from '../../../composables/useAppConfig';
-import type { OpenChapterOptions } from './useReaderChapterOpen';
+import type { DialogApi } from "naive-ui";
+import type { ComputedRef, Ref } from "vue";
+import type { ChapterItem } from "@/stores";
+import type { AppConfig } from "../../../composables/useAppConfig";
+import type { OpenChapterOptions } from "./useReaderChapterOpen";
 import type {
   ReaderPositionSnapshot,
   ReaderProgressPayload,
   ReaderProgressTarget,
-} from './useReaderPosition';
+} from "./useReaderPosition";
 
 interface ReaderConflictPayload {
   bookId?: string;
@@ -31,7 +31,7 @@ interface ReportReaderSessionPayload {
 }
 
 interface ReaderSyncApi {
-  syncNow: (mode?: 'push' | 'sync' | 'pull') => Promise<unknown>;
+  syncNow: (mode?: "push" | "sync" | "pull") => Promise<unknown>;
   reportReaderSession: (payload: ReportReaderSessionPayload) => Promise<unknown>;
   syncCurrentReadingProgress: (bookId: string) => Promise<unknown>;
   listenReadingConflict: (listener: (payload: unknown) => void) => Promise<() => void>;
@@ -68,7 +68,7 @@ interface UseReaderProgressSyncOptions {
 const READER_SYNC_DEBOUNCE_MS = 3000;
 
 function isReaderConflictPayload(payload: unknown): payload is ReaderConflictPayload {
-  return typeof payload === 'object' && payload !== null;
+  return typeof payload === "object" && payload !== null;
 }
 
 export function useReaderProgressSync(options: UseReaderProgressSyncOptions) {
@@ -90,7 +90,7 @@ export function useReaderProgressSync(options: UseReaderProgressSyncOptions) {
 
   function reportReaderSession(active: boolean) {
     const bookId = options.currentShelfId.value;
-    if (bookId === undefined || bookId === '') {
+    if (bookId === undefined || bookId === "") {
       return;
     }
     const position = options.readCurrentPosition();
@@ -126,7 +126,7 @@ export function useReaderProgressSync(options: UseReaderProgressSyncOptions) {
 
   async function doSaveDetailedProgress(): Promise<void> {
     const shelfId = options.currentShelfId.value;
-    if (shelfId === undefined || shelfId === '' || options.shouldIgnorePositionEvents()) {
+    if (shelfId === undefined || shelfId === "" || options.shouldIgnorePositionEvents()) {
       return;
     }
 
@@ -166,7 +166,7 @@ export function useReaderProgressSync(options: UseReaderProgressSyncOptions) {
     return (
       options.getShow() &&
       options.currentShelfId.value !== undefined &&
-      options.currentShelfId.value !== '' &&
+      options.currentShelfId.value !== "" &&
       syncConfig.sync_enabled &&
       syncConfig.sync_scope_reading_progress
     );
@@ -188,7 +188,7 @@ export function useReaderProgressSync(options: UseReaderProgressSyncOptions) {
       if (bookId) {
         await options.sync.syncCurrentReadingProgress(bookId);
       } else {
-        await options.sync.syncNow('sync');
+        await options.sync.syncNow("sync");
       }
     } catch {
       // 同步失败不打断阅读
@@ -206,7 +206,7 @@ export function useReaderProgressSync(options: UseReaderProgressSyncOptions) {
         const data = payload;
         if (
           data.bookId === undefined ||
-          data.bookId === '' ||
+          data.bookId === "" ||
           data.bookId !== options.currentShelfId.value
         ) {
           return;
@@ -215,16 +215,16 @@ export function useReaderProgressSync(options: UseReaderProgressSyncOptions) {
         const chapterIndex = Number(remote.chapterIndex ?? -1);
         const chapter = options.getChapter(chapterIndex);
         options.dialog.warning({
-          title: '阅读进度不一致',
+          title: "阅读进度不一致",
           content: `服务器进度为「${chapter?.name ?? `第 ${chapterIndex + 1} 章`}」。可以跳转到服务器进度，也可以保留当前位置继续阅读。`,
-          positiveText: '跳转到服务器进度',
-          negativeText: '保留当前位置',
+          positiveText: "跳转到服务器进度",
+          negativeText: "保留当前位置",
           onPositiveClick: () => {
             const pageIndex = Number(remote.pageIndex ?? -1);
             const scrollRatio = Number(remote.scrollRatio ?? -1);
             if (chapterIndex >= 0) {
               void options.openChapter(chapterIndex, {
-                position: scrollRatio >= 0 || pageIndex >= 0 ? 'resume' : 'first',
+                position: scrollRatio >= 0 || pageIndex >= 0 ? "resume" : "first",
                 pageIndex: pageIndex >= 0 ? pageIndex : undefined,
                 pageRatio: scrollRatio >= 0 ? scrollRatio : undefined,
               });

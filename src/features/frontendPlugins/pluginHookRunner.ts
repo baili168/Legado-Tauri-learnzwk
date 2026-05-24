@@ -1,10 +1,10 @@
-import type { RuntimePluginRecord } from './pluginRuntimeTypes';
+import type { RuntimePluginRecord } from "./pluginRuntimeTypes";
 import type {
   FrontendPluginApi,
   FrontendPluginHookName,
   ReaderLifecycleHook,
   ReaderSessionSnapshot,
-} from './pluginTypes';
+} from "./pluginTypes";
 
 export function notifySessionListeners(
   record: RuntimePluginRecord,

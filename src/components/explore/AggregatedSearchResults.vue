@@ -64,12 +64,7 @@ function isSameBook(a: BookItem, b: BookItem): boolean {
   if (sim >= 0.85) {
     return true;
   }
-  if (
-    sim >= 0.7 &&
-    a.author &&
-    b.author &&
-    a.author.trim() === b.author.trim()
-  ) {
+  if (sim >= 0.7 && a.author && b.author && a.author.trim() === b.author.trim()) {
     return true;
   }
   return false;
@@ -144,10 +139,7 @@ const aggregatedBooks = computed<AggregatedBook[]>(() => {
     </div>
 
     <!-- 空状态 -->
-    <AppEmpty
-      v-else-if="!loading"
-      :title="emptyDescription ?? '暂无搜索结果'"
-    />
+    <AppEmpty v-else-if="!loading" :title="emptyDescription ?? '暂无搜索结果'" />
   </div>
 </template>
 
@@ -168,10 +160,7 @@ const aggregatedBooks = computed<AggregatedBook[]>(() => {
 }
 .agg-results__grid {
   display: grid;
-  grid-template-columns: repeat(
-    auto-fill,
-    minmax(var(--book-card-col-min, 220px), 1fr)
-  );
+  grid-template-columns: repeat(auto-fill, minmax(var(--book-card-col-min, 220px), 1fr));
   gap: 10px;
 }
 </style>

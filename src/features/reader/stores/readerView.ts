@@ -1,9 +1,9 @@
-import { defineStore } from 'pinia';
-import { computed, ref, shallowRef, type ComputedRef, type Ref } from 'vue';
-import type { ReaderBookInfo, TemporaryChapterSourceOverride } from '@/components/reader/types';
-import type { ChapterItem } from '@/stores/scriptBridge';
+import { defineStore } from "pinia";
+import { computed, ref, shallowRef, type ComputedRef, type Ref } from "vue";
+import type { ReaderBookInfo, TemporaryChapterSourceOverride } from "@/components/reader/types";
+import type { ChapterItem } from "@/stores/scriptBridge";
 
-type PagedModeKind = 'slide' | 'cover' | 'simulation' | 'none';
+type PagedModeKind = "slide" | "cover" | "simulation" | "none";
 type ValueSource<T> = Ref<T> | ComputedRef<T>;
 
 export interface ReaderContentRefs {
@@ -41,6 +41,8 @@ export interface ReaderViewBindings {
   currentChapterOverride: ValueSource<TemporaryChapterSourceOverride | null>;
   ttsProgressText: ValueSource<string>;
   ttsScrollHighlightIdx: ValueSource<number>;
+  ttsScrollSentenceIdx: ValueSource<number>;
+  isTtsSentenceActive: ValueSource<boolean>;
   currentScrollChapterLoading: ValueSource<boolean>;
   prevScrollChapterContent: ValueSource<string>;
   prevScrollChapterTitle: ValueSource<string>;
@@ -68,21 +70,21 @@ function readSource<T>(source: ValueSource<T> | undefined, fallback: T): T {
   return source ? source.value : fallback;
 }
 
-export const useReaderViewStore = defineStore('readerView', () => {
+export const useReaderViewStore = defineStore("readerView", () => {
   const bindings = shallowRef<ReaderViewBindings | null>(null);
 
   const chapters = computed<ChapterItem[]>(() => readSource(bindings.value?.chapters, []));
   const bookInfo = computed<ReaderBookInfo | undefined>(() =>
     readSource(bindings.value?.bookInfo, undefined),
   );
-  const sourceType = computed(() => readSource(bindings.value?.sourceType, 'novel'));
-  const fileName = computed(() => readSource(bindings.value?.fileName, ''));
+  const sourceType = computed(() => readSource(bindings.value?.sourceType, "novel"));
+  const fileName = computed(() => readSource(bindings.value?.fileName, ""));
   const refreshingToc = computed(() => readSource(bindings.value?.refreshingToc, false));
   const hasPrev = computed(() => readSource(bindings.value?.hasPrev, false));
   const hasNext = computed(() => readSource(bindings.value?.hasNext, false));
   const readingChapterIndex = computed(() => readSource(bindings.value?.readingChapterIndex, 0));
-  const currentChapterName = computed(() => readSource(bindings.value?.currentChapterName, ''));
-  const currentChapterUrl = computed(() => readSource(bindings.value?.currentChapterUrl, ''));
+  const currentChapterName = computed(() => readSource(bindings.value?.currentChapterName, ""));
+  const currentChapterUrl = computed(() => readSource(bindings.value?.currentChapterUrl, ""));
   const isVideoMode = computed(() => readSource(bindings.value?.isVideoMode, false));
   const isComicMode = computed(() => readSource(bindings.value?.isComicMode, false));
   const isPagedMode = computed(() => readSource(bindings.value?.isPagedMode, false));
@@ -92,8 +94,8 @@ export const useReaderViewStore = defineStore('readerView', () => {
   const activePagedPages = computed<string[]>(() =>
     readSource(bindings.value?.activePagedPages, []),
   );
-  const prevBoundaryPage = computed(() => readSource(bindings.value?.prevBoundaryPage, ''));
-  const nextBoundaryPage = computed(() => readSource(bindings.value?.nextBoundaryPage, ''));
+  const prevBoundaryPage = computed(() => readSource(bindings.value?.prevBoundaryPage, ""));
+  const nextBoundaryPage = computed(() => readSource(bindings.value?.nextBoundaryPage, ""));
   const blockingLoading = computed(() => readSource(bindings.value?.blockingLoading, false));
   const blockingError = computed(() => readSource(bindings.value?.blockingError, false));
   const currentShelfId = computed(() => readSource(bindings.value?.currentShelfId, undefined));
@@ -102,46 +104,52 @@ export const useReaderViewStore = defineStore('readerView', () => {
   const currentChapterOverride = computed<TemporaryChapterSourceOverride | null>(() =>
     readSource(bindings.value?.currentChapterOverride, null),
   );
-  const ttsProgressText = computed(() => readSource(bindings.value?.ttsProgressText, ''));
+  const ttsProgressText = computed(() => readSource(bindings.value?.ttsProgressText, ""));
   const ttsScrollHighlightIdx = computed(() =>
     readSource(bindings.value?.ttsScrollHighlightIdx, -1),
+  );
+  const ttsScrollSentenceIdx = computed(() =>
+    readSource(bindings.value?.ttsScrollSentenceIdx, -1),
+  );
+  const isTtsSentenceActive = computed(() =>
+    readSource(bindings.value?.isTtsSentenceActive, false),
   );
   const currentScrollChapterLoading = computed(() =>
     readSource(bindings.value?.currentScrollChapterLoading, false),
   );
   const prevScrollChapterContent = computed(() =>
-    readSource(bindings.value?.prevScrollChapterContent, ''),
+    readSource(bindings.value?.prevScrollChapterContent, ""),
   );
   const prevScrollChapterTitle = computed(() =>
-    readSource(bindings.value?.prevScrollChapterTitle, ''),
+    readSource(bindings.value?.prevScrollChapterTitle, ""),
   );
   const prevScrollChapterLoading = computed(() =>
     readSource(bindings.value?.prevScrollChapterLoading, false),
   );
   const nextScrollChapterContent = computed(() =>
-    readSource(bindings.value?.nextScrollChapterContent, ''),
+    readSource(bindings.value?.nextScrollChapterContent, ""),
   );
   const nextScrollChapterTitle = computed(() =>
-    readSource(bindings.value?.nextScrollChapterTitle, ''),
+    readSource(bindings.value?.nextScrollChapterTitle, ""),
   );
   const nextScrollChapterLoading = computed(() =>
     readSource(bindings.value?.nextScrollChapterLoading, false),
   );
   const prevComicChapterContent = computed(() =>
-    readSource(bindings.value?.prevComicChapterContent, ''),
+    readSource(bindings.value?.prevComicChapterContent, ""),
   );
   const prevComicChapterTitle = computed(() =>
-    readSource(bindings.value?.prevComicChapterTitle, ''),
+    readSource(bindings.value?.prevComicChapterTitle, ""),
   );
   const nextComicChapterContent = computed(() =>
-    readSource(bindings.value?.nextComicChapterContent, ''),
+    readSource(bindings.value?.nextComicChapterContent, ""),
   );
   const nextComicChapterTitle = computed(() =>
-    readSource(bindings.value?.nextComicChapterTitle, ''),
+    readSource(bindings.value?.nextComicChapterTitle, ""),
   );
   const contentRefs = computed(() => bindings.value?.contentRefs ?? emptyContentRefs);
-  const bookName = computed(() => bookInfo.value?.name ?? '');
-  const bookUrl = computed(() => bookInfo.value?.bookUrl ?? '');
+  const bookName = computed(() => bookInfo.value?.name ?? "");
+  const bookUrl = computed(() => bookInfo.value?.bookUrl ?? "");
 
   function bind(nextBindings: ReaderViewBindings) {
     bindings.value = nextBindings;
@@ -177,6 +185,8 @@ export const useReaderViewStore = defineStore('readerView', () => {
     currentChapterOverride,
     ttsProgressText,
     ttsScrollHighlightIdx,
+    ttsScrollSentenceIdx,
+    isTtsSentenceActive,
     currentScrollChapterLoading,
     prevScrollChapterContent,
     prevScrollChapterTitle,

@@ -4,30 +4,29 @@
  * 管理分组列表、当前选中的分组、分组的增删改查
  */
 
-import { computed } from 'vue';
-import type { ShelfGroup } from '@/types/shelfGroup';
-import { useBookshelfStore } from '@/stores/bookshelf';
-import { useDynamicConfig } from './useDynamicConfig';
+import { computed } from "vue";
+import type { BookTag, BookTagRelation, ShelfGroup } from "@/types/shelfGroup";
+import { useBookshelfStore } from "@/stores/bookshelf";
+import { useDynamicConfig } from "./useDynamicConfig";
 
 export interface ShelfGroupsState {
-  /** 分组列表 */
   groups: ShelfGroup[];
-  /** 当前选中的分组 ID */
   activeGroupId: string;
-  /** 最近阅读书籍 ID */
   lastReadBookId: string | null;
-  /** "全部书籍"分组是否启用（显示在标签栏） */
   allGroupEnabled: boolean;
-  /** 书籍到分组的映射关系 { bookId: groupId } */
   bookGroupMap: Record<string, string>;
+  tags: BookTag[];
+  bookTags: BookTagRelation[];
 }
 
 const DEFAULT_STATE: ShelfGroupsState = {
   groups: [],
-  activeGroupId: 'all',
+  activeGroupId: "all",
   lastReadBookId: null,
   allGroupEnabled: true,
   bookGroupMap: {},
+  tags: [],
+  bookTags: [],
 };
 
 function generateId(): string {
@@ -38,18 +37,34 @@ export function useShelfGroups() {
   const bookshelfStore = useBookshelfStore();
 
   const store = useDynamicConfig<ShelfGroupsState>({
-    namespace: 'ui.shelfGroups',
-    version: 1,
+    namespace: "ui.shelfGroups",
+    version: 2,
     defaults: () => ({ ...DEFAULT_STATE }),
-    migrate: () => null,
+    migrate: (ctx) => {
+      if (ctx.storedVersion === 1) {
+        const old = ctx.storedData as Record<string, unknown> | null;
+        if (old) {
+          return {
+            groups: (old.groups as ShelfGroup[]) ?? [],
+            activeGroupId: (old.activeGroupId as string) ?? "all",
+            lastReadBookId: (old.lastReadBookId as string) ?? null,
+            allGroupEnabled: (old.allGroupEnabled as boolean) ?? true,
+            bookGroupMap: (old.bookGroupMap as Record<string, string>) ?? {},
+            tags: [],
+            bookTags: [],
+          };
+        }
+      }
+      return null;
+    },
   });
 
   /** 生成分组列表（含全部书籍） */
   const groupsWithAll = computed<ShelfGroup[]>(() => {
     const allGroupEnabled = store.state.allGroupEnabled ?? true;
     const allGroup: ShelfGroup = {
-      id: 'all',
-      name: '全部书籍',
+      id: "all",
+      name: "全部书籍",
       createdAt: 0,
       enabled: allGroupEnabled,
       order: -1,
@@ -71,7 +86,7 @@ export function useShelfGroups() {
 
   /** 启用的分组列表（用于显示） */
   const enabledGroups = computed(() => {
-    return groupsWithAll.value.filter((g) => g.enabled || g.id === 'all');
+    return groupsWithAll.value.filter((g) => g.enabled || g.id === "all");
   });
 
   /** 根据当前分组过滤的书籍（不含隐私过滤，由上层视图按隐私模式处理） */
@@ -79,7 +94,7 @@ export function useShelfGroups() {
     const activeId = store.state.activeGroupId;
     let books = [...bookshelfStore.books];
 
-    if (activeId === 'all') {
+    if (activeId === "all") {
       // 全部书籍：按 lastReadAt 降序排列，最近阅读的在前
       return sortByLastRead(books);
     }
@@ -138,12 +153,12 @@ export function useShelfGroups() {
 
   /** 删除分组 */
   async function removeGroup(groupId: string) {
-    if (groupId === 'all') {
+    if (groupId === "all") {
       return;
     }
     store.state.groups = store.state.groups.filter((g) => g.id !== groupId);
     if (store.state.activeGroupId === groupId) {
-      store.state.activeGroupId = 'all';
+      store.state.activeGroupId = "all";
     }
     await store.replace(store.state);
   }
@@ -180,9 +195,9 @@ export function useShelfGroups() {
     store.state.allGroupEnabled = enabled;
 
     // 如果禁用了"全部书籍"，且当前选中的是"全部"，自动切换到第一个可见分组
-    if (!enabled && store.state.activeGroupId === 'all') {
+    if (!enabled && store.state.activeGroupId === "all") {
       const firstVisible = visibleGroups.value[0];
-      if (firstVisible && firstVisible.id !== 'all') {
+      if (firstVisible && firstVisible.id !== "all") {
         store.state.activeGroupId = firstVisible.id;
       }
     }

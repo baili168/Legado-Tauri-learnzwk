@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { ChevronDown } from 'lucide-vue-next';
-import { NTag, NSwitch, NButton } from 'naive-ui';
-import { ref } from 'vue';
-import type { ExtensionMeta } from '@/composables/useExtension';
-import type { FrontendPluginRecord } from '@/composables/useFrontendPlugins';
+import { ChevronDown } from "lucide-vue-next";
+import { NTag, NSwitch, NButton } from "naive-ui";
+import { ref } from "vue";
+import type { ExtensionMeta } from "@/composables/useExtension";
+import type { FrontendPluginRecord } from "@/composables/useFrontendPlugins";
 import {
   catDot,
   catType,
   runAtLabel,
   runtimeStatusType,
   runtimeStatusLabel,
-} from '@/utils/extensionDisplayUtils';
+} from "@/utils/extensionDisplayUtils";
 
 const props = defineProps<{
   ext: ExtensionMeta;
@@ -21,7 +21,7 @@ const emit = defineEmits<{
   toggle: [];
   move: [direction: -1 | 1];
   reload: [];
-  'view-code': [];
+  "view-code": [];
   edit: [];
   delete: [];
   settings: [];
@@ -38,7 +38,7 @@ const showDetails = ref(false);
       <div class="ext-card__name-row">
         <span class="ext-card__name">{{ props.ext.name }}</span>
         <n-tag :type="catType(props.ext.category) as any" size="tiny" :bordered="false">
-          {{ props.ext.category || '其他' }}
+          {{ props.ext.category || "其他" }}
         </n-tag>
         <n-tag
           size="tiny"
@@ -55,7 +55,7 @@ const showDetails = ref(false);
           {{ runtimeStatusLabel(props.runtimeInfo?.status) }}
         </n-tag>
       </div>
-      <p class="ext-card__desc">{{ props.ext.description || '暂无描述' }}</p>
+      <p class="ext-card__desc">{{ props.ext.description || "暂无描述" }}</p>
       <div v-if="props.runtimeInfo?.status === 'error'" class="ext-card__error">
         <span class="ext-card__error-title">运行错误</span>
         <span class="ext-card__error-msg">{{ props.runtimeInfo?.runtimeError }}</span>
@@ -63,7 +63,7 @@ const showDetails = ref(false);
       <div class="ext-card__meta">
         <span>v{{ props.ext.version }}</span>
         <span class="ext-card__dot" />
-        <span>{{ props.ext.author || '未知作者' }}</span>
+        <span>{{ props.ext.author || "未知作者" }}</span>
         <template v-if="props.runtimeInfo">
           <span class="ext-card__dot" />
           <span> hooks {{ props.runtimeInfo?.runtimeHooks.length ?? 0 }} </span>
@@ -95,7 +95,7 @@ const showDetails = ref(false);
       <div class="ext-card__toggle">
         <n-switch :value="props.ext.enabled" size="small" @update:value="emit('toggle')" />
         <span class="ext-card__toggle-text">
-          {{ props.ext.enabled ? '已启用' : '已禁用' }}
+          {{ props.ext.enabled ? "已启用" : "已禁用" }}
         </span>
       </div>
       <div class="ext-card__action-list">
@@ -156,7 +156,7 @@ const showDetails = ref(false);
         <div v-if="props.runtimeInfo.runtimeBookshelfActions?.length" class="ext-card__detail-row">
           <span class="ext-card__detail-label">书架动作</span>
           <span class="ext-card__detail-value">{{
-            props.runtimeInfo.runtimeBookshelfActions.join(', ')
+            props.runtimeInfo.runtimeBookshelfActions.join(", ")
           }}</span>
         </div>
         <div class="ext-card__detail-row">
@@ -253,7 +253,7 @@ const showDetails = ref(false);
   flex-shrink: 0;
 }
 .ext-card__grant {
-  font-family: 'Cascadia Code', 'Consolas', monospace;
+  font-family: "Cascadia Code", "Consolas", monospace;
   font-size: 0.65rem;
   background: var(--color-surface-secondary, rgba(0, 0, 0, 0.04));
   padding: 1px 5px;

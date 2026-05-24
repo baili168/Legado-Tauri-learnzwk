@@ -9,16 +9,16 @@
  *  1. ExploreView.onMounted 中 await preloadExploreCategoryCache() / preloadExploreBooksCache()
  *  2. SourceExploreSection 中用相应 get/set 函数
  */
-import type { BookItem } from '@/stores';
+import type { BookItem } from "@/stores";
 import {
   ensureFrontendNamespaceLoaded,
   getFrontendStorageItem,
   setFrontendStorageItem,
-} from './useFrontendStorage';
+} from "./useFrontendStorage";
 
 // ── 分类缓存 ──────────────────────────────────────────────────────────────
 
-const CATS_NS = 'explore.cats';
+const CATS_NS = "explore.cats";
 
 /** 预热命名空间（ExploreView mount 时调用一次） */
 export async function preloadExploreCategoryCache(): Promise<void> {
@@ -36,7 +36,7 @@ export function getCachedExploreCategories(fileName: string): string[] | null {
     if (!Array.isArray(parsed)) {
       return null;
     }
-    return parsed.filter((v): v is string => typeof v === 'string');
+    return parsed.filter((v): v is string => typeof v === "string");
   } catch {
     return null;
   }
@@ -49,7 +49,7 @@ export function setCachedExploreCategories(fileName: string, cats: string[]): vo
 
 // ── 书籍缓存（第 1 页，有效期 1 天）────────────────────────────────────────
 
-const BOOKS_NS = 'explore.books';
+const BOOKS_NS = "explore.books";
 const BOOKS_TTL_MS = 24 * 60 * 60 * 1000; // 1 天
 
 interface BooksCacheEntry {
@@ -78,7 +78,7 @@ export function getCachedExploreBooks(fileName: string, category: string): BookI
   }
   try {
     const entry = JSON.parse(raw) as BooksCacheEntry;
-    if (!entry || typeof entry.ts !== 'number' || !Array.isArray(entry.books)) {
+    if (!entry || typeof entry.ts !== "number" || !Array.isArray(entry.books)) {
       return null;
     }
     if (Date.now() - entry.ts > BOOKS_TTL_MS) {

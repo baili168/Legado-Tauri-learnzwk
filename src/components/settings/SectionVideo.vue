@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { useMessage } from 'naive-ui';
-import { storeToRefs } from 'pinia';
-import { useAppConfigStore } from '@/stores';
-import SettingItem from './SettingItem.vue';
-import SettingSection from './SettingSection.vue';
+import { useMessage } from "naive-ui";
+import { storeToRefs } from "pinia";
+import { useAppConfigStore } from "@/stores";
+import SettingItem from "./SettingItem.vue";
+import SettingSection from "./SettingSection.vue";
 
 const message = useMessage();
 const _appCfg = useAppConfigStore();
@@ -25,45 +25,45 @@ const {
 const { setConfig } = _appCfg;
 
 const PLAYER_OPTIONS = [
-  { label: 'Video.js', value: 'videojs' },
-  { label: 'XGPlayer（西瓜播放器）', value: 'xgplayer' },
-  { label: 'DPlayer', value: 'dplayer' },
+  { label: "Video.js", value: "videojs" },
+  { label: "XGPlayer（西瓜播放器）", value: "xgplayer" },
+  { label: "DPlayer", value: "dplayer" },
 ];
 
 const QUALITY_OPTIONS = [
-  { label: '自动', value: 'auto' },
-  { label: '最高画质', value: 'highest' },
-  { label: '最低画质', value: 'lowest' },
+  { label: "自动", value: "auto" },
+  { label: "最高画质", value: "highest" },
+  { label: "最低画质", value: "lowest" },
 ];
 
 const RATE_OPTIONS = [
-  { label: '0.5x', value: 0.5 },
-  { label: '0.75x', value: 0.75 },
-  { label: '1.0x', value: 1.0 },
-  { label: '1.25x', value: 1.25 },
-  { label: '1.5x', value: 1.5 },
-  { label: '2.0x', value: 2.0 },
-  { label: '3.0x', value: 3.0 },
+  { label: "0.5x", value: 0.5 },
+  { label: "0.75x", value: 0.75 },
+  { label: "1.0x", value: 1.0 },
+  { label: "1.25x", value: 1.25 },
+  { label: "1.5x", value: 1.5 },
+  { label: "2.0x", value: 2.0 },
+  { label: "3.0x", value: 3.0 },
 ];
 
 const VJS_PRELOAD_OPTIONS = [
-  { label: '自动（auto）', value: 'auto' },
-  { label: '仅元数据（metadata）', value: 'metadata' },
-  { label: '不预加载（none）', value: 'none' },
+  { label: "自动（auto）", value: "auto" },
+  { label: "仅元数据（metadata）", value: "metadata" },
+  { label: "不预加载（none）", value: "none" },
 ];
 
 const SEEK_STEP_OPTIONS = [
-  { label: '5 秒', value: 5 },
-  { label: '10 秒', value: 10 },
-  { label: '15 秒', value: 15 },
-  { label: '30 秒', value: 30 },
-  { label: '60 秒', value: 60 },
+  { label: "5 秒", value: 5 },
+  { label: "10 秒", value: 10 },
+  { label: "15 秒", value: 15 },
+  { label: "30 秒", value: 30 },
+  { label: "60 秒", value: 60 },
 ];
 
 async function handleSet(key: string, value: string) {
   try {
     await setConfig(key, value);
-    message.success('已保存');
+    message.success("已保存");
   } catch (e: unknown) {
     message.error(`保存失败: ${e}`);
   }

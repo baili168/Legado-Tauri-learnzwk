@@ -1,5 +1,5 @@
-import type { ReaderBookInfo } from '@/components/reader/types';
-import type { CachedChapter, ChapterItem, ShelfBook } from '@/stores';
+import type { ReaderBookInfo } from "@/components/reader/types";
+import type { CachedChapter, ChapterItem, ShelfBook } from "@/stores";
 
 export function shelfBookToReaderBookInfo(book: ShelfBook): ReaderBookInfo {
   return {

@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { storeToRefs } from 'pinia';
-import { ref } from 'vue';
-import type { ChapterGroup } from '@/stores';
-import VideoPlayerPage from '@/components/reader/modes/VideoPlayerPage.vue';
-import { useReaderActionsStore, useReaderSessionStore, useReaderViewStore } from '@/stores';
+import { storeToRefs } from "pinia";
+import { ref } from "vue";
+import type { ChapterGroup } from "@/stores";
+import VideoPlayerPage from "@/components/reader/modes/VideoPlayerPage.vue";
+import { useReaderActionsStore, useReaderSessionStore, useReaderViewStore } from "@/stores";
 
 defineProps<{
   chapterGroups?: ChapterGroup[];

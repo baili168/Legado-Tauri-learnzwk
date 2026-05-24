@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue';
-import { useReaderActionsStore } from '@/features/reader/stores/readerActions';
+import { onMounted, onUnmounted } from "vue";
+import { useReaderActionsStore } from "@/features/reader/stores/readerActions";
 
 export interface KeyboardHandlerOptions {
   enabled?: boolean;
@@ -14,7 +14,7 @@ const props = withDefaults(defineProps<KeyboardHandlerOptions>(), {
 });
 
 const emit = defineEmits<{
-  (e: 'escape'): void;
+  (e: "escape"): void;
 }>();
 
 const readerActions = useReaderActionsStore();
@@ -24,73 +24,71 @@ function handleKeyDown(event: KeyboardEvent) {
 
   const target = event.target as HTMLElement;
   const isInputLike =
-    target.tagName === 'INPUT' ||
-    target.tagName === 'TEXTAREA' ||
-    target.isContentEditable;
+    target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable;
 
   if (isInputLike) return;
 
   const isCtrlOrCmd = event.ctrlKey || event.metaKey;
 
   switch (event.key) {
-    case 'ArrowLeft':
-    case 'ArrowUp':
+    case "ArrowLeft":
+    case "ArrowUp":
       event.preventDefault();
       readerActions.gotoPrevBoundary();
       break;
 
-    case 'ArrowRight':
-    case 'ArrowDown':
+    case "ArrowRight":
+    case "ArrowDown":
       event.preventDefault();
       readerActions.gotoNextBoundary();
       break;
 
-    case 'PageUp':
+    case "PageUp":
       event.preventDefault();
       readerActions.gotoPrevBoundary();
       break;
 
-    case 'PageDown':
+    case "PageDown":
       event.preventDefault();
       readerActions.gotoNextBoundary();
       break;
 
-    case 'Home':
+    case "Home":
       event.preventDefault();
       readerActions.gotoPrevBoundary();
       break;
 
-    case 'End':
+    case "End":
       event.preventDefault();
       readerActions.gotoNextBoundary();
       break;
 
-    case ' ':
+    case " ":
       event.preventDefault();
       readerActions.gotoNextBoundary();
       break;
 
-    case 'Enter':
+    case "Enter":
       event.preventDefault();
       readerActions.gotoNextBoundary();
       break;
 
-    case 'Escape':
+    case "Escape":
       event.preventDefault();
-      emit('escape');
+      emit("escape");
       readerActions.close();
       break;
 
-    case 'f':
-    case 'F':
+    case "f":
+    case "F":
       if (isCtrlOrCmd) {
         event.preventDefault();
         props.onOpenSearch?.();
       }
       break;
 
-    case 'b':
-    case 'B':
+    case "b":
+    case "B":
       if (isCtrlOrCmd) {
         event.preventDefault();
         props.onAddHighlight?.();
@@ -106,11 +104,11 @@ function handleKeyDown(event: KeyboardEvent) {
 }
 
 onMounted(() => {
-  window.addEventListener('keydown', handleKeyDown, { capture: true });
+  window.addEventListener("keydown", handleKeyDown, { capture: true });
 });
 
 onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeyDown, { capture: true });
+  window.removeEventListener("keydown", handleKeyDown, { capture: true });
 });
 </script>
 

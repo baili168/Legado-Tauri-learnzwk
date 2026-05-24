@@ -1,12 +1,7 @@
 <template>
   <Teleport to="body">
     <Transition name="toolbar-fade">
-      <div
-        v-if="visible"
-        ref="toolbarRef"
-        class="selection-toolbar"
-        :style="toolbarStyle"
-      >
+      <div v-if="visible" ref="toolbarRef" class="selection-toolbar" :style="toolbarStyle">
         <button
           v-for="color in highlightColors"
           :key="color.value"
@@ -19,35 +14,19 @@
 
         <div class="toolbar-divider"></div>
 
-        <button
-          class="toolbar-btn"
-          title="添加笔记"
-          @click="handleAddNote"
-        >
+        <button class="toolbar-btn" title="添加笔记" @click="handleAddNote">
           <BookMark :size="16" />
         </button>
 
-        <button
-          class="toolbar-btn"
-          title="复制"
-          @click="handleCopy"
-        >
+        <button class="toolbar-btn" title="复制" @click="handleCopy">
           <Copy :size="16" />
         </button>
 
-        <button
-          class="toolbar-btn"
-          title="搜索"
-          @click="handleSearch"
-        >
+        <button class="toolbar-btn" title="搜索" @click="handleSearch">
           <Search :size="16" />
         </button>
 
-        <button
-          class="toolbar-btn"
-          title="分享"
-          @click="handleShare"
-        >
+        <button class="toolbar-btn" title="分享" @click="handleShare">
           <Share2 :size="16" />
         </button>
       </div>
@@ -63,12 +42,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
-import { BookMark, Copy, Search, Share2 } from 'lucide-vue-next';
-import { NPopover } from 'naive-ui';
-import type { HighlightColor, HighlightAnnotation } from '@/features/reader/stores/readerBookmarks';
-import AnnotationNoteEditor from './AnnotationNoteEditor.vue';
-import { useNativeShare } from '@/composables/useNativeShare';
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
+import { BookMark, Copy, Search, Share2 } from "lucide-vue-next";
+import { NPopover } from "naive-ui";
+import type { HighlightColor, HighlightAnnotation } from "@/features/reader/stores/readerBookmarks";
+import AnnotationNoteEditor from "./AnnotationNoteEditor.vue";
+import { useNativeShare } from "@/composables/useNativeShare";
 
 interface HighlightColorOption {
   value: HighlightColor;
@@ -77,10 +56,10 @@ interface HighlightColorOption {
 }
 
 const highlightColors: HighlightColorOption[] = [
-  { value: 'yellow', label: '黄色', hex: '#fef08a' },
-  { value: 'blue', label: '蓝色', hex: '#93c5fd' },
-  { value: 'green', label: '绿色', hex: '#86efac' },
-  { value: 'pink', label: '粉色', hex: '#f9a8d4' },
+  { value: "yellow", label: "黄色", hex: "#fef08a" },
+  { value: "blue", label: "蓝色", hex: "#93c5fd" },
+  { value: "green", label: "绿色", hex: "#86efac" },
+  { value: "pink", label: "粉色", hex: "#f9a8d4" },
 ];
 
 const visible = ref(false);
@@ -91,12 +70,7 @@ const noteEditorVisible = ref(false);
 const pendingHighlight = ref<HighlightAnnotation | null>(null);
 
 const emit = defineEmits<{
-  highlight: [
-    text: string,
-    color: HighlightColor,
-    startOffset: number,
-    endOffset: number,
-  ];
+  highlight: [text: string, color: HighlightColor, startOffset: number, endOffset: number];
   addNote: [highlight: HighlightAnnotation];
 }>();
 
@@ -189,7 +163,7 @@ function getSelectionOffsets(): { start: number; end: number } {
     }
 
     if (node.nodeType === Node.TEXT_NODE) {
-      const text = node.textContent || '';
+      const text = node.textContent || "";
       if (!foundStart) {
         offset += text.length;
       } else {
@@ -205,12 +179,11 @@ function getSelectionOffsets(): { start: number; end: number } {
     }
   }
 
-  const root = container.nodeType === Node.TEXT_NODE
-    ? container.parentElement
-    : container as Element;
+  const root =
+    container.nodeType === Node.TEXT_NODE ? container.parentElement : (container as Element);
 
   if (root) {
-    const textContent = root.textContent || '';
+    const textContent = root.textContent || "";
     offset = 0;
 
     const preRange = document.createRange();
@@ -234,7 +207,7 @@ async function handleHighlight(color: HighlightColor) {
 
   const { start, end } = getSelectionOffsets();
 
-  emit('highlight', selectedText, color, start, end);
+  emit("highlight", selectedText, color, start, end);
 
   selection.removeAllRanges();
   visible.value = false;
@@ -258,7 +231,7 @@ function handleAddNote() {
     startOffset: start,
     endOffset: end,
     text: selectedText,
-    color: 'yellow',
+    color: "yellow",
     createdAt: Date.now(),
   };
 
@@ -275,7 +248,7 @@ async function handleCopy() {
   try {
     await navigator.clipboard.writeText(selectedText);
   } catch (err) {
-    console.error('复制失败:', err);
+    console.error("复制失败:", err);
   }
 
   selection.removeAllRanges();
@@ -290,7 +263,7 @@ function handleSearch() {
   if (!selectedText) return;
 
   const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(selectedText)}`;
-  window.open(searchUrl, '_blank');
+  window.open(searchUrl, "_blank");
 
   selection.removeAllRanges();
   visible.value = false;
@@ -306,8 +279,8 @@ async function handleShare() {
   const { shareSelection } = useNativeShare();
   await shareSelection(
     selectedText,
-    readerContext.value.fileName || '未知书籍',
-    readerContext.value.chapterName || '未知章节',
+    readerContext.value.fileName || "未知书籍",
+    readerContext.value.chapterName || "未知章节",
   );
 
   selection.removeAllRanges();
@@ -316,7 +289,7 @@ async function handleShare() {
 
 function handleNoteSave(note: string) {
   if (pendingHighlight.value) {
-    emit('addNote', pendingHighlight.value);
+    emit("addNote", pendingHighlight.value);
   }
   noteEditorVisible.value = false;
   pendingHighlight.value = null;
@@ -328,11 +301,11 @@ function handleNoteClose() {
 }
 
 onMounted(() => {
-  document.addEventListener('selectionchange', handleSelectionChange);
+  document.addEventListener("selectionchange", handleSelectionChange);
 });
 
 onUnmounted(() => {
-  document.removeEventListener('selectionchange', handleSelectionChange);
+  document.removeEventListener("selectionchange", handleSelectionChange);
 });
 </script>
 
@@ -400,7 +373,8 @@ onUnmounted(() => {
 
 .toolbar-fade-enter-active,
 .toolbar-fade-leave-active {
-  transition: opacity var(--dur-fast) var(--ease-standard),
+  transition:
+    opacity var(--dur-fast) var(--ease-standard),
     transform var(--dur-fast) var(--ease-standard);
 }
 

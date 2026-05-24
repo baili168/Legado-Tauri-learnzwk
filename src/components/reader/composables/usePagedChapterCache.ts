@@ -1,6 +1,6 @@
-import { nextTick, reactive, type Ref } from 'vue';
-import type { PaginationEngine, ReaderPagePadding, ReaderTypography } from '../types';
-import { usePagination, type ReadingAnchor, type PageMeta } from './usePagination';
+import { nextTick, reactive, type Ref } from "vue";
+import type { PaginationEngine, ReaderPagePadding, ReaderTypography } from "../types";
+import { usePagination, type ReadingAnchor, type PageMeta } from "./usePagination";
 
 interface ChapterPageEntry {
   pages?: string[];
@@ -24,10 +24,10 @@ interface UsePagedChapterCacheOptions {
 
 function escapeHtml(text: string): string {
   return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 async function waitForHost(hostRef: Ref<HTMLElement | null>): Promise<HTMLElement> {
@@ -39,7 +39,7 @@ async function waitForHost(hostRef: Ref<HTMLElement | null>): Promise<HTMLElemen
     }
     await new Promise((resolve) => requestAnimationFrame(resolve));
   }
-  throw new Error('分页容器未就绪');
+  throw new Error("分页容器未就绪");
 }
 
 export function usePagedChapterCache(options: UsePagedChapterCacheOptions) {
@@ -63,12 +63,12 @@ export function usePagedChapterCache(options: UsePagedChapterCacheOptions) {
     return pageEntries.get(index)?.pages ?? [];
   }
 
-  function getBoundaryPage(index: number, edge: 'first' | 'last'): string {
+  function getBoundaryPage(index: number, edge: "first" | "last"): string {
     const pages = getPages(index);
     if (!pages.length) {
-      return '';
+      return "";
     }
-    return edge === 'first' ? pages[0] : pages[pages.length - 1];
+    return edge === "first" ? pages[0] : pages[pages.length - 1];
   }
 
   async function paginateWithHost(
@@ -82,17 +82,17 @@ export function usePagedChapterCache(options: UsePagedChapterCacheOptions) {
     const text = await options.loadChapterText(index, forceNetwork);
     const paginator = usePagination();
     const title = options.getChapterTitle(index);
-    const prefixHtml = title ? `<p class="reader-chapter-title">${escapeHtml(title)}</p>` : '';
+    const prefixHtml = title ? `<p class="reader-chapter-title">${escapeHtml(title)}</p>` : "";
 
     const paginateJob = paginator.paginate(
       text,
       host,
       options.getTypography(),
       options.getPadding(),
-      'first',
+      "first",
       prefixHtml,
       anchor,
-      options.getPaginationEngine?.() ?? 'dom',
+      options.getPaginationEngine?.() ?? "dom",
     );
 
     for (let i = 0; i < 120; i++) {
@@ -102,12 +102,12 @@ export function usePagedChapterCache(options: UsePagedChapterCacheOptions) {
       await new Promise((resolve) => requestAnimationFrame(resolve));
     }
 
-    const initialPages = paginator.pages.value.length > 0 ? paginator.pages.value : ['<p></p>'];
+    const initialPages = paginator.pages.value.length > 0 ? paginator.pages.value : ["<p></p>"];
     const initialMetas = paginator.pageMetas.value.length > 0 ? paginator.pageMetas.value : [];
     setEntry(index, { pages: initialPages, pageMetas: initialMetas, pagesComplete: false });
 
     const completePromise = paginateJob.then(() => {
-      const finalPages = paginator.pages.value.length > 0 ? paginator.pages.value : ['<p></p>'];
+      const finalPages = paginator.pages.value.length > 0 ? paginator.pages.value : ["<p></p>"];
       const finalMetas = paginator.pageMetas.value;
       const resolvedPage = anchor ? paginator.currentPage.value : undefined;
       setEntry(index, {

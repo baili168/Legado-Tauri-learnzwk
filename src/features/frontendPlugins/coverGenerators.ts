@@ -3,4 +3,4 @@ export type {
   CoverGeneratorDefinition,
   CoverGeneratorResult,
   FrontendCoverGeneratorRecord,
-} from './types';
+} from "./types";

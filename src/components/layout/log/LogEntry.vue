@@ -1,94 +1,94 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import type { LogEntry } from './useLogState';
+import { computed } from "vue";
+import type { LogEntry } from "./useLogState";
 
 const props = defineProps<{
   entry: LogEntry;
   expanded: boolean;
   expandedMsg: boolean;
-  activeTab: 'headers' | 'response' | 'request';
+  activeTab: "headers" | "response" | "request";
 }>();
 
 const emit = defineEmits<{
-  'toggle-expand': [id: number];
-  'toggle-expand-msg': [id: number];
-  'update:active-tab': [id: number, tab: 'headers' | 'response' | 'request'];
+  "toggle-expand": [id: number];
+  "toggle-expand-msg": [id: number];
+  "update:active-tab": [id: number, tab: "headers" | "response" | "request"];
 }>();
 
 function statusClass(status: number) {
   if (status >= 200 && status < 300) {
-    return 'lw-status--ok';
+    return "lw-status--ok";
   }
   if (status >= 300 && status < 400) {
-    return 'lw-status--redirect';
+    return "lw-status--redirect";
   }
   if (status >= 400) {
-    return 'lw-status--error';
+    return "lw-status--error";
   }
-  return '';
+  return "";
 }
 
-function typeLabel(type: LogEntry['type']): string {
+function typeLabel(type: LogEntry["type"]): string {
   const MAP: Record<string, string> = {
-    script: 'SCR',
-    http: 'HTTP',
-    ui: 'UI',
-    browser: 'BRWS',
-    system: 'SYS',
+    script: "SCR",
+    http: "HTTP",
+    ui: "UI",
+    browser: "BRWS",
+    system: "SYS",
   };
   return MAP[type] ?? type.toUpperCase();
 }
 
-function typeBgColor(type: LogEntry['type']): string {
+function typeBgColor(type: LogEntry["type"]): string {
   const MAP: Record<string, string> = {
-    script: '#312e81',
-    http: '#14532d',
-    ui: '#7c2d12',
-    browser: '#164e63',
-    system: '#1c1c24',
+    script: "#312e81",
+    http: "#14532d",
+    ui: "#7c2d12",
+    browser: "#164e63",
+    system: "#1c1c24",
   };
-  return MAP[type] ?? '#1c1c24';
+  return MAP[type] ?? "#1c1c24";
 }
 
-function typeTextColor(type: LogEntry['type']): string {
+function typeTextColor(type: LogEntry["type"]): string {
   const MAP: Record<string, string> = {
-    script: '#a5b4fc',
-    http: '#86efac',
-    ui: '#fdba74',
-    browser: '#67e8f9',
-    system: '#a1a1aa',
+    script: "#a5b4fc",
+    http: "#86efac",
+    ui: "#fdba74",
+    browser: "#67e8f9",
+    system: "#a1a1aa",
   };
-  return MAP[type] ?? '#d4d4d8';
+  return MAP[type] ?? "#d4d4d8";
 }
 
-function levelTextColor(level: LogEntry['level']): string {
+function levelTextColor(level: LogEntry["level"]): string {
   const MAP: Record<string, string> = {
-    debug: '#71717a',
-    info: '#60a5fa',
-    warn: '#fbbf24',
-    error: '#f87171',
+    debug: "#71717a",
+    info: "#60a5fa",
+    warn: "#fbbf24",
+    error: "#f87171",
   };
-  return MAP[level] ?? '#d4d4d8';
+  return MAP[level] ?? "#d4d4d8";
 }
 
 function formatTime(ts: number): string {
   const d = new Date(ts);
   return (
-    d.toLocaleTimeString('zh-CN', { hour12: false }) +
-    '.' +
-    String(d.getMilliseconds()).padStart(3, '0')
+    d.toLocaleTimeString("zh-CN", { hour12: false }) +
+    "." +
+    String(d.getMilliseconds()).padStart(3, "0")
   );
 }
 
 /** 消息超过 120 字符或含换行时视为长消息，需要折叠 */
 const isLongMsg = computed(
-  () => props.entry.message.length > 120 || props.entry.message.includes('\n'),
+  () => props.entry.message.length > 120 || props.entry.message.includes("\n"),
 );
 
 const httpTabs = computed(() => {
-  const base: ('headers' | 'response' | 'request')[] = ['headers', 'response'];
+  const base: ("headers" | "response" | "request")[] = ["headers", "response"];
   if (props.entry.httpDetail?.requestBody) {
-    base.push('request');
+    base.push("request");
   }
   return base;
 });
@@ -128,13 +128,13 @@ const httpTabs = computed(() => {
         <!-- HTTP 额外信息 -->
         <template v-if="entry.type === 'http' && entry.httpDetail">
           <span :class="statusClass(entry.httpDetail.status)" class="lw-entry__status-code">{{
-            entry.httpDetail.status || (entry.httpDetail.error ? '✗' : '✓')
+            entry.httpDetail.status || (entry.httpDetail.error ? "✗" : "✓")
           }}</span>
           <span class="lw-entry__method">{{ entry.httpDetail.method }}</span>
           <span v-if="entry.httpDetail.elapsed" class="lw-entry__elapsed"
             >{{ entry.httpDetail.elapsed }}ms</span
           >
-          <span class="lw-entry__expand-icon">{{ expanded ? '▾' : '▸' }}</span>
+          <span class="lw-entry__expand-icon">{{ expanded ? "▾" : "▸" }}</span>
         </template>
       </div>
       <!-- 第二行：消息内容（撑满宽度） -->
@@ -153,7 +153,7 @@ const httpTabs = computed(() => {
             class="lw-entry__toggle-msg"
             @click.stop="emit('toggle-expand-msg', entry.id)"
           >
-            {{ expandedMsg ? '收起' : '展开' }}
+            {{ expandedMsg ? "收起" : "展开" }}
           </button>
         </template>
       </div>
@@ -170,7 +170,7 @@ const httpTabs = computed(() => {
         :class="{ 'lw-http-detail__tab--active': activeTab === tab }"
         @click.stop="emit('update:active-tab', entry.id, tab)"
       >
-        {{ tab === 'headers' ? 'Headers' : tab === 'response' ? 'Response' : 'Request Body' }}
+        {{ tab === "headers" ? "Headers" : tab === "response" ? "Response" : "Request Body" }}
       </button>
     </div>
 
@@ -188,7 +188,7 @@ const httpTabs = computed(() => {
         <div class="lw-kv">
           <span class="lw-kv__k">Status</span
           ><span class="lw-kv__v" :class="statusClass(entry.httpDetail.status)">{{
-            entry.httpDetail.status || 'N/A'
+            entry.httpDetail.status || "N/A"
           }}</span>
         </div>
         <div class="lw-kv">
@@ -218,12 +218,12 @@ const httpTabs = computed(() => {
 
     <!-- Response Body -->
     <div v-if="activeTab === 'response'" class="lw-http-detail__body app-scrollbar">
-      <pre class="lw-http-detail__pre">{{ entry.httpDetail.responseBody || '(empty)' }}</pre>
+      <pre class="lw-http-detail__pre">{{ entry.httpDetail.responseBody || "(empty)" }}</pre>
     </div>
 
     <!-- Request Body -->
     <div v-if="activeTab === 'request'" class="lw-http-detail__body app-scrollbar">
-      <pre class="lw-http-detail__pre">{{ entry.httpDetail.requestBody || '(empty)' }}</pre>
+      <pre class="lw-http-detail__pre">{{ entry.httpDetail.requestBody || "(empty)" }}</pre>
     </div>
   </div>
 </template>

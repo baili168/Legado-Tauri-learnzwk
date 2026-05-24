@@ -2,16 +2,16 @@
   阅读器目录与书籍详情抽屉，负责章节检索、跳转、缓存操作和当前阅读章节定位。
 -->
 <script setup lang="ts">
-import { openUrl } from '@tauri-apps/plugin-opener';
-import { useVirtualList } from '@vueuse/core';
-import { Trash2, RefreshCw, Download } from 'lucide-vue-next';
-import { ref, nextTick, watch, computed } from 'vue';
-import type { ChapterItem } from '@/stores';
-import { useOverlayBackstack } from '@/composables/useOverlayBackstack';
-import type { ReaderBookInfo } from './types';
-import AppInput from '../base/AppInput.vue';
-import AppTabs from '../base/AppTabs.vue';
-import BookCoverImg from '../BookCoverImg.vue';
+import { openUrl } from "@tauri-apps/plugin-opener";
+import { useVirtualList } from "@vueuse/core";
+import { Trash2, RefreshCw, Download } from "lucide-vue-next";
+import { ref, nextTick, watch, computed } from "vue";
+import type { ChapterItem } from "@/stores";
+import { useOverlayBackstack } from "@/composables/useOverlayBackstack";
+import type { ReaderBookInfo } from "./types";
+import AppInput from "../base/AppInput.vue";
+import AppTabs from "../base/AppTabs.vue";
+import BookCoverImg from "../BookCoverImg.vue";
 
 defineOptions({ inheritAttrs: false });
 
@@ -31,29 +31,29 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'update:show', val: boolean): void;
-  (e: 'select', idx: number): void;
-  (e: 'refresh-toc'): void;
+  (e: "update:show", val: boolean): void;
+  (e: "select", idx: number): void;
+  (e: "refresh-toc"): void;
   /** 清理单章缓存（章节索引） */
-  (e: 'clear-chapter-cache', idx: number): void;
+  (e: "clear-chapter-cache", idx: number): void;
   /** 清理全书所有章节缓存 */
-  (e: 'clear-all-cache'): void;
+  (e: "clear-all-cache"): void;
 }>();
 
 useOverlayBackstack(
   () => props.show,
-  () => emit('update:show', false),
+  () => emit("update:show", false),
 );
 
-type TabKey = 'toc' | 'detail';
+type TabKey = "toc" | "detail";
 const TOC_ITEM_HEIGHT = 48;
-const activeTab = ref<TabKey>('toc');
+const activeTab = ref<TabKey>("toc");
 const tocTabs = [
-  { key: 'toc', label: '目录' },
-  { key: 'detail', label: '详情' },
+  { key: "toc", label: "目录" },
+  { key: "detail", label: "详情" },
 ];
 
-const searchQuery = ref('');
+const searchQuery = ref("");
 
 /** 过滤后的章节列表（带原始索引） */
 const filteredChapters = computed(() => {
@@ -74,7 +74,7 @@ const {
 } = useVirtualList(filteredChapters, { itemHeight: TOC_ITEM_HEIGHT, overscan: 8 });
 
 function getTocListElement() {
-  return document.querySelector<HTMLElement>('.reader-toc__list');
+  return document.querySelector<HTMLElement>(".reader-toc__list");
 }
 
 async function scrollCurrentChapterIntoView() {
@@ -101,7 +101,7 @@ async function scrollCurrentChapterIntoView() {
       0,
       idx * TOC_ITEM_HEIGHT - Math.max(0, currentListEl.clientHeight - TOC_ITEM_HEIGHT) / 2,
     );
-    currentListEl.scrollTo({ top: centeredTop, behavior: 'auto' });
+    currentListEl.scrollTo({ top: centeredTop, behavior: "auto" });
   });
 }
 
@@ -126,7 +126,7 @@ function onTocPointerUp(e: PointerEvent) {
   const dy = e.clientY - tocSwipeStartY;
   tocSwipePointerId = null;
   if (dx < -64 && Math.abs(dx) > Math.abs(dy) * 1.35) {
-    emit('update:show', false);
+    emit("update:show", false);
   }
 }
 
@@ -141,7 +141,7 @@ watch(
   (val) => {
     if (val) {
       nextTick(() => {
-        if (activeTab.value === 'toc') {
+        if (activeTab.value === "toc") {
           void scrollCurrentChapterIntoView();
         }
       });
@@ -152,7 +152,7 @@ watch(
 watch(
   () => [props.currentIndex, props.show, activeTab.value, searchQuery.value] as const,
   ([, show, tab]) => {
-    if (!show || tab !== 'toc') {
+    if (!show || tab !== "toc") {
       return;
     }
     nextTick(() => {
@@ -162,16 +162,16 @@ watch(
 );
 
 function onSelect(idx: number) {
-  emit('select', idx);
-  emit('update:show', false);
+  emit("select", idx);
+  emit("update:show", false);
 }
 
 function formatTime(ts?: number) {
   if (!ts) {
-    return '—';
+    return "—";
   }
   const d = new Date(ts);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
 const detailRows = computed(() => {
@@ -181,40 +181,40 @@ const detailRows = computed(() => {
   }
   const rows: { label: string; value: string; isUrl?: boolean }[] = [];
   if (b.sourceName) {
-    rows.push({ label: '来源扩展', value: b.sourceName });
+    rows.push({ label: "来源扩展", value: b.sourceName });
   }
   if (b.fileName) {
-    rows.push({ label: '书源文件', value: b.fileName });
+    rows.push({ label: "书源文件", value: b.fileName });
   }
   if (b.bookUrl) {
-    rows.push({ label: '书籍地址', value: b.bookUrl, isUrl: true });
+    rows.push({ label: "书籍地址", value: b.bookUrl, isUrl: true });
   }
   if (b.kind) {
-    rows.push({ label: '分类标签', value: b.kind });
+    rows.push({ label: "分类标签", value: b.kind });
   }
   if (b.status) {
-    rows.push({ label: '状态', value: b.status });
+    rows.push({ label: "状态", value: b.status });
   }
   if (b.lastChapter) {
-    rows.push({ label: '最新章节', value: b.lastChapter });
+    rows.push({ label: "最新章节", value: b.lastChapter });
   }
   if (b.wordCount) {
-    rows.push({ label: '字数', value: b.wordCount });
+    rows.push({ label: "字数", value: b.wordCount });
   }
   if (b.chapterCount) {
-    rows.push({ label: '章节总数', value: `${b.chapterCount} 章` });
+    rows.push({ label: "章节总数", value: `${b.chapterCount} 章` });
   }
   if (b.updateTime) {
-    rows.push({ label: '更新时间', value: b.updateTime });
+    rows.push({ label: "更新时间", value: b.updateTime });
   }
   if (b.totalChapters) {
-    rows.push({ label: '目录章节数', value: `${b.totalChapters} 章` });
+    rows.push({ label: "目录章节数", value: `${b.totalChapters} 章` });
   }
   if (b.addedAt) {
-    rows.push({ label: '加入时间', value: formatTime(b.addedAt) });
+    rows.push({ label: "加入时间", value: formatTime(b.addedAt) });
   }
   if (b.lastReadAt) {
-    rows.push({ label: '最后阅读', value: formatTime(b.lastReadAt) });
+    rows.push({ label: "最后阅读", value: formatTime(b.lastReadAt) });
   }
   return rows;
 });
@@ -309,7 +309,7 @@ const detailRows = computed(() => {
               @click="emit('refresh-toc')"
             >
               <RefreshCw :size="14" />
-              {{ props.refreshingToc ? '更新中…' : '更新目录' }}
+              {{ props.refreshingToc ? "更新中…" : "更新目录" }}
             </button>
           </div>
         </div>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { openUrl } from '@tauri-apps/plugin-opener';
+import { openUrl } from "@tauri-apps/plugin-opener";
 import {
   ChevronLeft,
   MoreVertical,
@@ -8,12 +8,14 @@ import {
   Pencil,
   X,
   Upload,
-} from 'lucide-vue-next';
-import { storeToRefs } from 'pinia';
-import { ref, computed } from 'vue';
-import { useOverlayBackstack } from '@/composables/useOverlayBackstack';
-import { useResponsiveControl } from '@/composables/useResponsiveControl';
-import { useAppConfigStore } from '@/stores';
+  EyeOff,
+} from "lucide-vue-next";
+import { storeToRefs } from "pinia";
+import { ref, computed } from "vue";
+import { useOverlayBackstack } from "@/composables/useOverlayBackstack";
+import { useResponsiveControl } from "@/composables/useResponsiveControl";
+import { useAppConfigStore } from "@/stores";
+import { usePrivacyModeStore } from "@/stores/privacyMode";
 
 const props = withDefaults(
   defineProps<{
@@ -35,19 +37,22 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{
-  (e: 'close'): void;
-  (e: 'refresh-chapter'): void;
-  (e: 'cache-chapters', count: number): void;
-  (e: 'whole-book-switch'): void;
-  (e: 'temporary-switch'): void;
-  (e: 'clear-temporary-switch'): void;
+  (e: "close"): void;
+  (e: "refresh-chapter"): void;
+  (e: "cache-chapters", count: number): void;
+  (e: "whole-book-switch"): void;
+  (e: "temporary-switch"): void;
+  (e: "clear-temporary-switch"): void;
 }>();
 
 const _appCfg = useAppConfigStore();
 const { config } = storeToRefs(_appCfg);
 
+const privacyStore = usePrivacyModeStore();
+const { isIncognito } = storeToRefs(privacyStore);
+
 const { breakpoint: bp } = useResponsiveControl();
-const isWideLayout = computed(() => bp.value === 'expanded' || bp.value === 'wide');
+const isWideLayout = computed(() => bp.value === "expanded" || bp.value === "wide");
 
 // ── 三点菜单状态 ──────────────────────────────────────────────────────────
 const menuOpen = ref(false);
@@ -60,16 +65,16 @@ const maxCacheCount = computed(() => props.totalChapters || 50);
 
 const cacheCountDisplay = computed(() => {
   if (cacheCount.value < 0) {
-    return '全部章节';
+    return "全部章节";
   }
   if (cacheCount.value === 0) {
-    return '关闭（0章）';
+    return "关闭（0章）";
   }
   return `${cacheCount.value} 章`;
 });
 
 /** 是否支持缓存（视频不支持） */
-const supportCache = computed(() => props.sourceType !== 'video');
+const supportCache = computed(() => props.sourceType !== "video");
 
 function openMenu() {
   menuOpen.value = true;
@@ -82,7 +87,7 @@ function closeMenu() {
 
 function handleRefresh() {
   closeMenu();
-  emit('refresh-chapter');
+  emit("refresh-chapter");
 }
 
 function handleShowCachePanel() {
@@ -91,22 +96,26 @@ function handleShowCachePanel() {
 
 function handleStartCache() {
   closeMenu();
-  emit('cache-chapters', cacheCount.value < 0 ? -1 : cacheCount.value);
+  emit("cache-chapters", cacheCount.value < 0 ? -1 : cacheCount.value);
 }
 
 function handleWholeBookSwitch() {
   closeMenu();
-  emit('whole-book-switch');
+  emit("whole-book-switch");
 }
 
 function handleTemporarySwitch() {
   closeMenu();
-  emit('temporary-switch');
+  emit("temporary-switch");
 }
 
 function handleClearTemporarySwitch() {
   closeMenu();
-  emit('clear-temporary-switch');
+  emit("clear-temporary-switch");
+}
+
+function handleToggleIncognito() {
+  privacyStore.toggleIncognito();
 }
 
 // 三点下拉菜单接入返回栈
@@ -137,10 +146,24 @@ useOverlayBackstack(() => menuOpen.value, closeMenu);
       >
     </div>
 
+    <button
+      class="reader-top-bar__incognito"
+      :class="{ 'reader-top-bar__incognito--active': isIncognito }"
+      @click.stop="handleToggleIncognito"
+      :title="isIncognito ? '关闭隐身模式' : '开启隐身模式'"
+    >
+      <EyeOff :size="18" />
+    </button>
+
     <!-- 三点菜单按钮 -->
     <button class="reader-top-bar__more" @click.stop="openMenu" title="更多操作">
       <MoreVertical :size="20" />
     </button>
+
+    <div v-if="isIncognito" class="reader-top-bar__incognito-indicator">
+      <EyeOff :size="12" />
+      <span>隐身模式</span>
+    </div>
 
     <!-- 遮罩 -->
     <Transition name="reader-menu-fade">
@@ -255,7 +278,7 @@ useOverlayBackstack(() => menuOpen.value, closeMenu);
 }
 
 .reader-top-bar::before {
-  content: var(--reader-top-menu-label-text, '');
+  content: var(--reader-top-menu-label-text, "");
   display: var(--reader-top-menu-label-display, none);
   align-items: center;
   flex: var(--reader-top-menu-label-flex, 0 0 auto);
@@ -424,8 +447,8 @@ useOverlayBackstack(() => menuOpen.value, closeMenu);
 /* toolbar 显隐过渡 */
 .reader-toolbar {
   transition:
-    opacity var(--dur-base) var(--ease-standard),
-    transform var(--dur-base) var(--ease-standard);
+    opacity 150ms var(--ease-standard),
+    transform 150ms var(--ease-standard);
 }
 
 .reader-toolbar--hidden {
@@ -467,5 +490,56 @@ useOverlayBackstack(() => menuOpen.value, closeMenu);
 .reader-menu-slide-leave-to {
   opacity: 0;
   transform: translateY(-6px) scale(0.97);
+}
+
+/* 隐身模式按钮 */
+.reader-top-bar__incognito {
+  display: var(--reader-top-icon-display, inline-flex);
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition:
+    background 0.15s,
+    color 0.15s;
+  flex-shrink: 0;
+}
+
+.reader-top-bar__incognito:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.reader-top-bar__incognito--active {
+  color: #c084fc;
+}
+
+.reader-top-bar__incognito--active:hover {
+  background: rgba(192, 132, 252, 0.15);
+}
+
+/* 隐身模式指示器 */
+.reader-top-bar__incognito-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 22px;
+  background: rgba(192, 132, 252, 0.15);
+  border-top: 1px solid rgba(192, 132, 252, 0.3);
+  color: #c084fc;
+  font-size: 0.6875rem;
+  font-weight: 500;
+}
+
+.reader-top-bar__incognito-indicator span {
+  letter-spacing: 0.02em;
 }
 </style>

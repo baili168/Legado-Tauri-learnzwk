@@ -1,10 +1,10 @@
 /**
  * 统一归一化阅读器各模式的当前位置，用于书架进度、同步与插件会话。
  */
-import type { ComputedRef, Ref } from 'vue';
-import type { ComicModeApi, PagedModeApi, ScrollModeApi } from './useReaderModeBridge';
+import type { ComputedRef, Ref } from "vue";
+import type { ComicModeApi, PagedModeApi, ScrollModeApi } from "./useReaderModeBridge";
 
-export type ReaderPositionMode = 'paged' | 'scroll' | 'comic' | 'video';
+export type ReaderPositionMode = "paged" | "scroll" | "comic" | "video";
 export type ReaderChapterOffset = -1 | 0 | 1;
 
 const SCROLL_LINE_ANCHOR_BASE = 1_000_000_000;
@@ -71,21 +71,21 @@ export function decodeScrollLineAnchor(value: number): ScrollLineAnchor | null {
 }
 
 function validIndex(value: unknown): number {
-  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? Math.floor(value) : -1;
+  return typeof value === "number" && Number.isFinite(value) && value >= 0 ? Math.floor(value) : -1;
 }
 
 function validRatio(value: unknown): number {
-  return typeof value === 'number' && Number.isFinite(value) && value >= 0
+  return typeof value === "number" && Number.isFinite(value) && value >= 0
     ? clampReaderRatio(value)
     : -1;
 }
 
 function validPlaybackTime(value: unknown): number {
-  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : -1;
+  return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : -1;
 }
 
 function validChapterOffset(value: unknown): ReaderChapterOffset {
-  if (typeof value !== 'number' || !Number.isFinite(value)) {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
     return 0;
   }
   if (value < 0) {
@@ -119,7 +119,7 @@ export function useReaderPosition(options: UseReaderPositionOptions) {
   function readCurrentPosition(): ReaderPositionSnapshot {
     const mode = options.mode.value;
 
-    if (mode === 'paged') {
+    if (mode === "paged") {
       const pageIndex = validIndex(options.pagedPageIndex.value);
       const ratio =
         validRatio(options.currentScrollRatio.value) >= 0
@@ -134,7 +134,7 @@ export function useReaderPosition(options: UseReaderPositionOptions) {
       };
     }
 
-    if (mode === 'scroll') {
+    if (mode === "scroll") {
       const modeRef = options.scrollModeRef.value;
       return {
         mode,
@@ -153,7 +153,7 @@ export function useReaderPosition(options: UseReaderPositionOptions) {
       };
     }
 
-    if (mode === 'comic') {
+    if (mode === "comic") {
       const modeRef = options.comicModeRef.value;
       return {
         mode,
@@ -175,7 +175,7 @@ export function useReaderPosition(options: UseReaderPositionOptions) {
 
   function writeSnapshotToRefs(snapshot: ReaderPositionSnapshot) {
     options.currentPageIndex.value = snapshot.pageIndex;
-    if (snapshot.mode === 'paged') {
+    if (snapshot.mode === "paged") {
       options.pagedPageIndex.value = snapshot.pageIndex >= 0 ? snapshot.pageIndex : 0;
     }
     options.currentScrollRatio.value = snapshot.scrollRatio;

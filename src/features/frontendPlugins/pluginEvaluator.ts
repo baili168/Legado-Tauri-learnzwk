@@ -1,11 +1,11 @@
-import type { ExtensionMeta } from '@/composables/useExtension';
-import type { RuntimePluginRecord } from './pluginRuntimeTypes';
+import type { ExtensionMeta } from "@/composables/useExtension";
+import type { RuntimePluginRecord } from "./pluginRuntimeTypes";
 import type {
   FrontendPluginApi,
   FrontendPluginRegistration,
   PluginHookHandler,
   ReaderSlotMount,
-} from './pluginTypes';
+} from "./pluginTypes";
 import {
   normalizeHandlers,
   normalizeRuntimeMetadata,
@@ -17,9 +17,9 @@ import {
   normalizeCoverGeneratorDefinitions,
   extractLegacyExports,
   convertLegacyPlugin,
-} from './pluginNormalizer';
-import { createEmptyHookMap, SUPPORTED_FRONTEND_PLUGIN_HOOKS } from './readerHooks';
-import { createEmptySlotMap, SUPPORTED_READER_PLUGIN_SLOTS } from './readerSlots';
+} from "./pluginNormalizer";
+import { createEmptyHookMap, SUPPORTED_FRONTEND_PLUGIN_HOOKS } from "./readerHooks";
+import { createEmptySlotMap, SUPPORTED_READER_PLUGIN_SLOTS } from "./readerSlots";
 
 export async function evaluatePlugin(
   meta: ExtensionMeta,
@@ -36,7 +36,7 @@ export async function evaluatePlugin(
   const legacy = extractLegacyExports(source, legado);
   const registration = registrations[0] ?? convertLegacyPlugin(meta, legacy);
   if (!registration) {
-    throw new Error('插件未调用 legado.registerPlugin，且未识别到兼容的旧接口');
+    throw new Error("插件未调用 legado.registerPlugin，且未识别到兼容的旧接口");
   }
 
   const normalized = normalizeRuntimeMetadata(meta, registration);
@@ -47,11 +47,11 @@ export async function evaluatePlugin(
     version: normalized.version,
     description: normalized.description,
     author: meta.author,
-    category: meta.category || '其他',
+    category: meta.category || "其他",
     enabled: meta.enabled,
     order: 0,
-    status: 'active',
-    runtimeError: '',
+    status: "active",
+    runtimeError: "",
     runtimeHooks: [],
     runtimeSlots: [],
     runtimeBookshelfActions: [],

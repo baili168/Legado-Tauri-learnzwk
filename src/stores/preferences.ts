@@ -8,9 +8,9 @@
  *
  * 底层持久化走 useDynamicConfig。
  */
-import { defineStore } from 'pinia';
-import { readonly } from 'vue';
-import { useDynamicConfig } from '@/composables/useDynamicConfig';
+import { defineStore } from "pinia";
+import { readonly } from "vue";
+import { useDynamicConfig } from "@/composables/useDynamicConfig";
 
 // ── 阅读器偏好设置 ───────────────────────────────────────────────────────
 
@@ -32,12 +32,12 @@ export interface ReaderPreferences {
   /** 翻页模式："scroll" | "page" */
   pageMode: string;
   /** 自动繁简转换模式 */
-  chineseConvert: '' | 's2t' | 's2tw' | 's2hk' | 't2s' | 'tw2s' | 'hk2s';
+  chineseConvert: "" | "s2t" | "s2tw" | "s2hk" | "t2s" | "tw2s" | "hk2s";
 }
 
 // ── 视图卡片密度 ──────────────────────────────────────────────────────────
 
-export type ViewDensityMode = 'compact' | 'normal' | 'comfortable';
+export type ViewDensityMode = "compact" | "normal" | "comfortable";
 
 export interface ViewDensityPreferences {
   bookshelf: ViewDensityMode;
@@ -90,35 +90,35 @@ export interface SearchPreferences {
 
 // ── Store ─────────────────────────────────────────────────────────────────
 
-export const usePreferencesStore = defineStore('preferences', () => {
+export const usePreferencesStore = defineStore("preferences", () => {
   const readerConfig = useDynamicConfig<ReaderPreferences>({
-    namespace: 'preferences.reader',
+    namespace: "preferences.reader",
     version: 1,
     defaults: () => ({
       fontSize: 18,
       lineHeight: 1.75,
       paragraphSpacing: 12,
       paddingH: 20,
-      themePresetId: '',
-      backgroundPresetId: '',
-      backgroundImage: '',
-      pageMode: 'scroll',
-      chineseConvert: '',
+      themePresetId: "",
+      backgroundPresetId: "",
+      backgroundImage: "",
+      pageMode: "scroll",
+      chineseConvert: "",
     }),
   });
 
   const densityConfig = useDynamicConfig<ViewDensityPreferences>({
-    namespace: 'preferences.viewDensity',
+    namespace: "preferences.viewDensity",
     version: 1,
     defaults: () => ({
-      bookshelf: 'normal',
-      search: 'normal',
-      explore: 'normal',
+      bookshelf: "normal",
+      search: "normal",
+      explore: "normal",
     }),
   });
 
   const tocAutoUpdateConfig = useDynamicConfig<TocAutoUpdatePreferences>({
-    namespace: 'preferences.tocAutoUpdate',
+    namespace: "preferences.tocAutoUpdate",
     version: 1,
     defaults: () => ({
       enabled: false,
@@ -130,7 +130,7 @@ export const usePreferencesStore = defineStore('preferences', () => {
   });
 
   const devToolsConfig = useDynamicConfig<DevToolsPreferences>({
-    namespace: 'preferences.devTools',
+    namespace: "preferences.devTools",
     version: 1,
     defaults: () => ({
       vConsoleEnabled: false,
@@ -138,7 +138,7 @@ export const usePreferencesStore = defineStore('preferences', () => {
   });
 
   const searchConfig = useDynamicConfig<SearchPreferences>({
-    namespace: 'preferences.search',
+    namespace: "preferences.search",
     version: 1,
     defaults: () => ({
       lastSourceFileName: null,

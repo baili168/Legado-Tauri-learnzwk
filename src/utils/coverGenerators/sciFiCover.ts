@@ -1,6 +1,6 @@
-import type { ShelfBook } from '@/stores';
-import type { BuiltinCoverGeneratorDefinition } from './types';
-import { bookAuthor, bookKind, buildDataUrl, textSpans, wrapText } from './shared';
+import type { ShelfBook } from "@/stores";
+import type { BuiltinCoverGeneratorDefinition } from "./types";
+import { bookAuthor, bookKind, buildDataUrl, textSpans, wrapText } from "./shared";
 
 function generateSciFiCover(book: ShelfBook): string {
   const title = textSpans(wrapText(book.name, 7, 4), { x: 64, lineHeight: 112 });
@@ -19,14 +19,14 @@ function generateSciFiCover(book: ShelfBook): string {
   <path d="M-20 702L620 372V840H-20Z" fill="#020617" opacity="0.72" />
   <path d="M64 620H536M112 560H488M168 500H432" stroke="#22d3ee" stroke-width="2" opacity="0.45" />
   <text x="64" y="258" fill="#f8fafc" font-size="112" font-weight="900" font-family="'Noto Sans SC','Source Han Sans SC',sans-serif">${title}</text>
-  <text x="64" y="596" fill="#67e8f9" font-size="48" font-weight="800">${bookKind(book, '科幻未来')}</text>
+  <text x="64" y="596" fill="#67e8f9" font-size="48" font-weight="800">${bookKind(book, "科幻未来")}</text>
   <text x="64" y="656" fill="#ffffff" font-size="60" font-weight="900">${bookAuthor(book)}</text>
 </svg>`);
 }
 
 export const sciFiCoverGenerator: BuiltinCoverGeneratorDefinition = {
-  id: 'builtin:sci-fi',
-  name: '科幻星环',
-  description: '深空、星环与冷色霓光，适合科幻、末世、未来题材。',
+  id: "builtin:sci-fi",
+  name: "科幻星环",
+  description: "深空、星环与冷色霓光，适合科幻、末世、未来题材。",
   generate: generateSciFiCover,
 };

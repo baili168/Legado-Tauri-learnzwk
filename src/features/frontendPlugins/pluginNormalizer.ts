@@ -1,4 +1,4 @@
-import type { ExtensionMeta } from '@/composables/useExtension';
+import type { ExtensionMeta } from "@/composables/useExtension";
 import type {
   FrontendPluginRegistration,
   ReaderThemeDefinition,
@@ -19,7 +19,7 @@ import type {
   ReaderThemeContext,
   ReaderBackgroundContext,
   ReaderSkinContext,
-} from './pluginTypes';
+} from "./pluginTypes";
 
 export interface NormalizerPluginContext {
   pluginId: string;
@@ -137,10 +137,10 @@ export function normalizeRuntimeMetadata(
   return {
     pluginId:
       (registration.id?.trim() ?? meta.namespace?.trim()) ||
-      meta.fileName.replace(/\.js$/i, '') ||
+      meta.fileName.replace(/\.js$/i, "") ||
       meta.name.trim(),
     name: (registration.name?.trim() ?? meta.name.trim()) || meta.fileName,
-    version: (registration.version?.trim() ?? meta.version.trim()) || '0.0.0',
+    version: (registration.version?.trim() ?? meta.version.trim()) || "0.0.0",
     description: registration.description?.trim() ?? meta.description.trim(),
   };
 }
@@ -160,8 +160,8 @@ export function normalizeThemeDefinitions(
         id: `${record.pluginId}:${localId}`,
         localId,
         name,
-        description: definition.description?.trim() ?? '',
-        category: (definition.category?.trim() ?? record.category) || '其他',
+        description: definition.description?.trim() ?? "",
+        category: (definition.category?.trim() ?? record.category) || "其他",
         previewResolver: definition.preview,
         resolveResolver: definition.resolve,
       } satisfies RuntimeReaderThemeDefinition;
@@ -184,8 +184,8 @@ export function normalizeBackgroundDefinitions(
         id: `${record.pluginId}:${localId}`,
         localId,
         name,
-        description: definition.description?.trim() ?? '',
-        category: (definition.category?.trim() ?? record.category) || '其他',
+        description: definition.description?.trim() ?? "",
+        category: (definition.category?.trim() ?? record.category) || "其他",
         previewResolver: definition.preview,
         resolveResolver: definition.resolve,
       } satisfies RuntimeReaderBackgroundDefinition;
@@ -208,8 +208,8 @@ export function normalizeSkinDefinitions(
         id: `${record.pluginId}:${localId}`,
         localId,
         name,
-        description: definition.description?.trim() ?? '',
-        category: (definition.category?.trim() ?? record.category) || '其他',
+        description: definition.description?.trim() ?? "",
+        category: (definition.category?.trim() ?? record.category) || "其他",
         lockedFlipMode: definition.lockedFlipMode?.trim() ?? undefined,
         previewResolver: definition.preview,
         resolveResolver: definition.resolve,
@@ -226,15 +226,15 @@ export function normalizeBookshelfActionDefinitions(
     .map((definition) => {
       const localId = definition.id?.trim();
       const name = definition.name?.trim();
-      if (!localId || !name || typeof definition.run !== 'function') {
+      if (!localId || !name || typeof definition.run !== "function") {
         return null;
       }
       return {
         id: `${record.pluginId}:${localId}`,
         localId,
         name,
-        description: definition.description?.trim() ?? '',
-        category: (definition.category?.trim() ?? record.category) || '其他',
+        description: definition.description?.trim() ?? "",
+        category: (definition.category?.trim() ?? record.category) || "其他",
         visible: definition.when,
         run: definition.run,
       } satisfies RuntimeBookshelfActionDefinition;
@@ -250,15 +250,15 @@ export function normalizeReaderContextActionDefinitions(
     .map((definition) => {
       const localId = definition.id?.trim();
       const name = definition.name?.trim();
-      if (!localId || !name || typeof definition.run !== 'function') {
+      if (!localId || !name || typeof definition.run !== "function") {
         return null;
       }
       return {
         id: `${record.pluginId}:${localId}`,
         localId,
         name,
-        description: definition.description?.trim() ?? '',
-        category: (definition.category?.trim() ?? record.category) || '其他',
+        description: definition.description?.trim() ?? "",
+        category: (definition.category?.trim() ?? record.category) || "其他",
         visible: definition.when,
         run: definition.run,
       } satisfies RuntimeReaderContextActionDefinition;
@@ -274,15 +274,15 @@ export function normalizeCoverGeneratorDefinitions(
     .map((definition) => {
       const localId = definition.id?.trim();
       const name = definition.name?.trim();
-      if (!localId || !name || typeof definition.generate !== 'function') {
+      if (!localId || !name || typeof definition.generate !== "function") {
         return null;
       }
       return {
         id: `${record.pluginId}:${localId}`,
         localId,
         name,
-        description: definition.description?.trim() ?? '',
-        category: (definition.category?.trim() ?? record.category) || '其他',
+        description: definition.description?.trim() ?? "",
+        category: (definition.category?.trim() ?? record.category) || "其他",
         visible: definition.when,
         generate: definition.generate,
       } satisfies RuntimeCoverGeneratorDefinition;
@@ -295,7 +295,7 @@ export function extractLegacyExports(
   legado: Record<string, unknown>,
 ): LegacyPluginExports {
   const runner = new Function(
-    'legado',
+    "legado",
     `${source}
 return {
   filterContent: typeof filterContent === 'function' ? filterContent : undefined,
@@ -316,29 +316,29 @@ export function convertLegacyPlugin(
   const hooks: HookDefinitionMap = {};
 
   if (legacy.filterContent) {
-    hooks['reader.content.beforePaginate'] = async (payload) =>
+    hooks["reader.content.beforePaginate"] = async (payload) =>
       legacy.filterContent?.((payload as ReaderContentPayload).content);
-    hooks['reader.content.beforeRender'] = async (payload) =>
+    hooks["reader.content.beforeRender"] = async (payload) =>
       legacy.filterContent?.((payload as ReaderContentPayload).content);
   }
   if (legacy.onChapterLoaded) {
-    hooks['reader.content.beforeRender'] = [
-      ...normalizeHandlers(hooks['reader.content.beforeRender']),
+    hooks["reader.content.beforeRender"] = [
+      ...normalizeHandlers(hooks["reader.content.beforeRender"]),
       async (payload) => legacy.onChapterLoaded?.((payload as ReaderContentPayload).content),
     ];
   }
   if (legacy.onSessionStart) {
-    hooks['reader.session.enter'] = async () => legacy.onSessionStart?.();
+    hooks["reader.session.enter"] = async () => legacy.onSessionStart?.();
   }
   if (legacy.onSessionEnd) {
-    hooks['reader.session.exit'] = async () => legacy.onSessionEnd?.();
+    hooks["reader.session.exit"] = async () => legacy.onSessionEnd?.();
   }
 
   const themes =
     legacy.getTheme || legacy.toggle
       ? [
           {
-            id: 'legacy-theme',
+            id: "legacy-theme",
             name: meta.name || meta.fileName,
             description: meta.description,
             resolve: () => legacy.getTheme?.() ?? legacy.toggle?.(true) ?? undefined,
@@ -351,7 +351,7 @@ export function convertLegacyPlugin(
   }
 
   return {
-    id: meta.namespace?.trim() || meta.fileName.replace(/\.js$/i, ''),
+    id: meta.namespace?.trim() || meta.fileName.replace(/\.js$/i, ""),
     name: meta.name,
     version: meta.version,
     description: meta.description,

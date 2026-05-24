@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { ArrowDown, Copy, Minus, Pause, Play, Trash2, X } from 'lucide-vue-next';
-import { useMessage } from 'naive-ui';
-import { computed, nextTick, reactive, ref, watch } from 'vue';
-import { isMobile } from '@/composables/useEnv';
-import { useOverlayBackstack } from '@/composables/useOverlayBackstack';
-import { copyText } from '@/utils/clipboard';
-import type { FilterType } from './log/useLogState';
-import LogEntry from './log/LogEntry.vue';
-import LogFab from './log/LogFab.vue';
-import { useLogState } from './log/useLogState';
+import { ArrowDown, Copy, Minus, Pause, Play, Trash2, X } from "lucide-vue-next";
+import { useMessage } from "naive-ui";
+import { computed, nextTick, reactive, ref, watch } from "vue";
+import { isMobile } from "@/composables/useEnv";
+import { useOverlayBackstack } from "@/composables/useOverlayBackstack";
+import { copyText } from "@/utils/clipboard";
+import type { FilterType } from "./log/useLogState";
+import LogEntry from "./log/LogEntry.vue";
+import LogFab from "./log/LogFab.vue";
+import { useLogState } from "./log/useLogState";
 
 // ─────────────────────────────────────────────────────────────
 // Props / Emits
@@ -22,7 +22,7 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{
-  'update:show': [value: boolean];
+  "update:show": [value: boolean];
   close: [];
 }>();
 
@@ -123,7 +123,7 @@ let dragSPY = 0;
 
 function onDragStart(e: PointerEvent) {
   const target = e.target as HTMLElement;
-  if (target.closest('button, select, input, a')) {
+  if (target.closest("button, select, input, a")) {
     return;
   }
   dragActive = true;
@@ -131,8 +131,8 @@ function onDragStart(e: PointerEvent) {
   dragSY = e.clientY;
   dragSPX = pos.x;
   dragSPY = pos.y;
-  window.addEventListener('pointermove', onDragMove, { passive: false });
-  window.addEventListener('pointerup', onDragEnd, { once: true });
+  window.addEventListener("pointermove", onDragMove, { passive: false });
+  window.addEventListener("pointerup", onDragEnd, { once: true });
   e.preventDefault();
 }
 
@@ -147,7 +147,7 @@ function onDragMove(e: PointerEvent) {
 
 function onDragEnd() {
   dragActive = false;
-  window.removeEventListener('pointermove', onDragMove);
+  window.removeEventListener("pointermove", onDragMove);
 }
 
 // ── 调整大小 ────────────────────────────────────────────────────
@@ -164,8 +164,8 @@ function onResizeStart(e: PointerEvent) {
   resizeSY = e.clientY;
   resizeSW = size.w;
   resizeSH = size.h;
-  window.addEventListener('pointermove', onResizeMove, { passive: false });
-  window.addEventListener('pointerup', onResizeEnd, { once: true });
+  window.addEventListener("pointermove", onResizeMove, { passive: false });
+  window.addEventListener("pointerup", onResizeEnd, { once: true });
   e.preventDefault();
   e.stopPropagation();
 }
@@ -181,7 +181,7 @@ function onResizeMove(e: PointerEvent) {
 
 function onResizeEnd() {
   resizeActive = false;
-  window.removeEventListener('pointermove', onResizeMove);
+  window.removeEventListener("pointermove", onResizeMove);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -189,13 +189,13 @@ function onResizeEnd() {
 // ─────────────────────────────────────────────────────────────
 
 const panelStyle = computed(() => ({
-  left: '0',
-  right: '0',
-  bottom: '0',
-  width: '100%',
-  height: '65vh',
-  borderRadius: '12px 12px 0 0',
-  top: 'unset',
+  left: "0",
+  right: "0",
+  bottom: "0",
+  width: "100%",
+  height: "65vh",
+  borderRadius: "12px 12px 0 0",
+  top: "unset",
 }));
 
 // ─────────────────────────────────────────────────────────────
@@ -204,8 +204,8 @@ const panelStyle = computed(() => ({
 
 function close() {
   minimized.value = false;
-  emit('update:show', false);
-  emit('close');
+  emit("update:show", false);
+  emit("close");
 }
 
 function onBackdropClick(e: MouseEvent) {
@@ -217,9 +217,9 @@ function onBackdropClick(e: MouseEvent) {
 function formatDetailMap(title: string, detail: Record<string, string>) {
   const lines = Object.entries(detail).map(([key, value]) => `${key}: ${value}`);
   if (lines.length === 0) {
-    return '';
+    return "";
   }
-  return `${title}:\n${lines.join('\n')}`;
+  return `${title}:\n${lines.join("\n")}`;
 }
 
 function formatLogForCopy() {
@@ -229,10 +229,10 @@ function formatLogForCopy() {
         `[${formatTime(entry.time)}]`,
         `[${entry.type.toUpperCase()}]`,
         `[${entry.level.toUpperCase()}]`,
-        entry.sourceName ? `[${entry.sourceName}]` : '',
+        entry.sourceName ? `[${entry.sourceName}]` : "",
       ]
         .filter(Boolean)
-        .join(' ');
+        .join(" ");
 
       if (!entry.httpDetail) {
         return `${head} ${entry.message}`;
@@ -242,7 +242,7 @@ function formatLogForCopy() {
         `${head} ${entry.message}`,
         `URL: ${entry.httpDetail.url}`,
         `Method: ${entry.httpDetail.method}`,
-        `Status: ${entry.httpDetail.status || 'N/A'}`,
+        `Status: ${entry.httpDetail.status || "N/A"}`,
         `Elapsed: ${entry.httpDetail.elapsed}ms`,
       ];
 
@@ -256,8 +256,8 @@ function formatLogForCopy() {
         sections.push(`Response Body:\n${entry.httpDetail.responseBody}`);
       }
 
-      const requestHeaders = formatDetailMap('Request Headers', entry.httpDetail.requestHeaders);
-      const responseHeaders = formatDetailMap('Response Headers', entry.httpDetail.responseHeaders);
+      const requestHeaders = formatDetailMap("Request Headers", entry.httpDetail.requestHeaders);
+      const responseHeaders = formatDetailMap("Response Headers", entry.httpDetail.responseHeaders);
       if (requestHeaders) {
         sections.push(requestHeaders);
       }
@@ -265,14 +265,14 @@ function formatLogForCopy() {
         sections.push(responseHeaders);
       }
 
-      return sections.join('\n');
+      return sections.join("\n");
     })
-    .join('\n\n');
+    .join("\n\n");
 }
 
 async function handleCopyLogs() {
   if (filteredLogs.value.length === 0) {
-    message.warning('当前没有可复制的日志');
+    message.warning("当前没有可复制的日志");
     return;
   }
   try {
@@ -285,12 +285,12 @@ async function handleCopyLogs() {
 
 function handlePauseToggle() {
   paused.value = !paused.value;
-  message.info(paused.value ? '已暂停接收新日志' : '已继续接收实时日志');
+  message.info(paused.value ? "已暂停接收新日志" : "已继续接收实时日志");
 }
 
 function handleClearLogs() {
   clearLogs();
-  message.success('日志已清空');
+  message.success("日志已清空");
 }
 
 // 自动滚动
@@ -379,17 +379,17 @@ watch(
               @click="filterType = t"
             >
               {{
-                t === 'all'
-                  ? '全部'
-                  : t === 'script'
-                    ? '脚本'
-                    : t === 'http'
-                      ? 'HTTP'
-                      : t === 'ui'
-                        ? 'UI'
-                        : t === 'browser'
-                          ? '浏览器'
-                          : '系统'
+                t === "all"
+                  ? "全部"
+                  : t === "script"
+                    ? "脚本"
+                    : t === "http"
+                      ? "HTTP"
+                      : t === "ui"
+                        ? "UI"
+                        : t === "browser"
+                          ? "浏览器"
+                          : "系统"
               }}
               <span class="lw-type-tab__count">{{ counts[t] }}</span>
             </button>
@@ -436,7 +436,7 @@ watch(
         <!-- ── 日志列表 ── -->
         <div ref="scrollEl" class="lw-list app-scrollbar" @scroll="onScroll">
           <div v-if="filteredLogs.length === 0" class="lw-empty">
-            {{ paused ? '已暂停 — 点击 ▶ 继续' : '等待日志…' }}
+            {{ paused ? "已暂停 — 点击 ▶ 继续" : "等待日志…" }}
           </div>
           <template v-for="entry in filteredLogs" :key="entry.id">
             <LogEntry
@@ -485,7 +485,7 @@ watch(
   flex-direction: column;
   background: #0e0e12;
   color: #d4d4d8;
-  font-family: var(--font-mono, 'JetBrains Mono', 'Cascadia Code', Consolas, monospace);
+  font-family: var(--font-mono, "JetBrains Mono", "Cascadia Code", Consolas, monospace);
   font-size: 12px;
   line-height: 1.5;
   border: 1px solid rgba(255, 255, 255, 0.1);

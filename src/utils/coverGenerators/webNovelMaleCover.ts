@@ -1,6 +1,6 @@
-import type { ShelfBook } from '@/stores';
-import type { BuiltinCoverGeneratorDefinition } from './types';
-import { bookAuthor, bookKind, buildDataUrl, textSpans, wrapText } from './shared';
+import type { ShelfBook } from "@/stores";
+import type { BuiltinCoverGeneratorDefinition } from "./types";
+import { bookAuthor, bookKind, buildDataUrl, textSpans, wrapText } from "./shared";
 
 function generateWebNovelMaleCover(book: ShelfBook): string {
   const title = textSpans(wrapText(book.name, 6, 4), { x: 60, lineHeight: 120 });
@@ -18,14 +18,14 @@ function generateWebNovelMaleCover(book: ShelfBook): string {
   <path d="M50 602L560 388" stroke="#facc15" stroke-width="16" stroke-linecap="round" opacity="0.86" />
   <path d="M82 640L504 462" stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity="0.62" />
   <text x="60" y="250" fill="#ffffff" font-size="116" font-weight="900" font-family="'Noto Sans SC','Source Han Sans SC',sans-serif">${title}</text>
-  <text x="60" y="640" fill="#fde68a" font-size="48" font-weight="800">${bookKind(book, '热血网文')}</text>
+  <text x="60" y="640" fill="#fde68a" font-size="48" font-weight="800">${bookKind(book, "热血网文")}</text>
   <text x="60" y="694" fill="#ffffff" font-size="60" font-weight="900">${bookAuthor(book)}</text>
 </svg>`);
 }
 
 export const webNovelMaleCoverGenerator: BuiltinCoverGeneratorDefinition = {
-  id: 'builtin:webnovel-male',
-  name: '男频热血',
-  description: '高对比、强动势、金色光线，适合玄幻、都市、升级流。',
+  id: "builtin:webnovel-male",
+  name: "男频热血",
+  description: "高对比、强动势、金色光线，适合玄幻、都市、升级流。",
   generate: generateWebNovelMaleCover,
 };

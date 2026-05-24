@@ -1,6 +1,6 @@
-import type { ShelfBook } from '@/stores';
-import type { BuiltinCoverGeneratorDefinition } from './types';
-import { bookAuthor, bookKind, buildDataUrl, textSpans, wrapText } from './shared';
+import type { ShelfBook } from "@/stores";
+import type { BuiltinCoverGeneratorDefinition } from "./types";
+import { bookAuthor, bookKind, buildDataUrl, textSpans, wrapText } from "./shared";
 
 function generateMinimalLiteraryCover(book: ShelfBook): string {
   const title = textSpans(wrapText(book.name, 8, 4), { x: 72, lineHeight: 108 });
@@ -12,14 +12,14 @@ function generateMinimalLiteraryCover(book: ShelfBook): string {
   <circle cx="450" cy="610" r="96" fill="#111827" opacity="0.08" />
   <circle cx="498" cy="560" r="46" fill="#b91c1c" opacity="0.84" />
   <text x="112" y="184" fill="#111827" font-size="104" font-weight="900" font-family="'Noto Serif SC','Source Han Serif SC',serif">${title}</text>
-  <text x="112" y="590" fill="#52525b" font-size="46">${bookKind(book, '文学精选')}</text>
+  <text x="112" y="590" fill="#52525b" font-size="46">${bookKind(book, "文学精选")}</text>
   <text x="112" y="650" fill="#111827" font-size="60" font-weight="900">${bookAuthor(book)}</text>
 </svg>`);
 }
 
 export const minimalLiteraryCoverGenerator: BuiltinCoverGeneratorDefinition = {
-  id: 'builtin:minimal-literary',
-  name: '极简文学',
-  description: '克制留白和小面积强调色，适合严肃文学、短篇、散文。',
+  id: "builtin:minimal-literary",
+  name: "极简文学",
+  description: "克制留白和小面积强调色，适合严肃文学、短篇、散文。",
   generate: generateMinimalLiteraryCover,
 };

@@ -1,14 +1,14 @@
-import type { ExtensionMeta } from '@/composables/useExtension';
+import type { ExtensionMeta } from "@/composables/useExtension";
 import {
   ensureFrontendNamespaceLoaded,
   getFrontendStorageItem,
   legacyLocalStorageGet,
   legacyLocalStorageRemove,
   setFrontendStorageItem,
-} from '@/composables/useFrontendStorage';
-import { PLUGIN_STORAGE_KEYS } from './pluginStorage';
+} from "@/composables/useFrontendStorage";
+import { PLUGIN_STORAGE_KEYS } from "./pluginStorage";
 
-const LEGACY_PLUGIN_ORDER_KEY = 'legado_frontend_plugin_order_v1';
+const LEGACY_PLUGIN_ORDER_KEY = "legado_frontend_plugin_order_v1";
 
 export function ensurePluginOrderLoaded(): Promise<void> {
   return ensureFrontendNamespaceLoaded(PLUGIN_STORAGE_KEYS.orderNamespace, () => {
@@ -32,7 +32,7 @@ export function readPluginOrder(): string[] {
     }
     const parsed = JSON.parse(raw) as unknown;
     return Array.isArray(parsed)
-      ? parsed.filter((value): value is string => typeof value === 'string')
+      ? parsed.filter((value): value is string => typeof value === "string")
       : [];
   } catch {
     return [];
@@ -60,6 +60,6 @@ export function sortExtensionsByPluginOrder(list: ExtensionMeta[]): ExtensionMet
     if (leftOrder !== undefined || rightOrder !== undefined) {
       return (leftOrder ?? Number.MAX_SAFE_INTEGER) - (rightOrder ?? Number.MAX_SAFE_INTEGER);
     }
-    return left.fileName.localeCompare(right.fileName, 'zh-CN');
+    return left.fileName.localeCompare(right.fileName, "zh-CN");
   });
 }

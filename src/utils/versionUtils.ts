@@ -4,15 +4,15 @@
 
 /** 将版本字符串格式化为显示文本，如 "1.2.3" → "v1.2.3" */
 export function formatVersion(version: string): string {
-  return version ? `v${version}` : '未标注版本';
+  return version ? `v${version}` : "未标注版本";
 }
 
 function _cleanVersion(v: string): string {
-  return v.trim().replace(/^v/i, '');
+  return v.trim().replace(/^v/i, "");
 }
 
 function _parseVersion(v: string): number[] {
-  return v.split('.').map((n) => parseInt(n, 10) || 0);
+  return v.split(".").map((n) => parseInt(n, 10) || 0);
 }
 
 /**

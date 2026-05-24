@@ -1,6 +1,6 @@
-import type { ShelfBook } from '@/stores';
-import type { BuiltinCoverGeneratorDefinition } from './types';
-import { bookAuthor, bookKind, buildDataUrl, paletteFromBook, textSpans, wrapText } from './shared';
+import type { ShelfBook } from "@/stores";
+import type { BuiltinCoverGeneratorDefinition } from "./types";
+import { bookAuthor, bookKind, buildDataUrl, paletteFromBook, textSpans, wrapText } from "./shared";
 
 function generatePaperTextureCover(book: ShelfBook): string {
   const palette = paletteFromBook(book);
@@ -26,14 +26,14 @@ function generatePaperTextureCover(book: ShelfBook): string {
     ${title}
   </text>
   <text x="300" y="560" text-anchor="middle" fill="rgba(42,28,15,0.86)" font-size="56" font-weight="700">${bookAuthor(book)}</text>
-  <text x="300" y="606" text-anchor="middle" fill="rgba(42,28,15,0.64)" font-size="44">${bookKind(book, '纸纹文艺')}</text>
+  <text x="300" y="606" text-anchor="middle" fill="rgba(42,28,15,0.64)" font-size="44">${bookKind(book, "纸纹文艺")}</text>
   <rect x="190" y="650" width="220" height="10" rx="5" fill="${palette.primary}" opacity="0.76" />
 </svg>`);
 }
 
 export const paperTextureCoverGenerator: BuiltinCoverGeneratorDefinition = {
-  id: 'builtin:paper-texture',
-  name: '纸纹文艺版',
-  description: '带纸纹与浅色底卡，适合简介型或文学类封面。',
+  id: "builtin:paper-texture",
+  name: "纸纹文艺版",
+  description: "带纸纹与浅色底卡，适合简介型或文学类封面。",
   generate: generatePaperTextureCover,
 };

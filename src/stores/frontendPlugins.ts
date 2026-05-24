@@ -6,9 +6,9 @@
  *
  * 原 composable 逻辑不变，此文件仅负责注册为 Pinia Store。
  */
-import { defineStore } from 'pinia';
-import { useFrontendPlugins } from '@/composables/useFrontendPlugins';
+import { defineStore } from "pinia";
+import { useFrontendPlugins } from "@/composables/useFrontendPlugins";
 
-export const useFrontendPluginsStore = defineStore('frontendPlugins', () => {
+export const useFrontendPluginsStore = defineStore("frontendPlugins", () => {
   return useFrontendPlugins();
 });

@@ -1,36 +1,39 @@
 <script setup lang="ts">
-import type { Component } from 'vue';
-import { BookOpen, Compass, Search, LayoutGrid, Package, SlidersHorizontal } from 'lucide-vue-next';
-import type { NavItem } from '@/types';
+import type { Component } from "vue";
+import { BookOpen, Compass, Search, LayoutGrid, Package, SlidersHorizontal, Bell, BarChart3 } from "lucide-vue-next";
+import type { NavItem } from "@/types";
 
 const props = withDefaults(
   defineProps<{
     items?: NavItem[];
     activeId?: string;
+    unreadCount?: number;
   }>(),
   {
     items: () => [],
-    activeId: '',
+    activeId: "",
+    unreadCount: 0,
   },
 );
 
 const emit = defineEmits<{
   select: [id: string];
+  notification: [];
 }>();
 
 function onKeyDown(event: KeyboardEvent, index: number) {
   const len = props.items.length;
-  if (event.key === 'ArrowRight') {
+  if (event.key === "ArrowRight") {
     event.preventDefault();
     const next = (index + 1) % len;
-    (document.querySelectorAll('.bottom-nav__item')[next] as HTMLElement)?.focus();
-  } else if (event.key === 'ArrowLeft') {
+    (document.querySelectorAll(".bottom-nav__item")[next] as HTMLElement)?.focus();
+  } else if (event.key === "ArrowLeft") {
     event.preventDefault();
     const prev = (index - 1 + len) % len;
-    (document.querySelectorAll('.bottom-nav__item')[prev] as HTMLElement)?.focus();
-  } else if (event.key === 'Enter' || event.key === ' ') {
+    (document.querySelectorAll(".bottom-nav__item")[prev] as HTMLElement)?.focus();
+  } else if (event.key === "Enter" || event.key === " ") {
     event.preventDefault();
-    emit('select', props.items[index].id);
+    emit("select", props.items[index].id);
   }
 }
 
@@ -65,6 +68,33 @@ const ICON_COMPONENTS: Record<string, Component> = {
         <component :is="ICON_COMPONENTS[item.icon]" :size="22" :stroke-width="1.75" />
       </span>
       <span class="bottom-nav__label">{{ item.label }}</span>
+    </button>
+    <button
+      class="bottom-nav__item bottom-nav__item--notif focusable"
+      :class="{ 'bottom-nav__item--active': activeId === 'updateFeed' }"
+      aria-label="更新通知"
+      role="tab"
+      tabindex="0"
+      @click="emit('notification')"
+    >
+      <span class="bottom-nav__icon" aria-hidden="true">
+        <Bell :size="22" :stroke-width="1.75" />
+        <span v-if="unreadCount > 0" class="bottom-nav__badge">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+      </span>
+      <span class="bottom-nav__label">更新</span>
+    </button>
+    <button
+      class="bottom-nav__item bottom-nav__item--extra focusable"
+      :class="{ 'bottom-nav__item--active': activeId === 'readingHistory' }"
+      aria-label="阅读记录"
+      role="tab"
+      tabindex="0"
+      @click="emit('select', 'readingHistory')"
+    >
+      <span class="bottom-nav__icon" aria-hidden="true">
+        <BarChart3 :size="22" :stroke-width="1.75" />
+      </span>
+      <span class="bottom-nav__label">记录</span>
     </button>
   </nav>
 </template>
@@ -127,5 +157,22 @@ const ICON_COMPONENTS: Record<string, Component> = {
   text-overflow: ellipsis;
   max-width: 100%;
   line-height: var(--lh-tight);
+}
+
+.bottom-nav__badge {
+  position: absolute;
+  top: -4px;
+  right: -8px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--color-error);
+  color: #fff;
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  white-space: nowrap;
 }
 </style>

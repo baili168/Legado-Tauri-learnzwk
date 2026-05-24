@@ -1,18 +1,18 @@
-import type { MessageApi } from 'naive-ui';
-import type { WholeBookSwitchedPayload } from '@/components/reader/types';
-import { invokeWithTimeout } from '@/composables/useInvoke';
-import { useNativeShare } from '@/composables/useNativeShare';
-import { useShelfGroups } from '@/composables/useShelfGroups';
+import type { MessageApi } from "naive-ui";
+import type { WholeBookSwitchedPayload } from "@/components/reader/types";
+import { invokeWithTimeout } from "@/composables/useInvoke";
+import { useNativeShare } from "@/composables/useNativeShare";
+import { useShelfGroups } from "@/composables/useShelfGroups";
 import {
   useBookshelfStore,
   useFrontendPluginsStore,
   type ChapterItem,
   type ShelfBook,
-} from '@/stores';
-import { useBookshelfReaderStore } from '../stores/bookshelfReader';
-import { useBookshelfUiStore } from '../stores/bookshelfUi';
+} from "@/stores";
+import { useBookshelfReaderStore } from "../stores/bookshelfReader";
+import { useBookshelfUiStore } from "../stores/bookshelfUi";
 
-const GROUP_KEY_PREFIX = 'move-to-group:';
+const GROUP_KEY_PREFIX = "move-to-group:";
 
 export function useBookshelfActions(message: MessageApi) {
   const bookshelfStore = useBookshelfStore();
@@ -22,14 +22,16 @@ export function useBookshelfActions(message: MessageApi) {
   const shelfGroups = useShelfGroups();
 
   function syncOpenReaderBookInfo(bookId: string) {
-    readerStore.syncOpenReaderBookInfo(bookshelfStore.books.find((book: ShelfBook) => book.id === bookId));
+    readerStore.syncOpenReaderBookInfo(
+      bookshelfStore.books.find((book: ShelfBook) => book.id === bookId),
+    );
   }
 
   async function handlePluginCoverGenerate(book: ShelfBook, generatorId: string) {
     try {
       const result = await frontendPluginsStore.runCoverGenerator(generatorId, book);
       if (!result?.coverUrl && !result?.patch) {
-        message.info('插件未返回可写回的封面结果');
+        message.info("插件未返回可写回的封面结果");
         return;
       }
       await bookshelfStore.patchBook(book.id, {
@@ -37,7 +39,7 @@ export function useBookshelfActions(message: MessageApi) {
         coverUrl: result.coverUrl ?? result.patch?.coverUrl,
       });
       syncOpenReaderBookInfo(book.id);
-      message.success(result.message ?? '已写回插件生成的封面');
+      message.success(result.message ?? "已写回插件生成的封面");
     } catch (error: unknown) {
       message.error(`插件封面生成失败: ${error instanceof Error ? error.message : String(error)}`);
     }
@@ -49,9 +51,9 @@ export function useBookshelfActions(message: MessageApi) {
       return;
     }
     const book = uiStore.contextBook;
-    if (key.startsWith('plugin-action:')) {
+    if (key.startsWith("plugin-action:")) {
       try {
-        const actionId = key.slice('plugin-action:'.length);
+        const actionId = key.slice("plugin-action:".length);
         await frontendPluginsStore.runBookshelfAction(actionId, book);
         await bookshelfStore.loadBooks();
         syncOpenReaderBookInfo(book.id);
@@ -60,48 +62,48 @@ export function useBookshelfActions(message: MessageApi) {
       }
       return;
     }
-    if (key === 'open-cover-generator') {
+    if (key === "open-cover-generator") {
       uiStore.coverGeneratorBook = book;
       uiStore.showCoverGeneratorDialog = true;
       return;
     }
-    if (key === 'open-detail' || key === 'edit-detail') {
+    if (key === "open-detail" || key === "edit-detail") {
       uiStore.bookDetailBook = book;
-      uiStore.bookDetailMode = key === 'edit-detail' ? 'edit' : 'view';
+      uiStore.bookDetailMode = key === "edit-detail" ? "edit" : "view";
       uiStore.showBookDetailDialog = true;
       return;
     }
-    if (key.startsWith('plugin-cover:')) {
-      await handlePluginCoverGenerate(book, key.slice('plugin-cover:'.length));
+    if (key.startsWith("plugin-cover:")) {
+      await handlePluginCoverGenerate(book, key.slice("plugin-cover:".length));
       return;
     }
-    if (key === 'remove') {
+    if (key === "remove") {
       try {
         await bookshelfStore.removeFromShelf(book.id);
-        message.success('已移出书架');
+        message.success("已移出书架");
       } catch (error: unknown) {
         message.error(`移出失败: ${error instanceof Error ? error.message : String(error)}`);
       }
       return;
     }
-    if (key === 'toggle-private') {
+    if (key === "toggle-private") {
       try {
         await bookshelfStore.setBookPrivate(book.id, !book.isPrivate);
-        message.success(book.isPrivate ? '已取消隐私' : '已设为隐私');
+        message.success(book.isPrivate ? "已取消隐私" : "已设为隐私");
       } catch (error: unknown) {
         message.error(`操作失败: ${error instanceof Error ? error.message : String(error)}`);
       }
       return;
     }
-    if (key === 'reveal-dir') {
+    if (key === "reveal-dir") {
       try {
-        await invokeWithTimeout('bookshelf_reveal_data_dir', { id: book.id }, 5000);
+        await invokeWithTimeout("bookshelf_reveal_data_dir", { id: book.id }, 5000);
       } catch (error: unknown) {
         message.error(`打开目录失败: ${error instanceof Error ? error.message : String(error)}`);
       }
       return;
     }
-    if (key === 'export') {
+    if (key === "export") {
       uiStore.exportBook = book;
       try {
         uiStore.exportCachedChapters = await bookshelfStore.getChapters(book.id);
@@ -111,7 +113,7 @@ export function useBookshelfActions(message: MessageApi) {
       uiStore.showExportDialog = true;
       return;
     }
-    if (key === 'switch-source') {
+    if (key === "switch-source") {
       uiStore.switchTargetBook = book;
       try {
         const cached = await bookshelfStore.getChapters(book.id);
@@ -125,7 +127,7 @@ export function useBookshelfActions(message: MessageApi) {
       uiStore.showSourceSwitchDialog = true;
       return;
     }
-    if (key === 'restore-switch') {
+    if (key === "restore-switch") {
       try {
         const restored = await bookshelfStore.restoreSourceSwitch(book.id);
         await bookshelfStore.loadBooks();
@@ -141,7 +143,7 @@ export function useBookshelfActions(message: MessageApi) {
             sourceSwitched: true,
           });
         }
-        message.success('已恢复到上次换源前的状态');
+        message.success("已恢复到上次换源前的状态");
       } catch (error: unknown) {
         message.error(`恢复失败: ${error instanceof Error ? error.message : String(error)}`);
       }
@@ -151,22 +153,22 @@ export function useBookshelfActions(message: MessageApi) {
       const groupId = key.slice(GROUP_KEY_PREFIX.length);
       try {
         await shelfGroups.addBookToGroup(book.id, groupId);
-        message.success('已移动到分组');
+        message.success("已移动到分组");
       } catch (error: unknown) {
         message.error(`移动失败: ${error instanceof Error ? error.message : String(error)}`);
       }
       return;
     }
-    if (key === 'remove-from-group') {
+    if (key === "remove-from-group") {
       try {
         await shelfGroups.removeBookFromGroup(book.id);
-        message.success('已移出分组');
+        message.success("已移出分组");
       } catch (error: unknown) {
         message.error(`操作失败: ${error instanceof Error ? error.message : String(error)}`);
       }
       return;
     }
-    if (key === 'share') {
+    if (key === "share") {
       const { shareBook } = useNativeShare();
       const success = await shareBook({
         name: book.name,
@@ -175,7 +177,7 @@ export function useBookshelfActions(message: MessageApi) {
         url: book.bookUrl,
       });
       if (success) {
-        message.success('已分享');
+        message.success("已分享");
       }
       return;
     }
@@ -213,6 +215,30 @@ export function useBookshelfActions(message: MessageApi) {
     }
   }
 
+  async function handleCbzImported(payload: {
+    title: string;
+    pages: string[];
+    coverUrl: string;
+  }) {
+    try {
+      const shelfBook = await bookshelfStore.importLocalCbz(payload);
+      message.success(`《${payload.title}》已导入书架，共 ${payload.pages.length} 页`);
+
+      // 在内存中缓存 blobs（供当前会话中使用）
+      const { useCbzImporter } = await import("@/composables/useCbzImporter");
+      const { cachePages } = useCbzImporter();
+      cachePages(shelfBook.bookUrl, payload.pages);
+
+      // 导航到漫画阅读器
+      readerStore.setBookMeta(shelfBook);
+      const cached = await bookshelfStore.getChapters(shelfBook.id);
+      readerStore.setCachedChapters(cached);
+      readerStore.openAt(0);
+    } catch (error: unknown) {
+      message.error(`导入失败: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
   return {
     handleMenuSelect,
     handleReaderSourceSwitched,
@@ -220,5 +246,6 @@ export function useBookshelfActions(message: MessageApi) {
     currentChaptersForSwitch,
     syncOpenReaderBookInfo,
     handleTxtImported,
+    handleCbzImported,
   };
 }

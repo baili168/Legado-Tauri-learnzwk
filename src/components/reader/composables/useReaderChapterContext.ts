@@ -1,8 +1,8 @@
-import { computed, ref, type ComputedRef, type Ref } from 'vue';
-import type { ChapterItem } from '@/stores';
-import type { TemporaryChapterSourceOverride } from '../types';
+import { computed, ref, type ComputedRef, type Ref } from "vue";
+import type { ChapterItem } from "@/stores";
+import type { TemporaryChapterSourceOverride } from "../types";
 
-type PagedModeKind = 'slide' | 'cover' | 'simulation' | 'none';
+type PagedModeKind = "slide" | "cover" | "simulation" | "none";
 type ValueSource<T> = Ref<T> | ComputedRef<T>;
 
 interface ReaderSettingsLike {
@@ -34,7 +34,7 @@ function readSource<T>(source: ValueSource<T>): T {
 }
 
 export function useReaderChapterContext(options: UseReaderChapterContextOptions) {
-  const localAddedShelfId = ref('');
+  const localAddedShelfId = ref("");
   const currentShelfId = computed(() => readSource(options.shelfBookId) ?? localAddedShelfId.value);
   const isOnShelf = computed(() => !!currentShelfId.value);
   const addingToShelf = ref(false);
@@ -56,8 +56,8 @@ export function useReaderChapterContext(options: UseReaderChapterContextOptions)
     () => options.temporaryChapterOverrides.value[options.activeChapterIndex.value] ?? null,
   );
 
-  const isComicMode = computed(() => sourceType.value === 'comic');
-  const isVideoMode = computed(() => sourceType.value === 'video');
+  const isComicMode = computed(() => sourceType.value === "comic");
+  const isVideoMode = computed(() => sourceType.value === "video");
   const activeSkinLockedFlipMode = computed<string | null>(() => {
     const skinId = options.settings.skinPresetId;
     if (!skinId) {
@@ -71,10 +71,10 @@ export function useReaderChapterContext(options: UseReaderChapterContextOptions)
     () => activeSkinLockedFlipMode.value ?? options.settings.flipMode,
   );
   const isScrollMode = computed(
-    () => !isComicMode.value && !isVideoMode.value && effectiveFlipMode.value === 'scroll',
+    () => !isComicMode.value && !isVideoMode.value && effectiveFlipMode.value === "scroll",
   );
   const pagedMode = computed<PagedModeKind | null>(() => {
-    if (isComicMode.value || isVideoMode.value || effectiveFlipMode.value === 'scroll') {
+    if (isComicMode.value || isVideoMode.value || effectiveFlipMode.value === "scroll") {
       return null;
     }
     return effectiveFlipMode.value as PagedModeKind;
@@ -85,18 +85,18 @@ export function useReaderChapterContext(options: UseReaderChapterContextOptions)
   const effectiveStyle = computed(() => {
     const base = options.getContentStyle();
     if (isComicMode.value || isVideoMode.value) {
-      base['--reader-bg-color'] = '#000000';
-      base['--reader-bg-image'] = 'none';
-      base['--reader-bg-size'] = 'auto';
-      base['--reader-bg-position'] = 'center';
-      base['--reader-bg-repeat'] = 'no-repeat';
-      base['--reader-bg-attachment'] = 'scroll';
-      base['--reader-bg-blend-mode'] = 'normal';
-      base['--reader-text-color'] = '#ffffff';
+      base["--reader-bg-color"] = "#000000";
+      base["--reader-bg-image"] = "none";
+      base["--reader-bg-size"] = "auto";
+      base["--reader-bg-position"] = "center";
+      base["--reader-bg-repeat"] = "no-repeat";
+      base["--reader-bg-attachment"] = "scroll";
+      base["--reader-bg-blend-mode"] = "normal";
+      base["--reader-text-color"] = "#ffffff";
     }
     Object.assign(base, options.readerAppearanceVars.value);
-    base['--reader-tts-hl-bg'] =
-      'color-mix(in srgb, var(--reader-selection-color) 65%, transparent)';
+    base["--reader-tts-hl-bg"] =
+      "color-mix(in srgb, var(--reader-selection-color) 65%, transparent)";
     return base;
   });
 

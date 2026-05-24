@@ -5,7 +5,7 @@
  * 刷新完成后自动隐藏指示器。
  */
 
-import { ref, computed, onBeforeUnmount } from 'vue';
+import { ref, computed, onBeforeUnmount } from "vue";
 
 export interface UseShelfPullRefreshOptions {
   /** 刷新回调，返回 Promise（刷新完成时 resolve） */
@@ -107,8 +107,8 @@ export function useShelfPullRefresh(options: UseShelfPullRefreshOptions) {
     pullDistance.value = 0;
     isReady.value = false;
 
-    document.addEventListener('mousemove', onGlobalMouseMove);
-    document.addEventListener('mouseup', onGlobalMouseUp, { once: true });
+    document.addEventListener("mousemove", onGlobalMouseMove);
+    document.addEventListener("mouseup", onGlobalMouseUp, { once: true });
   }
 
   function onGlobalMouseMove(e: MouseEvent) {
@@ -130,7 +130,7 @@ export function useShelfPullRefresh(options: UseShelfPullRefreshOptions) {
 
   function onGlobalMouseUp() {
     isDragging = false;
-    document.removeEventListener('mousemove', onGlobalMouseMove);
+    document.removeEventListener("mousemove", onGlobalMouseMove);
 
     if (isReady.value && !isRefreshing.value) {
       pullDistance.value = 0;
@@ -150,7 +150,7 @@ export function useShelfPullRefresh(options: UseShelfPullRefreshOptions) {
 
   // ── 清理 ──────────────────────────────────────────────────────────
   onBeforeUnmount(() => {
-    document.removeEventListener('mousemove', onGlobalMouseMove);
+    document.removeEventListener("mousemove", onGlobalMouseMove);
   });
 
   return {

@@ -1,20 +1,20 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import type { BookItem } from '@/stores';
-import { getBookMetaBadges, getBookMetaLine, getLatestChapterText } from '@/utils/bookMeta';
-import BookCoverImg from '../BookCoverImg.vue';
+import { computed } from "vue";
+import type { BookItem } from "@/stores";
+import { getBookMetaBadges, getBookMetaLine, getLatestChapterText } from "@/utils/bookMeta";
+import BookCoverImg from "../BookCoverImg.vue";
 
 const props = withDefaults(
   defineProps<{
     book: BookItem;
     showCover?: boolean;
     sourceType?: string;
-    displayMode?: 'card' | 'cover' | 'list';
+    displayMode?: "card" | "cover" | "list";
   }>(),
-  { showCover: true, sourceType: '', displayMode: 'card' },
+  { showCover: true, sourceType: "", displayMode: "card" },
 );
 
-defineEmits<{ (e: 'select', book: BookItem): void }>();
+defineEmits<{ (e: "select", book: BookItem): void }>();
 
 const badges = computed(() => getBookMetaBadges(props.book));
 const latestChapter = computed(() => getLatestChapterText(props.book));
@@ -41,13 +41,13 @@ const metaLine = computed(() => getBookMetaLine(props.book));
         class="book-card__name"
         :class="{ 'book-card__name--placeholder': !book.name }"
         :title="book.name || '未知书名'"
-        >{{ book.name || '未知书名' }}</span
+        >{{ book.name || "未知书名" }}</span
       >
       <span
         class="book-card__author"
         :class="{ 'book-card__author--placeholder': !book.author }"
         :title="book.author || '佚名'"
-        >{{ book.author || '佚名' }}</span
+        >{{ book.author || "佚名" }}</span
       >
     </div>
   </div>
@@ -71,13 +71,13 @@ const metaLine = computed(() => getBookMetaLine(props.book));
         class="book-card__name"
         :class="{ 'book-card__name--placeholder': !book.name }"
         :title="book.name || '未知书名'"
-        >{{ book.name || '未知书名' }}</span
+        >{{ book.name || "未知书名" }}</span
       >
       <span
         class="book-card__author"
         :class="{ 'book-card__author--placeholder': !book.author }"
         :title="book.author || '佚名'"
-        >{{ book.author || '佚名' }}</span
+        >{{ book.author || "佚名" }}</span
       >
       <div v-if="badges.length" class="book-card__tags">
         <n-tag
@@ -251,7 +251,7 @@ const metaLine = computed(() => getBookMetaLine(props.book));
   white-space: nowrap;
 }
 .book-card__meta-item + .book-card__meta-item::before {
-  content: '·';
+  content: "·";
   margin-right: 6px;
   opacity: 0.6;
 }

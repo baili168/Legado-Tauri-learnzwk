@@ -1,4 +1,4 @@
-import { invokeWithTimeout } from './useInvoke';
+import { invokeWithTimeout } from "./useInvoke";
 
 export interface BrowserCreateOptions {
   visible?: boolean;
@@ -11,8 +11,8 @@ export interface BrowserCreateOptions {
 }
 
 export interface BrowserNavigateOptions {
-  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle';
-  waitFor?: 'load' | 'domcontentloaded' | 'networkidle';
+  waitUntil?: "load" | "domcontentloaded" | "networkidle";
+  waitFor?: "load" | "domcontentloaded" | "networkidle";
   timeoutSecs?: number;
   timeout?: number;
   timeoutMs?: number;
@@ -46,7 +46,7 @@ function browserTimeoutMs(options: { timeoutSecs?: number; timeout?: number; tim
 }
 
 export function browserProbeCreate(options: BrowserCreateOptions = {}) {
-  return invokeWithTimeout<string>('browser_probe_create', { options }, DEFAULT_TIMEOUT);
+  return invokeWithTimeout<string>("browser_probe_create", { options }, DEFAULT_TIMEOUT);
 }
 
 export function browserProbeNavigate(
@@ -55,7 +55,7 @@ export function browserProbeNavigate(
   options: BrowserNavigateOptions = {},
 ) {
   return invokeWithTimeout<void>(
-    'browser_probe_navigate',
+    "browser_probe_navigate",
     { sessionId, url, options },
     browserTimeoutMs(options) + 5000,
   );
@@ -67,7 +67,7 @@ export function browserProbeEval<T = unknown>(
   options: BrowserEvalOptions = {},
 ) {
   return invokeWithTimeout<T>(
-    'browser_probe_eval',
+    "browser_probe_eval",
     { sessionId, code, options },
     browserTimeoutMs(options) + 5000,
   );
@@ -79,7 +79,7 @@ export function browserProbeRun<T = unknown>(
   options: BrowserRunOptions = {},
 ) {
   return invokeWithTimeout<T>(
-    'browser_probe_run',
+    "browser_probe_run",
     { url, code, options },
     browserTimeoutMs(options) + 10_000,
   );
@@ -87,36 +87,36 @@ export function browserProbeRun<T = unknown>(
 
 export function browserProbeGetCookies(url?: string) {
   return invokeWithTimeout<BrowserCookie[]>(
-    'browser_probe_get_cookies',
+    "browser_probe_get_cookies",
     { url: url ?? null },
     DEFAULT_TIMEOUT,
   );
 }
 
 export function browserProbeSetCookie(url: string, cookie: BrowserCookie) {
-  return invokeWithTimeout<void>('browser_probe_set_cookie', { url, cookie }, DEFAULT_TIMEOUT);
+  return invokeWithTimeout<void>("browser_probe_set_cookie", { url, cookie }, DEFAULT_TIMEOUT);
 }
 
 export function browserProbeSetUserAgent(userAgent: string) {
-  return invokeWithTimeout<void>('browser_probe_set_user_agent', { userAgent }, DEFAULT_TIMEOUT);
+  return invokeWithTimeout<void>("browser_probe_set_user_agent", { userAgent }, DEFAULT_TIMEOUT);
 }
 
 export function browserProbeClearData() {
-  return invokeWithTimeout<void>('browser_probe_clear_data', {}, DEFAULT_TIMEOUT);
+  return invokeWithTimeout<void>("browser_probe_clear_data", {}, DEFAULT_TIMEOUT);
 }
 
 export function browserProbeShow(sessionId: string) {
-  return invokeWithTimeout<void>('browser_probe_show', { sessionId }, DEFAULT_TIMEOUT);
+  return invokeWithTimeout<void>("browser_probe_show", { sessionId }, DEFAULT_TIMEOUT);
 }
 
 export function browserProbeHide(sessionId: string) {
-  return invokeWithTimeout<void>('browser_probe_hide', { sessionId }, DEFAULT_TIMEOUT);
+  return invokeWithTimeout<void>("browser_probe_hide", { sessionId }, DEFAULT_TIMEOUT);
 }
 
 export function browserProbeClose(sessionId: string) {
-  return invokeWithTimeout<void>('browser_probe_close', { sessionId }, DEFAULT_TIMEOUT);
+  return invokeWithTimeout<void>("browser_probe_close", { sessionId }, DEFAULT_TIMEOUT);
 }
 
 export function browserProbeCloseAll() {
-  return invokeWithTimeout<void>('browser_probe_close_all', {}, DEFAULT_TIMEOUT);
+  return invokeWithTimeout<void>("browser_probe_close_all", {}, DEFAULT_TIMEOUT);
 }

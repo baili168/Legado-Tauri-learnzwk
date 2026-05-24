@@ -1,16 +1,16 @@
-import type { DropdownOption } from 'naive-ui';
-import { defineStore } from 'pinia';
-import { computed, nextTick, ref } from 'vue';
-import type { CachedChapter, ChapterItem, ShelfBook } from '@/stores';
-import { isTauri } from '@/composables/useEnv';
-import { useBookshelfStore, useFrontendPluginsStore, usePrivacyModeStore } from '@/stores';
+import type { DropdownOption } from "naive-ui";
+import { defineStore } from "pinia";
+import { computed, nextTick, ref } from "vue";
+import type { CachedChapter, ChapterItem, ShelfBook } from "@/stores";
+import { isTauri } from "@/composables/useEnv";
+import { useBookshelfStore, useFrontendPluginsStore, usePrivacyModeStore } from "@/stores";
 
-export const useBookshelfUiStore = defineStore('bookshelfUi', () => {
+export const useBookshelfUiStore = defineStore("bookshelfUi", () => {
   const bookshelfStore = useBookshelfStore();
   const privacyModeStore = usePrivacyModeStore();
   const frontendPluginsStore = useFrontendPluginsStore();
 
-  const searchKw = ref('');
+  const searchKw = ref("");
   const openingBookId = ref<string | null>(null);
   const showGroupMenu = ref(false);
 
@@ -29,8 +29,9 @@ export const useBookshelfUiStore = defineStore('bookshelfUi', () => {
   const exportCachedChapters = ref<CachedChapter[]>([]);
   const showBookDetailDialog = ref(false);
   const bookDetailBook = ref<ShelfBook | null>(null);
-  const bookDetailMode = ref<'view' | 'edit'>('view');
+  const bookDetailMode = ref<"view" | "edit">("view");
   const showTxtImportDialog = ref(false);
+  const showCbzImportDialog = ref(false);
 
   const filteredBooks = computed(() => {
     const kw = searchKw.value.trim().toLowerCase();
@@ -60,20 +61,20 @@ export const useBookshelfUiStore = defineStore('bookshelfUi', () => {
           )
         : [];
     const items: DropdownOption[] = [
-      { label: '查看详情', key: 'open-detail' },
-      { label: '编辑详情', key: 'edit-detail' },
-      { type: 'divider', key: 'detail-div' },
-      { label: isPrivate ? '取消隐私' : '设为隐私', key: 'toggle-private' },
-      { label: '切换书源', key: 'switch-source' },
-      { label: '撤销上次换源', key: 'restore-switch' },
+      { label: "查看详情", key: "open-detail" },
+      { label: "编辑详情", key: "edit-detail" },
+      { type: "divider", key: "detail-div" },
+      { label: isPrivate ? "取消隐私" : "设为隐私", key: "toggle-private" },
+      { label: "切换书源", key: "switch-source" },
+      { label: "撤销上次换源", key: "restore-switch" },
     ];
     if (book) {
-      items.push({ label: '生成封面', key: 'open-cover-generator' });
+      items.push({ label: "生成封面", key: "open-cover-generator" });
     }
     if (pluginCoverGenerators.length) {
       items.push({
-        label: '插件生成封面',
-        key: 'generate-plugin-cover',
+        label: "插件生成封面",
+        key: "generate-plugin-cover",
         children: pluginCoverGenerators.map(
           (generator) =>
             ({
@@ -86,15 +87,15 @@ export const useBookshelfUiStore = defineStore('bookshelfUi', () => {
     if (pluginActions.length) {
       items.push(...pluginActions);
     }
-    items.push({ type: 'divider', key: 'div' });
-    items.push({ label: '分享', key: 'share' });
+    items.push({ type: "divider", key: "div" });
+    items.push({ label: "分享", key: "share" });
     if (isTauri) {
-      items.push({ label: '打开本地目录', key: 'reveal-dir' });
+      items.push({ label: "打开本地目录", key: "reveal-dir" });
     }
-    if ((book?.sourceType ?? 'novel') === 'novel') {
-      items.push({ label: '导出书籍', key: 'export' });
+    if ((book?.sourceType ?? "novel") === "novel") {
+      items.push({ label: "导出书籍", key: "export" });
     }
-    items.push({ label: '移出书架', key: 'remove' });
+    items.push({ label: "移出书架", key: "remove" });
     return items;
   });
 
@@ -122,7 +123,7 @@ export const useBookshelfUiStore = defineStore('bookshelfUi', () => {
     exportCachedChapters.value = [];
     showBookDetailDialog.value = false;
     bookDetailBook.value = null;
-    bookDetailMode.value = 'view';
+    bookDetailMode.value = "view";
   }
 
   return {
@@ -145,6 +146,7 @@ export const useBookshelfUiStore = defineStore('bookshelfUi', () => {
     bookDetailBook,
     bookDetailMode,
     showTxtImportDialog,
+    showCbzImportDialog,
     filteredBooks,
     menuOptions,
     openContextMenu,

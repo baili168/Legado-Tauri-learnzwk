@@ -1,7 +1,7 @@
 <script setup lang="ts">
 defineProps<{
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
-  size?: 'sm' | 'md' | 'lg';
+  variant?: "primary" | "secondary" | "ghost" | "danger";
+  size?: "sm" | "md" | "lg";
   block?: boolean;
   loading?: boolean;
   disabled?: boolean;
@@ -54,68 +54,68 @@ defineProps<{
 }
 
 /* size */
-.app-button[data-size='sm'] {
+.app-button[data-size="sm"] {
   min-height: var(--control-sm);
   padding-inline: var(--space-3);
   font-size: var(--fs-13);
 }
 
-.app-button[data-size='lg'] {
+.app-button[data-size="lg"] {
   min-height: var(--control-lg);
   padding-inline: var(--space-5);
   font-size: var(--fs-16);
 }
 
 /* variant: primary */
-.app-button[data-variant='primary'] {
+.app-button[data-variant="primary"] {
   background: var(--color-accent);
   color: var(--color-accent-contrast);
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .app-button[data-variant='primary']:hover {
+  .app-button[data-variant="primary"]:hover {
     background: var(--color-accent-hover);
   }
 }
 
-.app-button[data-variant='primary']:active {
+.app-button[data-variant="primary"]:active {
   background: var(--color-accent-hover);
 }
 
 /* variant: secondary */
-.app-button[data-variant='secondary'] {
+.app-button[data-variant="secondary"] {
   background: var(--color-surface);
   color: var(--color-text);
   box-shadow: inset 0 0 0 1px var(--color-border);
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .app-button[data-variant='secondary']:hover {
+  .app-button[data-variant="secondary"]:hover {
     background: var(--color-hover);
   }
 }
 
 /* variant: ghost */
-.app-button[data-variant='ghost'] {
+.app-button[data-variant="ghost"] {
   background: transparent;
   color: var(--color-text);
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .app-button[data-variant='ghost']:hover {
+  .app-button[data-variant="ghost"]:hover {
     background: var(--color-hover);
   }
 }
 
 /* variant: danger */
-.app-button[data-variant='danger'] {
+.app-button[data-variant="danger"] {
   background: var(--color-danger-bg);
   color: var(--color-danger);
   box-shadow: inset 0 0 0 1px var(--color-danger-border);
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .app-button[data-variant='danger']:hover {
+  .app-button[data-variant="danger"]:hover {
     opacity: 0.85;
   }
 }

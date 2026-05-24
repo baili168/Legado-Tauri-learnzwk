@@ -9,14 +9,14 @@ export interface CoverImageRef {
 export type CoverImageInput = string | CoverImageRef | null | undefined;
 
 export function isCoverImageRef(value: CoverImageInput): value is CoverImageRef {
-  return typeof value === 'object' && value !== null && typeof value.url === 'string';
+  return typeof value === "object" && value !== null && typeof value.url === "string";
 }
 
 export function getCoverImageUrl(value: CoverImageInput): string | undefined {
   if (!value) {
     return undefined;
   }
-  if (typeof value === 'string') {
+  if (typeof value === "string") {
     return value || undefined;
   }
   return value.url || undefined;

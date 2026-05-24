@@ -1,6 +1,6 @@
-import type { PatchShelfBookPayload, ShelfBook } from '@/composables/useBookshelf';
-import { invokeWithTimeout } from '@/composables/useInvoke';
-import type { FrontendPluginHttpRequest, FrontendPluginHttpResponse } from './pluginTypes';
+import type { PatchShelfBookPayload, ShelfBook } from "@/composables/useBookshelf";
+import { invokeWithTimeout } from "@/composables/useInvoke";
+import type { FrontendPluginHttpRequest, FrontendPluginHttpResponse } from "./pluginTypes";
 
 export function normalizeHttpHeaders(headers?: Record<string, string>): Array<[string, string]> {
   if (!headers) {
@@ -8,18 +8,18 @@ export function normalizeHttpHeaders(headers?: Record<string, string>): Array<[s
   }
   return Object.entries(headers)
     .map(([key, value]) => [key.trim(), value] as [string, string])
-    .filter(([key, value]) => key && typeof value === 'string');
+    .filter(([key, value]) => key && typeof value === "string");
 }
 
 export async function requestPluginHttp(
   request: FrontendPluginHttpRequest,
 ): Promise<FrontendPluginHttpResponse> {
   return invokeWithTimeout<FrontendPluginHttpResponse>(
-    'frontend_plugin_http_request',
+    "frontend_plugin_http_request",
     {
       request: {
         url: request.url,
-        method: request.method ?? 'GET',
+        method: request.method ?? "GET",
         headers: normalizeHttpHeaders(request.headers),
         body: request.body ?? null,
         timeoutSecs: request.timeoutSecs ?? null,
@@ -30,7 +30,7 @@ export async function requestPluginHttp(
 }
 
 export async function getShelfBookById(id: string): Promise<ShelfBook> {
-  return invokeWithTimeout<ShelfBook>('bookshelf_get', { id }, 10_000);
+  return invokeWithTimeout<ShelfBook>("bookshelf_get", { id }, 10_000);
 }
 
 export async function patchShelfBook(id: string, patch: PatchShelfBookPayload): Promise<ShelfBook> {
@@ -54,7 +54,7 @@ export async function patchShelfBook(id: string, patch: PatchShelfBookPayload): 
     clearContentCache: patch.clearContentCache,
   };
   return invokeWithTimeout<ShelfBook>(
-    'bookshelf_update_book',
+    "bookshelf_update_book",
     {
       book: payload,
       chapters: null,

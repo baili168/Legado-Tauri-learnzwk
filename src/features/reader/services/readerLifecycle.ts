@@ -1,5 +1,5 @@
-import type { ComputedRef, Ref } from 'vue';
-import type { OpenChapterOptions } from '@/components/reader/composables/useReaderChapterOpen';
+import type { ComputedRef, Ref } from "vue";
+import type { OpenChapterOptions } from "@/components/reader/composables/useReaderChapterOpen";
 
 export interface ShelfReaderSettingsSnapshot {
   readerSettings?: string;
@@ -52,7 +52,7 @@ export function createReaderLifecycleController(options: ReaderLifecycleControll
       const book = await options.getShelfBook(shelfBookId);
       options.activateBookSettings(shelfBookId, book.readerSettings);
       const savedIndex =
-        typeof book.readChapterIndex === 'number' && book.readChapterIndex >= 0
+        typeof book.readChapterIndex === "number" && book.readChapterIndex >= 0
           ? book.readChapterIndex
           : options.getCurrentIndex();
       if (savedIndex >= 0) {
@@ -96,7 +96,7 @@ export function createReaderLifecycleController(options: ReaderLifecycleControll
       options.pendingRestoreScrollRatio.value = -1;
       const hasRestorePos = restoreScrollRatio >= 0 || restorePageIndex >= 0;
       await options.openChapter(options.activeChapterIndex.value, {
-        position: hasRestorePos ? 'resume' : 'first',
+        position: hasRestorePos ? "resume" : "first",
         pageIndex: restorePageIndex >= 0 ? restorePageIndex : undefined,
         pageRatio: restoreScrollRatio >= 0 ? restoreScrollRatio : undefined,
       });

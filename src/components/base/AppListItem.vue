@@ -12,9 +12,9 @@ const emit = defineEmits<{
 }>();
 
 function onKeyDown(event: KeyboardEvent) {
-  if (event.key === 'Enter' || event.key === ' ') {
+  if (event.key === "Enter" || event.key === " ") {
     event.preventDefault();
-    emit('click');
+    emit("click");
   }
 }
 </script>

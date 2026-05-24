@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import { ChevronLeft } from 'lucide-vue-next';
-import type { ReaderSettings, ReaderTypography } from '@/components/reader/types';
+import { ChevronLeft } from "lucide-vue-next";
+import type { ReaderSettings, ReaderTypography } from "@/components/reader/types";
 
 defineProps<{
   settings: ReaderSettings;
   textAlignOptions: Array<{
     label: string;
-    value: ReaderTypography['textAlign'];
+    value: ReaderTypography["textAlign"];
   }>;
   textShadowPresets: Array<{ label: string; value: string }>;
 }>();
 
 const emit = defineEmits<{
   back: [];
-  'update-typography': [patch: Partial<ReaderTypography>];
+  "update-typography": [patch: Partial<ReaderTypography>];
 }>();
 </script>
 

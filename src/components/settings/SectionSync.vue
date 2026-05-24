@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import { useDialog, useMessage } from 'naive-ui';
-import { storeToRefs } from 'pinia';
-import QRCode from 'qrcode';
-import { computed, onMounted, ref } from 'vue';
-import { invokeWithTimeout } from '@/composables/useInvoke';
-import { useOverlayBackstack } from '@/composables/useOverlayBackstack';
+import { useDialog, useMessage } from "naive-ui";
+import { storeToRefs } from "pinia";
+import QRCode from "qrcode";
+import { computed, onMounted, ref } from "vue";
+import { invokeWithTimeout } from "@/composables/useInvoke";
+import { useOverlayBackstack } from "@/composables/useOverlayBackstack";
 import {
   useSync,
   type SyncConflict,
   type SyncStatus,
   type SyncQrPayload,
-} from '@/composables/useSync';
-import { useAppConfigStore } from '@/stores';
-import SettingItem from './SettingItem.vue';
-import SettingSection from './SettingSection.vue';
+} from "@/composables/useSync";
+import { useAppConfigStore } from "@/stores";
+import SettingItem from "./SettingItem.vue";
+import SettingSection from "./SettingSection.vue";
 
 const message = useMessage();
 const dialog = useDialog();
@@ -22,22 +22,22 @@ const { config, savingKey } = storeToRefs(_appCfg);
 const { setConfig, loadConfig } = _appCfg;
 const sync = useSync();
 
-const password = ref('');
+const password = ref("");
 const status = ref<SyncStatus | null>(null);
 const conflicts = ref<SyncConflict[]>([]);
 const syncing = ref(false);
 const testing = ref(false);
 const qrVisible = ref(false);
-const qrDataUrl = ref('');
-const qrRawText = ref('');
+const qrDataUrl = ref("");
+const qrRawText = ref("");
 const scanVisible = ref(false);
 const videoRef = ref<HTMLVideoElement | null>(null);
 
 // 百度网盘授权状态
 const baiduAuthVisible = ref(false);
-const baiduDeviceCode = ref('');
-const baiduVerificationUrl = ref('');
-const baiduUserCode = ref('');
+const baiduDeviceCode = ref("");
+const baiduVerificationUrl = ref("");
+const baiduUserCode = ref("");
 const baiduPolling = ref(false);
 const copyBaiduUserCode = () => navigator.clipboard.writeText(baiduUserCode.value);
 const baiduTokenStatus = ref<{
@@ -47,9 +47,9 @@ const baiduTokenStatus = ref<{
 } | null>(null);
 
 const providerOptions = [
-  { label: 'WebDAV', value: 'webdav' },
-  { label: 'FTP', value: 'ftp' },
-  { label: '百度网盘', value: 'baidu_netdisk' },
+  { label: "WebDAV", value: "webdav" },
+  { label: "FTP", value: "ftp" },
+  { label: "百度网盘", value: "baidu_netdisk" },
 ];
 
 useOverlayBackstack(() => qrVisible.value, closeQr);
@@ -67,12 +67,12 @@ useOverlayBackstack(
 );
 
 const scopeOptions = [
-  { label: '系统设置', key: 'sync_scope_app_settings' },
-  { label: '书源文件', key: 'sync_scope_booksources' },
-  { label: '插件文件', key: 'sync_scope_extensions' },
-  { label: '书架', key: 'sync_scope_bookshelf' },
-  { label: '单书设置', key: 'sync_scope_reader_settings' },
-  { label: '阅读位置', key: 'sync_scope_reading_progress' },
+  { label: "系统设置", key: "sync_scope_app_settings" },
+  { label: "书源文件", key: "sync_scope_booksources" },
+  { label: "插件文件", key: "sync_scope_extensions" },
+  { label: "书架", key: "sync_scope_bookshelf" },
+  { label: "单书设置", key: "sync_scope_reader_settings" },
+  { label: "阅读位置", key: "sync_scope_reading_progress" },
 ] as const;
 
 const enabledScopeKeys = computed({
@@ -88,7 +88,7 @@ const enabledScopeKeys = computed({
 
 function formatTime(ts: number) {
   if (!ts) {
-    return '从未';
+    return "从未";
   }
   return new Date(ts).toLocaleString();
 }
@@ -105,7 +105,7 @@ async function refresh() {
 async function handleSet(key: string, value: string) {
   try {
     await setConfig(key, value);
-    if (key.startsWith('sync_')) {
+    if (key.startsWith("sync_")) {
       await refresh();
     }
   } catch (e: unknown) {
@@ -115,13 +115,13 @@ async function handleSet(key: string, value: string) {
 
 async function saveCredentials() {
   await sync.setCredentials(password.value);
-  message.success('同步密码已保存到本机同步配置');
+  message.success("同步密码已保存到本机同步配置");
 }
 
 async function clearSyncCredentials() {
   await sync.clearCredentials();
-  password.value = '';
-  message.success('同步密码已清除');
+  password.value = "";
+  message.success("同步密码已清除");
 }
 
 async function testConnection() {
@@ -143,11 +143,11 @@ async function testConnection() {
   }
 }
 
-async function runSync(mode: 'sync' | 'pull' | 'push', strategy?: 'local' | 'remote') {
+async function runSync(mode: "sync" | "pull" | "push", strategy?: "local" | "remote") {
   syncing.value = true;
   try {
     const result = await sync.syncNow(mode, strategy);
-    if (result.status === 'conflict') {
+    if (result.status === "conflict") {
       message.warning(result.message);
     } else {
       message.success(result.message);
@@ -162,17 +162,17 @@ async function runSync(mode: 'sync' | 'pull' | 'push', strategy?: 'local' | 'rem
 
 async function showQr() {
   dialog.warning({
-    title: '确认生成明文同步二维码',
+    title: "确认生成明文同步二维码",
     content:
-      '二维码会包含 WebDAV 密码或 Token。任何看到二维码或截图的人都能获得同步账号。确认只在可信环境中展示。',
-    positiveText: '生成',
-    negativeText: '取消',
+      "二维码会包含 WebDAV 密码或 Token。任何看到二维码或截图的人都能获得同步账号。确认只在可信环境中展示。",
+    positiveText: "生成",
+    negativeText: "取消",
     onPositiveClick: async () => {
       try {
         const payload = await sync.generateQrPayload();
         qrRawText.value = JSON.stringify(payload);
         qrDataUrl.value = await QRCode.toDataURL(qrRawText.value, {
-          errorCorrectionLevel: 'M',
+          errorCorrectionLevel: "M",
           margin: 1,
         });
         qrVisible.value = true;
@@ -185,8 +185,8 @@ async function showQr() {
 
 function closeQr() {
   qrVisible.value = false;
-  qrDataUrl.value = '';
-  qrRawText.value = '';
+  qrDataUrl.value = "";
+  qrRawText.value = "";
 }
 
 async function copyQrText() {
@@ -195,7 +195,7 @@ async function copyQrText() {
   }
   try {
     await navigator.clipboard.writeText(qrRawText.value);
-    message.success('同步配置字符串已复制');
+    message.success("同步配置字符串已复制");
   } catch (e: unknown) {
     message.error(`复制失败: ${e}`);
   }
@@ -220,7 +220,7 @@ async function importPayload(payload: SyncQrPayload) {
   await sync.importQrPayload(payload);
   await loadConfig();
   await refresh();
-  message.success('已导入同步配置');
+  message.success("已导入同步配置");
 }
 
 async function importQrText(raw: string) {
@@ -229,7 +229,7 @@ async function importQrText(raw: string) {
 }
 
 function promptImportText() {
-  const raw = window.prompt('粘贴同步配置二维码内容');
+  const raw = window.prompt("粘贴同步配置二维码内容");
   if (!raw) {
     return;
   }
@@ -244,7 +244,7 @@ async function loadBaiduTokenStatus() {
       valid: boolean;
       expires_at: number;
       username: string;
-    }>('sync_baidu_token_status', undefined, 8000);
+    }>("sync_baidu_token_status", undefined, 8000);
     baiduTokenStatus.value = result;
   } catch {
     baiduTokenStatus.value = null;
@@ -259,10 +259,10 @@ async function startBaiduAuth() {
       user_code: string;
       expires_in: number;
       interval: number;
-    }>('sync_baidu_start_auth', undefined, 15000);
+    }>("sync_baidu_start_auth", undefined, 15000);
     baiduDeviceCode.value = result.device_code;
     baiduUserCode.value = result.user_code;
-    const base = result.verification_url.split('?')[0];
+    const base = result.verification_url.split("?")[0];
     baiduVerificationUrl.value = `${base}?code=${encodeURIComponent(result.user_code)}`;
     baiduAuthVisible.value = true;
   } catch (e: unknown) {
@@ -277,17 +277,17 @@ async function pollBaiduToken() {
   baiduPolling.value = true;
   try {
     const result = await invokeWithTimeout<{ status: string }>(
-      'sync_baidu_poll_token',
+      "sync_baidu_poll_token",
       { deviceCode: baiduDeviceCode.value },
       15000,
     );
-    if (result.status === 'authorized') {
+    if (result.status === "authorized") {
       baiduAuthVisible.value = false;
-      baiduDeviceCode.value = '';
-      message.success('百度网盘授权成功');
+      baiduDeviceCode.value = "";
+      message.success("百度网盘授权成功");
       await loadBaiduTokenStatus();
     } else {
-      message.info('授权尚未完成，请在浏览器中完成授权后再点击此按钮');
+      message.info("授权尚未完成，请在浏览器中完成授权后再点击此按钮");
     }
   } catch (e: unknown) {
     message.error(`轮询授权失败: ${e}`);
@@ -298,9 +298,9 @@ async function pollBaiduToken() {
 
 async function revokeBaiduAuth() {
   try {
-    await invokeWithTimeout<void>('sync_baidu_revoke_auth', undefined, 8000);
+    await invokeWithTimeout<void>("sync_baidu_revoke_auth", undefined, 8000);
     baiduTokenStatus.value = null;
-    message.success('已退出百度网盘授权');
+    message.success("已退出百度网盘授权");
   } catch (e: unknown) {
     message.error(`退出授权失败: ${e}`);
   }
@@ -308,10 +308,10 @@ async function revokeBaiduAuth() {
 
 onMounted(async () => {
   await loadConfig();
-  const credentials = await sync.getCredentials().catch(() => ({ password: '' }));
+  const credentials = await sync.getCredentials().catch(() => ({ password: "" }));
   password.value = credentials.password;
   await refresh();
-  if (config.value.sync_provider === 'baidu_netdisk') {
+  if (config.value.sync_provider === "baidu_netdisk") {
     await loadBaiduTokenStatus();
   }
 });
@@ -426,7 +426,7 @@ onMounted(async () => {
 
           <SettingItem label="授权状态">
             <span v-if="baiduTokenStatus?.valid" class="sync-baidu-status sync-baidu-status--ok">
-              已授权：{{ baiduTokenStatus.username || '已登录' }}
+              已授权：{{ baiduTokenStatus.username || "已登录" }}
             </span>
             <span v-else-if="baiduTokenStatus" class="sync-baidu-status sync-baidu-status--err">
               令牌已过期
@@ -700,7 +700,7 @@ onMounted(async () => {
 }
 
 .sync-qr-raw__input {
-  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 }
 
 .sync-video {

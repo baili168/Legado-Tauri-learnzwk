@@ -56,16 +56,16 @@
 
   /* font family */
   --font-ui:
-    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
-    'Noto Sans CJK SC', 'Microsoft YaHei', sans-serif;
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", "PingFang SC", "Hiragino Sans GB",
+    "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
 
   --font-reader-sans:
-    'PingFang SC', 'Noto Sans CJK SC', 'Source Han Sans SC', 'Microsoft YaHei', sans-serif;
+    "PingFang SC", "Noto Sans CJK SC", "Source Han Sans SC", "Microsoft YaHei", sans-serif;
 
   --font-reader-serif:
-    'Songti SC', 'Source Han Serif SC', 'Noto Serif CJK SC', 'STSong', 'SimSun', serif;
+    "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", "STSong", "SimSun", serif;
 
-  --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, 'Liberation Mono', monospace;
+  --font-mono: "JetBrains Mono", "Fira Code", Consolas, "Liberation Mono", monospace;
 
   /* font size */
   --fs-10: 0.625rem;
@@ -182,30 +182,30 @@
 }
 
 /* 高对比度主题（WCAG AAA, 对比度 >= 7:1） */
-[data-reader-high-contrast='hc-black'] {
+[data-reader-high-contrast="hc-black"] {
   --reader-bg-color: #000000;
   --reader-text-color: #ffffff;
   --reader-accent-color: #00ff00;
 }
-[data-reader-high-contrast='hc-white'] {
+[data-reader-high-contrast="hc-white"] {
   --reader-bg-color: #ffffff;
   --reader-text-color: #000000;
   --reader-accent-color: #0000ff;
 }
-[data-reader-high-contrast='hc-yellow'] {
+[data-reader-high-contrast="hc-yellow"] {
   --reader-bg-color: #ffff00;
   --reader-text-color: #000000;
   --reader-accent-color: #0000ff;
 }
 
 /* 阅读障碍字体 */
-[data-reader-dyslexia-font='OpenDyslexic'] {
-  --reader-font-family: 'OpenDyslexic', sans-serif;
+[data-reader-dyslexia-font="OpenDyslexic"] {
+  --reader-font-family: "OpenDyslexic", sans-serif;
   font-weight: 500;
 }
 
 /* 减少动画偏好 */
-[data-reader-reduce-motion='true'] {
+[data-reader-reduce-motion="true"] {
   *,
   *::before,
   *::after {
@@ -229,17 +229,17 @@
   }
 }
 
-:root[data-font-scale='small'] {
+:root[data-font-scale="small"] {
   font-size: 14px;
   --ui-font-scale: 0.875;
 }
 
-:root[data-font-scale='medium'] {
+:root[data-font-scale="medium"] {
   font-size: 16px;
   --ui-font-scale: 1;
 }
 
-:root[data-font-scale='large'] {
+:root[data-font-scale="large"] {
   font-size: 18px;
   --ui-font-scale: 1.125;
 }

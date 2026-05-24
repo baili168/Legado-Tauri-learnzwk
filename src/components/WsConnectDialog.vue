@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useMessage } from 'naive-ui';
+import { useMessage } from "naive-ui";
 /**
  * WsConnectDialog — 非 Tauri 环境下后端连接失败时弹出的地址输入框
  *
@@ -9,20 +9,20 @@ import { useMessage } from 'naive-ui';
  * 3. 写入当前 URL 的 `ws` 参数，重新探测，成功后刷新页面使所有组件重新初始化
  * 4. 允许跳过（仅本次，不保存），Dialog 关闭后用户可在设置页修改
  */
-import { ref, onMounted } from 'vue';
-import { hasNativeTransport } from '@/composables/useEnv';
-import { useOverlayBackstack } from '@/composables/useOverlayBackstack';
+import { ref, onMounted } from "vue";
+import { hasNativeTransport } from "@/composables/useEnv";
+import { useOverlayBackstack } from "@/composables/useOverlayBackstack";
 import {
   isTransportAvailable,
   getCustomWsUrl,
   setCustomWsUrl,
   resetWsProbe,
-} from '@/composables/useTransport';
+} from "@/composables/useTransport";
 
 const message = useMessage();
 
 const show = ref(false);
-const wsUrlInput = ref('');
+const wsUrlInput = ref("");
 const connecting = ref(false);
 let connectRequestId = 0;
 
@@ -35,7 +35,7 @@ onMounted(async () => {
 
   // 预填当前已保存的地址，或构造默认猜测地址
   const saved = getCustomWsUrl();
-  wsUrlInput.value = saved || `ws://${window.location.hostname || 'localhost'}:7688/ws`;
+  wsUrlInput.value = saved || `ws://${window.location.hostname || "localhost"}:7688/ws`;
 
   const ok = await isTransportAvailable();
   if (!ok) {
@@ -46,7 +46,7 @@ onMounted(async () => {
 async function handleConnect() {
   const url = wsUrlInput.value.trim();
   if (!url) {
-    message.error('请输入后端 WebSocket 地址');
+    message.error("请输入后端 WebSocket 地址");
     return;
   }
 
@@ -61,13 +61,13 @@ async function handleConnect() {
 
     if (ok) {
       show.value = false;
-      message.success('连接成功，正在刷新…');
+      message.success("连接成功，正在刷新…");
       // 刷新页面让所有组件用新连接重新初始化
       setTimeout(() => window.location.reload(), 600);
     } else {
       // 连接失败：重置，让用户继续修改地址
       resetWsProbe();
-      message.error('连接失败，请检查地址后重试');
+      message.error("连接失败，请检查地址后重试");
     }
   } finally {
     if (requestId === connectRequestId) {

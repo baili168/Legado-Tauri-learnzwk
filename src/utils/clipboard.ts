@@ -6,9 +6,9 @@
  */
 export async function copyText(text: string): Promise<void> {
   if (
-    typeof navigator !== 'undefined' &&
+    typeof navigator !== "undefined" &&
     navigator.clipboard &&
-    typeof navigator.clipboard.writeText === 'function'
+    typeof navigator.clipboard.writeText === "function"
   ) {
     try {
       await navigator.clipboard.writeText(text);
@@ -18,28 +18,28 @@ export async function copyText(text: string): Promise<void> {
     }
   }
 
-  if (typeof document === 'undefined') {
-    throw new Error('当前环境不支持复制');
+  if (typeof document === "undefined") {
+    throw new Error("当前环境不支持复制");
   }
 
-  const textarea = document.createElement('textarea');
+  const textarea = document.createElement("textarea");
   textarea.value = text;
-  textarea.setAttribute('readonly', 'true');
-  textarea.style.position = 'fixed';
-  textarea.style.top = '0';
-  textarea.style.left = '0';
-  textarea.style.opacity = '0';
-  textarea.style.pointerEvents = 'none';
+  textarea.setAttribute("readonly", "true");
+  textarea.style.position = "fixed";
+  textarea.style.top = "0";
+  textarea.style.left = "0";
+  textarea.style.opacity = "0";
+  textarea.style.pointerEvents = "none";
 
   document.body.appendChild(textarea);
   textarea.focus();
   textarea.select();
   textarea.setSelectionRange(0, textarea.value.length);
 
-  const copied = document.execCommand('copy');
+  const copied = document.execCommand("copy");
   document.body.removeChild(textarea);
 
   if (!copied) {
-    throw new Error('浏览器拒绝写入剪贴板');
+    throw new Error("浏览器拒绝写入剪贴板");
   }
 }

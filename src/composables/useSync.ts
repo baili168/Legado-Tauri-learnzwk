@@ -1,21 +1,21 @@
-import { BrowserQRCodeReader } from '@zxing/browser';
-import QRCode from 'qrcode';
-import { useAppConfig, type AppConfig } from './useAppConfig';
-import { eventListen, eventListenSync } from './useEventBus';
+import { BrowserQRCodeReader } from "@zxing/browser";
+import QRCode from "qrcode";
+import { useAppConfig, type AppConfig } from "./useAppConfig";
+import { eventListen, eventListenSync } from "./useEventBus";
 import {
   ensureFrontendNamespaceLoaded,
   getFrontendStorageItem,
   legacyLocalStorageGet,
   legacyLocalStorageRemove,
   setFrontendStorageJson,
-} from './useFrontendStorage';
-import { invokeWithTimeout } from './useInvoke';
+} from "./useFrontendStorage";
+import { invokeWithTimeout } from "./useInvoke";
 
-const READER_SETTINGS_NAMESPACE = 'dynamic-config.reader.defaults.lastEffective';
-const READER_SETTINGS_KEY = 'state';
-const SOURCE_FLAGS_NAMESPACE = 'source.capabilities';
-const SOURCE_EXPLORE_DISABLED_KEY = 'exploreDisabled';
-const SOURCE_SEARCH_DISABLED_KEY = 'searchDisabled';
+const READER_SETTINGS_NAMESPACE = "dynamic-config.reader.defaults.lastEffective";
+const READER_SETTINGS_KEY = "state";
+const SOURCE_FLAGS_NAMESPACE = "source.capabilities";
+const SOURCE_EXPLORE_DISABLED_KEY = "exploreDisabled";
+const SOURCE_SEARCH_DISABLED_KEY = "searchDisabled";
 
 export interface SyncStatus {
   enabled: boolean;
@@ -54,9 +54,9 @@ export interface SyncCredentials {
 }
 
 export interface SyncQrPayload {
-  type: 'legado-sync-config';
+  type: "legado-sync-config";
   version: 1;
-  provider: 'webdav' | 'ftp' | 'baidu_netdisk';
+  provider: "webdav" | "ftp" | "baidu_netdisk";
   profileId: string;
   webdavUrl: string;
   username: string;
@@ -109,18 +109,18 @@ function writeLocalJson(key: string, value: unknown) {
 
 async function pushClientState() {
   await invokeWithTimeout<void>(
-    'sync_client_state_set',
+    "sync_client_state_set",
     {
-      domain: 'reader_settings',
+      domain: "reader_settings",
       value: readLocalJson(READER_SETTINGS_KEY),
     },
     10000,
   ).catch(() => {});
 
   await invokeWithTimeout<void>(
-    'sync_client_state_set',
+    "sync_client_state_set",
     {
-      domain: 'source_flags',
+      domain: "source_flags",
       value: {
         exploreDisabled: readLocalJson(SOURCE_EXPLORE_DISABLED_KEY) ?? [],
         searchDisabled: readLocalJson(SOURCE_SEARCH_DISABLED_KEY) ?? [],
@@ -133,62 +133,62 @@ async function pushClientState() {
 function enabledScopes(config: AppConfig): string[] {
   const scopes: string[] = [];
   if (config.sync_scope_bookshelf) {
-    scopes.push('bookshelf');
+    scopes.push("bookshelf");
   }
   if (config.sync_scope_reading_progress) {
-    scopes.push('reading_progress');
+    scopes.push("reading_progress");
   }
   if (config.sync_scope_booksources) {
-    scopes.push('booksources');
+    scopes.push("booksources");
   }
   if (config.sync_scope_reader_settings) {
-    scopes.push('reader_settings');
+    scopes.push("reader_settings");
   }
   if (config.sync_scope_app_settings) {
-    scopes.push('app_settings');
+    scopes.push("app_settings");
   }
   if (config.sync_scope_source_flags) {
-    scopes.push('source_flags');
+    scopes.push("source_flags");
   }
   if (config.sync_scope_extensions) {
-    scopes.push('extensions');
+    scopes.push("extensions");
   }
   if (config.sync_scope_script_config) {
-    scopes.push('script_config');
+    scopes.push("script_config");
   }
   return scopes;
 }
 
 void ensureFrontendNamespaceLoaded(READER_SETTINGS_NAMESPACE, () => {
-  const legacy = legacyLocalStorageGet('legado-reader-settings');
+  const legacy = legacyLocalStorageGet("legado-reader-settings");
   if (!legacy) {
     return null;
   }
-  legacyLocalStorageRemove('legado-reader-settings');
+  legacyLocalStorageRemove("legado-reader-settings");
   return { [READER_SETTINGS_KEY]: legacy };
 });
 
 void ensureFrontendNamespaceLoaded(SOURCE_FLAGS_NAMESPACE, () => {
   const migrated: Record<string, string> = {};
-  const exploreLegacy = legacyLocalStorageGet('source-explore-disabled');
-  const searchLegacy = legacyLocalStorageGet('source-search-disabled');
+  const exploreLegacy = legacyLocalStorageGet("source-explore-disabled");
+  const searchLegacy = legacyLocalStorageGet("source-search-disabled");
   if (exploreLegacy) {
     migrated[SOURCE_EXPLORE_DISABLED_KEY] = exploreLegacy;
-    legacyLocalStorageRemove('source-explore-disabled');
+    legacyLocalStorageRemove("source-explore-disabled");
   }
   if (searchLegacy) {
     migrated[SOURCE_SEARCH_DISABLED_KEY] = searchLegacy;
-    legacyLocalStorageRemove('source-search-disabled');
+    legacyLocalStorageRemove("source-search-disabled");
   }
   return Object.keys(migrated).length ? migrated : null;
 });
 
 export function installSyncClientStateListener() {
-  return eventListenSync<{ domain: string; value: unknown }>('sync:client-state', ({ payload }) => {
-    if (payload.domain === 'reader_settings') {
+  return eventListenSync<{ domain: string; value: unknown }>("sync:client-state", ({ payload }) => {
+    if (payload.domain === "reader_settings") {
       writeLocalJson(READER_SETTINGS_KEY, payload.value);
     }
-    if (payload.domain === 'source_flags') {
+    if (payload.domain === "source_flags") {
       const value = payload.value as { exploreDisabled?: unknown; searchDisabled?: unknown };
       writeLocalJson(SOURCE_EXPLORE_DISABLED_KEY, value?.exploreDisabled ?? []);
       writeLocalJson(SOURCE_SEARCH_DISABLED_KEY, value?.searchDisabled ?? []);
@@ -200,58 +200,58 @@ export function useSync() {
   const { config, setConfig, loadConfig } = useAppConfig();
 
   function getStatus(): Promise<SyncStatus> {
-    return invokeWithTimeout<SyncStatus>('sync_get_status', undefined, 10000);
+    return invokeWithTimeout<SyncStatus>("sync_get_status", undefined, 10000);
   }
 
   async function setCredentials(password: string): Promise<void> {
-    await invokeWithTimeout<void>('sync_set_credentials', { password }, 10000);
+    await invokeWithTimeout<void>("sync_set_credentials", { password }, 10000);
   }
 
   async function clearCredentials(): Promise<void> {
-    await invokeWithTimeout<void>('sync_clear_credentials', undefined, 10000);
+    await invokeWithTimeout<void>("sync_clear_credentials", undefined, 10000);
   }
 
   async function getCredentials(): Promise<SyncCredentials> {
-    return invokeWithTimeout<SyncCredentials>('sync_get_credentials', undefined, 10000);
+    return invokeWithTimeout<SyncCredentials>("sync_get_credentials", undefined, 10000);
   }
 
   async function testConnection(password?: string) {
     return invokeWithTimeout<{ ok: boolean; message: string }>(
-      'sync_test_connection',
+      "sync_test_connection",
       { password: password ?? null },
       15000,
     );
   }
 
   async function syncNow(
-    mode: 'sync' | 'pull' | 'push' = 'sync',
-    conflictStrategy?: 'local' | 'remote',
+    mode: "sync" | "pull" | "push" = "sync",
+    conflictStrategy?: "local" | "remote",
   ): Promise<SyncRunSummary> {
     await pushClientState();
     return invokeWithTimeout<SyncRunSummary>(
-      'sync_now',
+      "sync_now",
       { mode, domains: null, conflictStrategy: conflictStrategy ?? null },
       120000,
     );
   }
 
   function listConflicts(): Promise<SyncConflict[]> {
-    return invokeWithTimeout<SyncConflict[]>('sync_list_conflicts', undefined, 10000);
+    return invokeWithTimeout<SyncConflict[]>("sync_list_conflicts", undefined, 10000);
   }
 
   function resolveConflict(conflictId: string, action: string): Promise<void> {
-    return invokeWithTimeout<void>('sync_resolve_conflict', { conflictId, action }, 10000);
+    return invokeWithTimeout<void>("sync_resolve_conflict", { conflictId, action }, 10000);
   }
 
   async function generateQrPayload(): Promise<SyncQrPayload> {
     const credentials = await getCredentials();
     return {
-      type: 'legado-sync-config',
+      type: "legado-sync-config",
       version: 1,
       provider:
-        config.value.sync_provider === 'ftp' || config.value.sync_provider === 'baidu_netdisk'
+        config.value.sync_provider === "ftp" || config.value.sync_provider === "baidu_netdisk"
           ? config.value.sync_provider
-          : 'webdav',
+          : "webdav",
       profileId: config.value.sync_profile_id,
       webdavUrl: config.value.sync_webdav_url,
       username: config.value.sync_webdav_username,
@@ -283,35 +283,35 @@ export function useSync() {
 
   async function generateQrDataUrl(): Promise<string> {
     const payload = await generateQrPayload();
-    return QRCode.toDataURL(JSON.stringify(payload), { errorCorrectionLevel: 'M', margin: 1 });
+    return QRCode.toDataURL(JSON.stringify(payload), { errorCorrectionLevel: "M", margin: 1 });
   }
 
   async function importQrPayload(payload: SyncQrPayload): Promise<void> {
-    if (payload.type !== 'legado-sync-config' || payload.version !== 1) {
-      throw new Error('不是有效的 Legado 同步配置二维码');
+    if (payload.type !== "legado-sync-config" || payload.version !== 1) {
+      throw new Error("不是有效的 Legado 同步配置二维码");
     }
-    await setConfig('sync_provider', payload.provider);
-    await setConfig('sync_profile_id', payload.profileId || 'default');
-    await setConfig('sync_webdav_url', payload.webdavUrl || '');
-    await setConfig('sync_webdav_username', payload.username || '');
-    await setConfig('sync_webdav_root_dir', payload.rootDir || 'legado-sync');
-    await setConfig('sync_webdav_allow_http', String(payload.allowHttp));
-    await setCredentials(payload.password || '');
+    await setConfig("sync_provider", payload.provider);
+    await setConfig("sync_profile_id", payload.profileId || "default");
+    await setConfig("sync_webdav_url", payload.webdavUrl || "");
+    await setConfig("sync_webdav_username", payload.username || "");
+    await setConfig("sync_webdav_root_dir", payload.rootDir || "legado-sync");
+    await setConfig("sync_webdav_allow_http", String(payload.allowHttp));
+    await setCredentials(payload.password || "");
 
     const scopeKeys = [
-      'bookshelf',
-      'reading_progress',
-      'booksources',
-      'reader_settings',
-      'app_settings',
-      'source_flags',
-      'extensions',
-      'script_config',
+      "bookshelf",
+      "reading_progress",
+      "booksources",
+      "reader_settings",
+      "app_settings",
+      "source_flags",
+      "extensions",
+      "script_config",
     ];
     for (const scope of scopeKeys) {
       await setConfig(`sync_scope_${scope}`, String(payload.enabledScopes.includes(scope)));
     }
-    await setConfig('sync_enabled', 'true');
+    await setConfig("sync_enabled", "true");
     await loadConfig();
   }
 
@@ -322,23 +322,23 @@ export function useSync() {
   }
 
   function reportReaderSession(session: ReaderSessionPayload): Promise<void> {
-    return invokeWithTimeout<void>('sync_report_reader_session', { session }, 5000);
+    return invokeWithTimeout<void>("sync_report_reader_session", { session }, 5000);
   }
 
   function syncCurrentReadingProgress(bookId: string): Promise<SyncV2ProgressResult> {
     return invokeWithTimeout<SyncV2ProgressResult>(
-      'sync_v2_sync_reading_progress',
+      "sync_v2_sync_reading_progress",
       { bookId },
       30000,
     );
   }
 
-  function notifyLifecycle(event: 'startup' | 'resume' | 'background'): Promise<void> {
-    return invokeWithTimeout<void>('sync_notify_lifecycle', { event }, 10000).catch(() => {});
+  function notifyLifecycle(event: "startup" | "resume" | "background"): Promise<void> {
+    return invokeWithTimeout<void>("sync_notify_lifecycle", { event }, 10000).catch(() => {});
   }
 
   function listenReadingConflict(handler: (payload: unknown) => void) {
-    return eventListen('sync:reading-progress-conflict', ({ payload }) => handler(payload));
+    return eventListen("sync:reading-progress-conflict", ({ payload }) => handler(payload));
   }
 
   return {

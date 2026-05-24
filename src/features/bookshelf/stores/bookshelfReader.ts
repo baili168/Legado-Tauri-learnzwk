@@ -1,20 +1,20 @@
-import { defineStore } from 'pinia';
-import { computed, ref, watch } from 'vue';
-import type { ReaderBookInfo, WholeBookSwitchedPayload } from '@/components/reader/types';
-import type { ChapterItem, EpisodeProgress, ShelfBook, ChapterGroup } from '@/stores';
-import { groupChapters, useBookshelfStore } from '@/stores';
-import { cachedChaptersToChapterItems, shelfBookToReaderBookInfo } from '../utils/readerBookInfo';
+import { defineStore } from "pinia";
+import { computed, ref, watch } from "vue";
+import type { ReaderBookInfo, WholeBookSwitchedPayload } from "@/components/reader/types";
+import type { ChapterItem, EpisodeProgress, ShelfBook, ChapterGroup } from "@/stores";
+import { groupChapters, useBookshelfStore } from "@/stores";
+import { cachedChaptersToChapterItems, shelfBookToReaderBookInfo } from "../utils/readerBookInfo";
 
-export const useBookshelfReaderStore = defineStore('bookshelfReader', () => {
+export const useBookshelfReaderStore = defineStore("bookshelfReader", () => {
   const showReader = ref(false);
-  const readerFileName = ref('');
-  const readerChapterUrl = ref('');
-  const readerChapterName = ref('');
+  const readerFileName = ref("");
+  const readerChapterUrl = ref("");
+  const readerChapterName = ref("");
   const readerChapters = ref<ChapterItem[]>([]);
   const readerCurrentIndex = ref(0);
-  const readerShelfId = ref('');
+  const readerShelfId = ref("");
   const readerBookInfo = ref<ReaderBookInfo | undefined>();
-  const readerSourceType = ref('novel');
+  const readerSourceType = ref("novel");
   const readerChapterGroups = computed<ChapterGroup[] | undefined>(() => {
     const groups = groupChapters(readerChapters.value);
     return groups.length > 1 ? groups : undefined;
@@ -29,7 +29,7 @@ export const useBookshelfReaderStore = defineStore('bookshelfReader', () => {
   function setBookMeta(book: ShelfBook) {
     readerShelfId.value = book.id;
     readerFileName.value = book.fileName;
-    readerSourceType.value = book.sourceType ?? 'novel';
+    readerSourceType.value = book.sourceType ?? "novel";
     readerBookInfo.value = shelfBookToReaderBookInfo(book);
   }
 
@@ -76,8 +76,8 @@ export const useBookshelfReaderStore = defineStore('bookshelfReader', () => {
     readerChapters.value = payload.chapters;
     readerCurrentIndex.value = Math.max(0, payload.matchedChapterIndex);
     const active = payload.chapters[readerCurrentIndex.value];
-    readerChapterUrl.value = payload.matchedChapterUrl ?? active?.url ?? '';
-    readerChapterName.value = active?.name ?? '';
+    readerChapterUrl.value = payload.matchedChapterUrl ?? active?.url ?? "";
+    readerChapterName.value = active?.name ?? "";
   }
 
   function closeIfReadingShelfBook(bookId: string) {

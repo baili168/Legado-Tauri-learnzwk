@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { useMessage } from 'naive-ui';
-import { ref, computed, watch } from 'vue';
-import type { BookItem, BookDetail, ChapterItem, ChapterGroup } from '@/stores';
-import { useScriptBridgeStore } from '@/stores';
-import type { BookSourceMeta } from '../../composables/useBookSource';
-import type { ReaderBookInfo } from '../reader/types';
+import { useMessage } from "naive-ui";
+import { ref, computed, watch } from "vue";
+import type { BookItem, BookDetail, ChapterItem, ChapterGroup } from "@/stores";
+import { useScriptBridgeStore } from "@/stores";
+import type { BookSourceMeta } from "../../composables/useBookSource";
+import type { ReaderBookInfo } from "../reader/types";
 import {
   browserProbeClose,
   browserProbeCreate,
@@ -13,12 +13,12 @@ import {
   browserProbeNavigate,
   browserProbeShow,
   type BrowserCookie,
-} from '../../composables/useBrowserProbe';
-import { getBookMetaLine, getLatestChapterText } from '../../utils/bookMeta';
-import BookCoverImg from '../BookCoverImg.vue';
-import BookCard from '../explore/BookCard.vue';
-import BookDetailDrawer from '../explore/BookDetailDrawer.vue';
-import ChapterReaderModal from '../explore/ChapterReaderModal.vue';
+} from "../../composables/useBrowserProbe";
+import { getBookMetaLine, getLatestChapterText } from "../../utils/bookMeta";
+import BookCoverImg from "../BookCoverImg.vue";
+import BookCard from "../explore/BookCard.vue";
+import BookDetailDrawer from "../explore/BookDetailDrawer.vue";
+import ChapterReaderModal from "../explore/ChapterReaderModal.vue";
 
 const props = defineProps<{
   sources: BookSourceMeta[];
@@ -30,38 +30,38 @@ const { runSearch, runBookInfo, runChapterList, runChapterContent, runExplore } 
 
 // ---- 调试状态 ----
 const debugSourceId = ref<string | null>(null);
-const debugCustomUrl = ref('');
-const debugKeyword = ref('');
-const debugResult = ref('');
+const debugCustomUrl = ref("");
+const debugKeyword = ref("");
+const debugResult = ref("");
 const debugLoading = ref(false);
-const debugResultStatus = ref<'idle' | 'ok' | 'error'>('idle');
+const debugResultStatus = ref<"idle" | "ok" | "error">("idle");
 
-const debugBookUrl = ref('');
-const debugChapterUrl = ref('');
-const browserProbeUrl = ref('');
+const debugBookUrl = ref("");
+const debugChapterUrl = ref("");
+const browserProbeUrl = ref("");
 const browserProbeCode = ref(
   "return {\n  title: document.title,\n  url: location.href,\n  text: document.body ? document.body.innerText.slice(0, 500) : ''\n};",
 );
 const browserProbeVisible = ref(false);
-const browserProbeUserAgent = ref('');
+const browserProbeUserAgent = ref("");
 const browserProbeWidth = ref<number | null>(980);
 const browserProbeHeight = ref<number | null>(760);
-const browserProbeSessionId = ref('');
-const browserProbeSessionSignature = ref('');
+const browserProbeSessionId = ref("");
+const browserProbeSessionSignature = ref("");
 const browserProbeLoading = ref(false);
-const browserProbeResult = ref('');
+const browserProbeResult = ref("");
 const browserProbeCookies = ref<BrowserCookie[]>([]);
 
 type DebugMode =
-  | 'idle'
-  | 'text'
-  | 'search'
-  | 'bookInfo'
-  | 'chapterList'
-  | 'chapterContent'
-  | 'explore';
-const debugMode = ref<DebugMode>('idle');
-const debugViewMode = ref<'preview' | 'raw'>('preview');
+  | "idle"
+  | "text"
+  | "search"
+  | "bookInfo"
+  | "chapterList"
+  | "chapterContent"
+  | "explore";
+const debugMode = ref<DebugMode>("idle");
+const debugViewMode = ref<"preview" | "raw">("preview");
 
 const selectedDebugSource = computed(
   () => props.sources.find((s) => s.sourceKey === debugSourceId.value) ?? null,
@@ -74,13 +74,13 @@ const debugSourceOptions = computed(() =>
           .split(/[\\\\/]/)
           .filter(Boolean)
           .slice(-2)
-          .join('/')}`
+          .join("/")}`
       : s.name,
     value: s.sourceKey,
   })),
 );
 
-const debugSourceType = computed(() => selectedDebugSource.value?.sourceType ?? '');
+const debugSourceType = computed(() => selectedDebugSource.value?.sourceType ?? "");
 
 const debugSourceUrls = computed<{ label: string; value: string }[]>(() => {
   const src = selectedDebugSource.value;
@@ -91,9 +91,9 @@ const debugSourceUrls = computed<{ label: string; value: string }[]>(() => {
   return list.map((u) => ({ label: u, value: u }));
 });
 
-const debugSelectedUrl = ref('');
+const debugSelectedUrl = ref("");
 watch(debugSourceId, () => {
-  debugSelectedUrl.value = '';
+  debugSelectedUrl.value = "";
 });
 
 const debugTargetUrl = computed(() => {
@@ -104,60 +104,60 @@ const debugTargetUrl = computed(() => {
     return debugSelectedUrl.value;
   }
   const src = selectedDebugSource.value;
-  return src?.url ?? '';
+  return src?.url ?? "";
 });
 
 // ---- 结果数据 ----
 const boaSearchResults = ref<BookItem[]>([]);
-const boaSearchJson = ref('');
+const boaSearchJson = ref("");
 const boaBookInfo = ref<BookDetail | null>(null);
 const boaBookInfoLatest = computed(() => getLatestChapterText(boaBookInfo.value));
 const boaBookInfoMetaLine = computed(() => getBookMetaLine(boaBookInfo.value));
-const boaBookInfoJson = ref('');
+const boaBookInfoJson = ref("");
 const boaChapters = ref<ChapterItem[]>([]);
-const boaChaptersJson = ref('');
-const boaContent = ref('');
-const boaContentJson = ref('');
+const boaChaptersJson = ref("");
+const boaContent = ref("");
+const boaContentJson = ref("");
 const boaExploreCategories = ref<string[]>([]);
-const boaExploreActiveCategory = ref('');
+const boaExploreActiveCategory = ref("");
 const boaExploreBooks = ref<BookItem[]>([]);
-const boaExploreJson = ref('');
+const boaExploreJson = ref("");
 const boaExploreCatLoading = ref(false);
 const boaExploreBooksLoading = ref(false);
 
 const debugRawJson = computed(() => {
   switch (debugMode.value) {
-    case 'search':
+    case "search":
       return boaSearchJson.value;
-    case 'bookInfo':
+    case "bookInfo":
       return boaBookInfoJson.value;
-    case 'chapterList':
+    case "chapterList":
       return boaChaptersJson.value;
-    case 'chapterContent':
+    case "chapterContent":
       return boaContentJson.value;
-    case 'explore':
+    case "explore":
       return boaExploreJson.value;
     default:
-      return '';
+      return "";
   }
 });
 
 function resetDebugResult() {
-  debugResult.value = '';
-  debugResultStatus.value = 'idle';
-  debugMode.value = 'idle';
-  debugViewMode.value = 'preview';
+  debugResult.value = "";
+  debugResultStatus.value = "idle";
+  debugMode.value = "idle";
+  debugViewMode.value = "preview";
   boaSearchResults.value = [];
-  boaSearchJson.value = '';
+  boaSearchJson.value = "";
   boaBookInfo.value = null;
-  boaBookInfoJson.value = '';
+  boaBookInfoJson.value = "";
   boaChapters.value = [];
-  boaChaptersJson.value = '';
-  boaContent.value = '';
-  boaContentJson.value = '';
+  boaChaptersJson.value = "";
+  boaContent.value = "";
+  boaContentJson.value = "";
   boaExploreBooks.value = [];
-  boaExploreJson.value = '';
-  boaExploreActiveCategory.value = '';
+  boaExploreJson.value = "";
+  boaExploreActiveCategory.value = "";
 }
 
 async function ensureBrowserProbeSession() {
@@ -186,24 +186,24 @@ async function ensureBrowserProbeSession() {
 async function runBrowserProbe() {
   const url = browserProbeUrl.value.trim() || debugTargetUrl.value;
   if (!url) {
-    message.warning('请输入浏览器探测 URL');
+    message.warning("请输入浏览器探测 URL");
     return;
   }
   browserProbeLoading.value = true;
-  browserProbeResult.value = '';
+  browserProbeResult.value = "";
   try {
     const id = await ensureBrowserProbeSession();
     if (browserProbeVisible.value) {
       await browserProbeShow(id);
     }
-    await browserProbeNavigate(id, url, { waitUntil: 'load' });
+    await browserProbeNavigate(id, url, { waitUntil: "load" });
     const result = await browserProbeEval(id, browserProbeCode.value);
     browserProbeResult.value = JSON.stringify(result, null, 2);
     browserProbeCookies.value = await browserProbeGetCookies(url);
-    message.success('浏览器探测完成');
+    message.success("浏览器探测完成");
   } catch (e: unknown) {
     browserProbeResult.value = e instanceof Error ? e.message : String(e);
-    message.error('浏览器探测失败');
+    message.error("浏览器探测失败");
   } finally {
     browserProbeLoading.value = false;
   }
@@ -216,39 +216,39 @@ async function closeBrowserProbe() {
   try {
     await browserProbeClose(browserProbeSessionId.value);
   } finally {
-    browserProbeSessionId.value = '';
-    browserProbeSessionSignature.value = '';
+    browserProbeSessionId.value = "";
+    browserProbeSessionSignature.value = "";
   }
 }
 
 // ---- 搜索 ----
 async function runBoaSearch() {
   if (!debugSourceId.value) {
-    message.warning('请先选择已安装书源');
+    message.warning("请先选择已安装书源");
     return;
   }
   if (!debugKeyword.value) {
-    message.warning('请输入搜索关键词');
+    message.warning("请输入搜索关键词");
     return;
   }
   debugLoading.value = true;
   resetDebugResult();
   try {
     const raw = await runSearch(
-      selectedDebugSource.value?.fileName ?? '',
+      selectedDebugSource.value?.fileName ?? "",
       debugKeyword.value.trim(),
       1,
-      selectedDebugSource.value?.sourceDir ?? '',
+      selectedDebugSource.value?.sourceDir ?? "",
     );
     const items = Array.isArray(raw) ? (raw as BookItem[]) : [];
     boaSearchResults.value = items;
     boaSearchJson.value = JSON.stringify(raw, null, 2);
-    debugResultStatus.value = 'ok';
-    debugMode.value = 'search';
+    debugResultStatus.value = "ok";
+    debugMode.value = "search";
     debugResult.value = `✓ 搜索成功，找到 ${items.length} 条结果`;
   } catch (e: unknown) {
-    debugResultStatus.value = 'error';
-    debugMode.value = 'text';
+    debugResultStatus.value = "error";
+    debugMode.value = "text";
     debugResult.value = `✗ 搜索失败\n${e instanceof Error ? e.message : String(e)}`;
   } finally {
     debugLoading.value = false;
@@ -258,29 +258,29 @@ async function runBoaSearch() {
 // ---- 书籍详情 ----
 async function runBoaBookInfo() {
   if (!debugSourceId.value) {
-    message.warning('请先选择已安装书源');
+    message.warning("请先选择已安装书源");
     return;
   }
   if (!debugBookUrl.value.trim()) {
-    message.warning('请输入书籍 URL');
+    message.warning("请输入书籍 URL");
     return;
   }
   debugLoading.value = true;
   resetDebugResult();
   try {
     const raw = await runBookInfo(
-      selectedDebugSource.value?.fileName ?? '',
+      selectedDebugSource.value?.fileName ?? "",
       debugBookUrl.value.trim(),
-      selectedDebugSource.value?.sourceDir ?? '',
+      selectedDebugSource.value?.sourceDir ?? "",
     );
     boaBookInfo.value = raw as BookDetail;
     boaBookInfoJson.value = JSON.stringify(raw, null, 2);
-    debugResultStatus.value = 'ok';
-    debugMode.value = 'bookInfo';
+    debugResultStatus.value = "ok";
+    debugMode.value = "bookInfo";
     debugResult.value = `✓ 书籍详情获取成功`;
   } catch (e: unknown) {
-    debugResultStatus.value = 'error';
-    debugMode.value = 'text';
+    debugResultStatus.value = "error";
+    debugMode.value = "text";
     debugResult.value = `✗ 书籍详情获取失败\n${e instanceof Error ? e.message : String(e)}`;
   } finally {
     debugLoading.value = false;
@@ -290,31 +290,31 @@ async function runBoaBookInfo() {
 // ---- 章节列表 ----
 async function runBoaChapterListTest() {
   if (!debugSourceId.value) {
-    message.warning('请先选择已安装书源');
+    message.warning("请先选择已安装书源");
     return;
   }
   if (!debugBookUrl.value.trim()) {
-    message.warning('请输入书籍 URL');
+    message.warning("请输入书籍 URL");
     return;
   }
   debugLoading.value = true;
   resetDebugResult();
   try {
     const raw = await runChapterList(
-      selectedDebugSource.value?.fileName ?? '',
+      selectedDebugSource.value?.fileName ?? "",
       debugBookUrl.value.trim(),
       undefined,
-      selectedDebugSource.value?.sourceDir ?? '',
+      selectedDebugSource.value?.sourceDir ?? "",
     );
     const items = Array.isArray(raw) ? (raw as ChapterItem[]) : [];
     boaChapters.value = items;
     boaChaptersJson.value = JSON.stringify(raw, null, 2);
-    debugResultStatus.value = 'ok';
-    debugMode.value = 'chapterList';
+    debugResultStatus.value = "ok";
+    debugMode.value = "chapterList";
     debugResult.value = `✓ 章节列表获取成功，共 ${items.length} 章`;
   } catch (e: unknown) {
-    debugResultStatus.value = 'error';
-    debugMode.value = 'text';
+    debugResultStatus.value = "error";
+    debugMode.value = "text";
     debugResult.value = `✗ 章节列表获取失败\n${e instanceof Error ? e.message : String(e)}`;
   } finally {
     debugLoading.value = false;
@@ -324,30 +324,30 @@ async function runBoaChapterListTest() {
 // ---- 章节正文 ----
 async function runBoaChapterContentTest() {
   if (!debugSourceId.value) {
-    message.warning('请先选择已安装书源');
+    message.warning("请先选择已安装书源");
     return;
   }
   if (!debugChapterUrl.value.trim()) {
-    message.warning('请输入章节 URL');
+    message.warning("请输入章节 URL");
     return;
   }
   debugLoading.value = true;
   resetDebugResult();
   try {
     const raw = await runChapterContent(
-      selectedDebugSource.value?.fileName ?? '',
+      selectedDebugSource.value?.fileName ?? "",
       debugChapterUrl.value.trim(),
-      selectedDebugSource.value?.sourceDir ?? '',
+      selectedDebugSource.value?.sourceDir ?? "",
     );
-    const text = typeof raw === 'string' ? raw : JSON.stringify(raw, null, 2);
+    const text = typeof raw === "string" ? raw : JSON.stringify(raw, null, 2);
     boaContent.value = text;
     boaContentJson.value = JSON.stringify(raw, null, 2);
-    debugResultStatus.value = 'ok';
-    debugMode.value = 'chapterContent';
+    debugResultStatus.value = "ok";
+    debugMode.value = "chapterContent";
     debugResult.value = `✓ 章节正文获取成功（${text.length} 字符）`;
   } catch (e: unknown) {
-    debugResultStatus.value = 'error';
-    debugMode.value = 'text';
+    debugResultStatus.value = "error";
+    debugMode.value = "text";
     debugResult.value = `✗ 章节正文获取失败\n${e instanceof Error ? e.message : String(e)}`;
   } finally {
     debugLoading.value = false;
@@ -357,28 +357,28 @@ async function runBoaChapterContentTest() {
 // ---- 发现 ----
 async function runBoaExploreGetAll() {
   if (!debugSourceId.value) {
-    message.warning('请先选择已安装书源');
+    message.warning("请先选择已安装书源");
     return;
   }
   boaExploreCatLoading.value = true;
   resetDebugResult();
-  debugMode.value = 'explore';
+  debugMode.value = "explore";
   try {
     const raw = await runExplore(
-      selectedDebugSource.value?.fileName ?? '',
-      'GETALL',
+      selectedDebugSource.value?.fileName ?? "",
+      "GETALL",
       1,
       true,
-      selectedDebugSource.value?.sourceDir ?? '',
+      selectedDebugSource.value?.sourceDir ?? "",
     );
     if (Array.isArray(raw)) {
-      boaExploreCategories.value = raw.filter((v): v is string => typeof v === 'string');
+      boaExploreCategories.value = raw.filter((v): v is string => typeof v === "string");
     }
     boaExploreJson.value = JSON.stringify(raw, null, 2);
-    debugResultStatus.value = 'ok';
+    debugResultStatus.value = "ok";
     debugResult.value = `✓ 获取到 ${boaExploreCategories.value.length} 个发现分类`;
   } catch (e: unknown) {
-    debugResultStatus.value = 'error';
+    debugResultStatus.value = "error";
     debugResult.value = `✗ 获取分类失败\n${e instanceof Error ? e.message : String(e)}`;
   } finally {
     boaExploreCatLoading.value = false;
@@ -392,23 +392,23 @@ async function runBoaExploreCategory(category: string) {
   boaExploreActiveCategory.value = category;
   boaExploreBooksLoading.value = true;
   boaExploreBooks.value = [];
-  boaExploreJson.value = '';
+  boaExploreJson.value = "";
   try {
     const raw = await runExplore(
-      selectedDebugSource.value?.fileName ?? '',
+      selectedDebugSource.value?.fileName ?? "",
       category,
       1,
       true,
-      selectedDebugSource.value?.sourceDir ?? '',
+      selectedDebugSource.value?.sourceDir ?? "",
     );
     const items = Array.isArray(raw) ? (raw as BookItem[]) : [];
     boaExploreBooks.value = items;
     boaExploreJson.value = JSON.stringify(raw, null, 2);
     debugResult.value = `✓ 分类「${category}」加载成功，共 ${items.length} 本`;
-    debugResultStatus.value = 'ok';
+    debugResultStatus.value = "ok";
   } catch (e: unknown) {
     debugResult.value = `✗ 分类「${category}」加载失败\n${e instanceof Error ? e.message : String(e)}`;
-    debugResultStatus.value = 'error';
+    debugResultStatus.value = "error";
   } finally {
     boaExploreBooksLoading.value = false;
   }
@@ -421,13 +421,13 @@ function debugFillChapterUrl(ch: ChapterItem) {
 
 // ---- 书籍详情弹窗 + 阅读器 ----
 const debugShowDrawer = ref(false);
-const debugDrawerBookUrl = ref('');
-const debugDrawerFileName = ref('');
+const debugDrawerBookUrl = ref("");
+const debugDrawerFileName = ref("");
 
 const debugShowReader = ref(false);
-const debugReaderChapterUrl = ref('');
-const debugReaderChapterName = ref('');
-const debugReaderFileName = ref('');
+const debugReaderChapterUrl = ref("");
+const debugReaderChapterName = ref("");
+const debugReaderFileName = ref("");
 const debugReaderChapters = ref<ChapterItem[]>([]);
 const debugReaderCurrentIndex = ref(0);
 const debugReaderBookInfo = ref<ReaderBookInfo | undefined>();
@@ -440,7 +440,7 @@ function debugOpenDetail(book: BookItem) {
   }
   debugBookUrl.value = book.bookUrl;
   debugDrawerBookUrl.value = book.bookUrl;
-  debugDrawerFileName.value = selectedDebugSource.value?.fileName ?? '';
+  debugDrawerFileName.value = selectedDebugSource.value?.fileName ?? "";
   debugShowDrawer.value = true;
 }
 
@@ -697,11 +697,11 @@ defineExpose({ setDebugSource });
           <n-tag v-if="debugMode !== 'idle' && debugMode !== 'text'" size="tiny" :bordered="false">
             {{
               {
-                search: '搜索',
-                bookInfo: '书籍详情',
-                chapterList: '章节列表',
-                chapterContent: '章节正文',
-                explore: '发现',
+                search: "搜索",
+                bookInfo: "书籍详情",
+                chapterList: "章节列表",
+                chapterContent: "章节正文",
+                explore: "发现",
               }[debugMode]
             }}
           </n-tag>
@@ -729,7 +729,7 @@ defineExpose({ setDebugSource });
           <div class="bv-debug__cards-hint">浏览器探测结果</div>
           <pre class="bv-debug__pre">{{ browserProbeResult }}</pre>
           <div v-if="browserProbeCookies.length" class="bv-debug__cards-hint">
-            Cookie：{{ browserProbeCookies.map((c) => c.name).join(', ') }}
+            Cookie：{{ browserProbeCookies.map((c) => c.name).join(", ") }}
           </div>
         </div>
         <n-spin :show="debugLoading || boaExploreBooksLoading" style="height: 100%; overflow: auto">
@@ -786,7 +786,7 @@ defineExpose({ setDebugSource });
                         最新: {{ boaBookInfoLatest }}
                       </div>
                       <div v-if="boaBookInfoMetaLine.length" class="bv-debug__book-last">
-                        {{ boaBookInfoMetaLine.join(' · ') }}
+                        {{ boaBookInfoMetaLine.join(" · ") }}
                       </div>
                     </div>
                   </div>
@@ -1005,7 +1005,7 @@ defineExpose({ setDebugSource });
   overflow: auto;
   padding: 12px 14px;
   margin: 0;
-  font-family: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace;
+  font-family: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
   font-size: 0.75rem;
   line-height: 1.6;
   color: var(--color-text-primary);
@@ -1127,7 +1127,7 @@ defineExpose({ setDebugSource });
   color: var(--color-text-muted);
   min-width: 28px;
   text-align: right;
-  font-family: 'Cascadia Code', 'Consolas', monospace;
+  font-family: "Cascadia Code", "Consolas", monospace;
 }
 .bv-debug__chapter-name {
   overflow: hidden;
