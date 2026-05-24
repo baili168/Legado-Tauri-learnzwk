@@ -17,7 +17,7 @@ open class BuildTask : DefaultTask() {
     @TaskAction
     fun assemble() {
         val rootDirRel = rootDirRel ?: throw GradleException("rootDirRel cannot be null")
-        val projectRoot = File(project.rootProject.projectDir, rootDirRel).absolutePath
+        val projectRoot = File(project.projectDir, rootDirRel).absolutePath
 
         val nodeCmd = if (Os.isFamily(Os.FAMILY_WINDOWS)) {
             "node.exe"

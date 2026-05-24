@@ -54,10 +54,10 @@ jobs:
       - name: Create cargo config for NDK linker
         run: |
           mkdir -p ~/.cargo
-          cat > ~/.cargo/config.toml << EOF
+          cat > ~/.cargo/config.toml << 'TOML'
           [target.aarch64-linux-android]
-          linker = "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang"
-          EOF
+          linker = "aarch64-linux-android24-clang"
+          TOML
           echo "--- ~/.cargo/config.toml ---"
           cat ~/.cargo/config.toml
 
@@ -68,13 +68,14 @@ jobs:
         run: |
           echo "Node: $(node --version)"
           echo "pnpm: $(pnpm --version)"
-          echo "Java: $(java --version)"
+          echo "Java: $(java --version 2>&1 | head -1)"
           echo "Rust: $(rustc --version)"
+          echo "Cargo: $(cargo --version)"
           echo "ANDROID_HOME: $ANDROID_HOME"
           echo "ANDROID_NDK_HOME: $ANDROID_NDK_HOME"
+          rustup target list --installed | grep android
           ls "$ANDROID_HOME/platforms/android-35/android.jar" && echo "✓ android.jar"
           ls "$ANDROID_HOME/build-tools/35.0.0/aapt2" && echo "✓ aapt2"
-          ls "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang" && echo "✓ NDK clang"
 
       - name: Build frontend
         run: pnpm build
@@ -84,40 +85,94 @@ jobs:
           export CI=false
           pnpm tauri android init
 
-      - name: Patch Gradle BuildTask for pnpm compatibility
+      - name: Patch generated Android files
         run: |
-          # 默认生成的 BuildTask.kt 使用 pnpm tauri 命令，在 Gradle 子进程中会找不到 tauri CLI
-          # 替换为直接调用 node tauri.js 的版本
+          echo "=== Patching generated Android build files ==="
+
+          # 1. Fix rootDirRel: CI 生成的 ../../.. 从 app/ 算少了一级，应为 ../../../..
+          BUILD_GRADLE="src-tauri/gen/android/app/build.gradle.kts"
+          if [ -f "$BUILD_GRADLE" ]; then
+            echo "Before:"
+            grep "rootDirRel" "$BUILD_GRADLE" || echo "  (no rootDirRel found)"
+            sed -i 's|rootDirRel = "../../.."|rootDirRel = "../../../.."|g' "$BUILD_GRADLE"
+            sed -i 's|rootDirRel = "../../../../"|rootDirRel = "../../../.."|g' "$BUILD_GRADLE"
+            echo "After:"
+            grep "rootDirRel" "$BUILD_GRADLE" || echo "  (no rootDirRel found)"
+            echo "✅ rootDirRel fixed"
+          else
+            echo "⚠️ $BUILD_GRADLE not found"
+          fi
+
+          # 2. Patch BuildTask.kt to use node directly instead of pnpm
           BUILD_TASK_DIR="src-tauri/gen/android/buildSrc/src/main/java/com/legado/reader/kotlin"
           if [ -d "$BUILD_TASK_DIR" ]; then
             cp android-config/BuildTask.kt "$BUILD_TASK_DIR/BuildTask.kt"
-            echo "✅ Patched BuildTask.kt"
+            echo "✅ BuildTask.kt patched"
           else
-            # fallback: try alternative package path
-            BUILD_TASK_DIR=$(find src-tauri/gen/android -name "BuildTask.kt" -path "*/kotlin/*" | head -1 | xargs dirname)
-            if [ -n "$BUILD_TASK_DIR" ]; then
+            BUILD_TASK_DIR=$(find src-tauri/gen/android -name "BuildTask.kt" -path "*/kotlin/*" 2>/dev/null | head -1 | xargs dirname 2>/dev/null)
+            if [ -n "$BUILD_TASK_DIR" ] && [ -d "$BUILD_TASK_DIR" ]; then
               cp android-config/BuildTask.kt "$BUILD_TASK_DIR/BuildTask.kt"
-              echo "✅ Patched BuildTask.kt at $BUILD_TASK_DIR"
+              echo "✅ BuildTask.kt patched at $BUILD_TASK_DIR"
             else
-              echo "⚠️ BuildTask.kt not found, continuing anyway"
+              echo "⚠️ BuildTask.kt not found"
             fi
           fi
 
-      - name: Build APK
+      - name: Build APK (verbose)
         run: |
           export CI=false
-          # 使用和 Tauri 兼容的 NDK 29
           export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/29.0.14206865"
-          # Gradle 构建在 src-tauri/gen/android 子目录运行，需要绝对路径才能找到 node_modules/.bin 中的 tauri CLI
           export PATH="${{ github.workspace }}/node_modules/.bin:$PATH"
-          pnpm tauri android build --apk --target aarch64
+          pnpm tauri android build --apk --target aarch64 -v 2>&1 | tee build-output.log
+
+      - name: Verify build output
+        run: |
+          echo "=== Checking for Rust .so library ==="
+          find src-tauri/gen/android -name "*.so" -type f 2>/dev/null | while read so; do
+            size=$(stat -c%s "$so" 2>/dev/null || stat -f%z "$so" 2>/dev/null)
+            echo "  $so ($(echo "scale=1; $size/1024/1024" | bc)MB)"
+          done
+
+          count=$(find src-tauri/gen/android -name "*.so" -type f 2>/dev/null | wc -l)
+          if [ "$count" -eq 0 ]; then
+            echo "⚠️ WARNING: No .so files found! Rust compilation may have failed."
+            echo "Checking cargo build output directory..."
+            find src-tauri/target -name "*.so" -type f 2>/dev/null | while read so; do
+              size=$(stat -c%s "$so" 2>/dev/null || stat -f%z "$so" 2>/dev/null)
+              echo "  $so ($(echo "scale=1; $size/1024/1024" | bc)MB)"
+            done
+          fi
+
+          echo ""
+          echo "=== All .apk files ==="
+          find src-tauri/gen/android -name "*.apk" -type f 2>/dev/null | while read apk; do
+            size=$(stat -c%s "$apk" 2>/dev/null || stat -f%z "$apk" 2>/dev/null)
+            echo "  $apk ($(echo "scale=1; $size/1024/1024" | bc)MB)"
+          done
+
+          echo ""
+          echo "=== Checking dist size ==="
+          if [ -d "dist" ]; then
+            dist_size=$(du -sh dist 2>/dev/null | cut -f1)
+            echo "  dist/ total size: $dist_size"
+          fi
 
       - name: Find APK
         id: find_apk
         run: |
-          APK_PATH=$(find src-tauri/gen/android -name "*.apk" | head -1)
+          # Prefer release APK with arm64 in path
+          APK_PATH=$(find src-tauri/gen/android -path "*/arm64/release/*.apk" -type f 2>/dev/null | head -1)
+          if [ -z "$APK_PATH" ]; then
+            APK_PATH=$(find src-tauri/gen/android -path "*release*.apk" -type f 2>/dev/null | head -1)
+          fi
+          if [ -z "$APK_PATH" ]; then
+            APK_PATH=$(find src-tauri/gen/android -name "*.apk" -type f 2>/dev/null | head -1)
+          fi
           echo "apk_path=$APK_PATH" >> $GITHUB_OUTPUT
-          echo "APK found at: $APK_PATH"
+          echo ""
+          echo "Selected APK: $APK_PATH"
+          apk_size=$(stat -c%s "$APK_PATH" 2>/dev/null || stat -f%z "$APK_PATH" 2>/dev/null)
+          echo "APK size: $(echo "scale=1; $apk_size/1024/1024" | bc)MB"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
@@ -128,9 +183,18 @@ jobs:
 
       - name: Summary
         run: |
-          echo "## Build Result" >> $GITHUB_STEP_SUMMARY
-          if [ -n "${{ steps.find_apk.outputs.apk_path }}" ]; then
-            echo "✅ APK built successfully!" >> $GITHUB_STEP_SUMMARY
+          APK_PATH="${{ steps.find_apk.outputs.apk_path }}"
+          echo "## APK Build Summary" >> $GITHUB_STEP_SUMMARY
+          if [ -n "$APK_PATH" ] && [ -f "$APK_PATH" ]; then
+            apk_size=$(stat -c%s "$APK_PATH" 2>/dev/null || stat -f%z "$APK_PATH" 2>/dev/null)
+            apk_mb=$(echo "scale=1; $apk_size/1024/1024" | bc)
+            echo "✅ APK: \`$APK_PATH\`" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "📦 Size: **${apk_mb} MB**" >> $GITHUB_STEP_SUMMARY
+            if (( $(echo "$apk_mb < 30" | bc -l) )); then
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "⚠️ **APK is small (< 30MB)** — Rust native library may be missing!" >> $GITHUB_STEP_SUMMARY
+            fi
           else
             echo "❌ No APK found" >> $GITHUB_STEP_SUMMARY
           fi
