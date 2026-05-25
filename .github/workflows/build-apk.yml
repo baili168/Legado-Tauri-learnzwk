@@ -99,11 +99,19 @@ jobs:
             echo "After:"
             grep "rootDirRel" "$BUILD_GRADLE" || echo "  (no rootDirRel found)"
             echo "✅ rootDirRel fixed"
+
+            # 2. Fix signing: generated template may reference non-existent signing config
+            if grep -q 'signingConfigs.getByName("release")' "$BUILD_GRADLE" 2>/dev/null; then
+              if ! grep -q 'create("release")' "$BUILD_GRADLE" 2>/dev/null; then
+                echo "⚠️ Missing release signing config, using debug signing for release builds"
+                sed -i 's|signingConfig = signingConfigs.getByName("release")|signingConfig = signingConfigs.getByName("debug")|g' "$BUILD_GRADLE"
+              fi
+            fi
           else
             echo "⚠️ $BUILD_GRADLE not found"
           fi
 
-          # 2. Patch BuildTask.kt to use node directly instead of pnpm
+          # 3. Patch BuildTask.kt to use node directly instead of pnpm
           BUILD_TASK_DIR="src-tauri/gen/android/buildSrc/src/main/java/com/legado/reader/kotlin"
           if [ -d "$BUILD_TASK_DIR" ]; then
             cp android-config/BuildTask.kt "$BUILD_TASK_DIR/BuildTask.kt"
@@ -118,6 +126,21 @@ jobs:
             fi
           fi
 
+      - name: Dump generated Android files (diagnostic)
+        run: |
+          echo "=== Generated app/build.gradle.kts ==="
+          cat src-tauri/gen/android/app/build.gradle.kts 2>/dev/null || echo "(not found)"
+          echo ""
+          echo "=== Generated tauri.build.gradle.kts ==="
+          cat src-tauri/gen/android/app/tauri.build.gradle.kts 2>/dev/null || echo "(not found)"
+          echo ""
+          echo "=== Generated BuildTask.kt ==="
+          BUILD_TASK=$(find src-tauri/gen/android -name "BuildTask.kt" -path "*/kotlin/*" 2>/dev/null | head -1)
+          cat "$BUILD_TASK" 2>/dev/null || echo "(not found)"
+          echo ""
+          echo "=== jniLibs directory ==="
+          find src-tauri/gen/android/app/src/main/jniLibs -type f 2>/dev/null | head -20 || echo "(jniLibs not found or empty)"
+
       - name: Build APK (verbose)
         run: |
           export CI=false
@@ -129,27 +152,45 @@ jobs:
         run: |
           echo "=== Checking for Rust .so library ==="
           find src-tauri/gen/android -name "*.so" -type f 2>/dev/null | while read so; do
-            size=$(stat -c%s "$so" 2>/dev/null || stat -f%z "$so" 2>/dev/null)
+            size=$(stat -c%s "$so" 2>/dev/null)
             echo "  $so ($(echo "scale=1; $size/1024/1024" | bc)MB)"
           done
 
           count=$(find src-tauri/gen/android -name "*.so" -type f 2>/dev/null | wc -l)
           if [ "$count" -eq 0 ]; then
-            echo "⚠️ WARNING: No .so files found! Rust compilation may have failed."
+            echo "⚠️ WARNING: No .so files found!"
             echo "Checking cargo build output directory..."
             find src-tauri/target -name "*.so" -type f 2>/dev/null | while read so; do
-              size=$(stat -c%s "$so" 2>/dev/null || stat -f%z "$so" 2>/dev/null)
+              size=$(stat -c%s "$so" 2>/dev/null)
               echo "  $so ($(echo "scale=1; $size/1024/1024" | bc)MB)"
             done
           fi
 
           echo ""
-          echo "=== All .apk files ==="
+          echo "=== app/build directory ==="
+          ls -la src-tauri/gen/android/app/build/ 2>/dev/null || echo "(app/build not found)"
+          echo ""
+          ls -la src-tauri/gen/android/app/build/outputs/ 2>/dev/null || echo "(app/build/outputs not found)"
+          echo ""
+          find src-tauri/gen/android/app/build -type f 2>/dev/null | head -30
+          echo ""
+
+          echo "=== All .apk files (any location) ==="
           find src-tauri/gen/android -name "*.apk" -type f 2>/dev/null | while read apk; do
-            size=$(stat -c%s "$apk" 2>/dev/null || stat -f%z "$apk" 2>/dev/null)
+            size=$(stat -c%s "$apk" 2>/dev/null)
+            echo "  $apk ($(echo "scale=1; $size/1024/1024" | bc)MB)"
+          done
+          find . -name "*.apk" -type f 2>/dev/null | while read apk; do
+            size=$(stat -c%s "$apk" 2>/dev/null)
             echo "  $apk ($(echo "scale=1; $size/1024/1024" | bc)MB)"
           done
 
+          echo ""
+          echo "=== Gradle error/problem reports ==="
+          find src-tauri/gen/android -name "*.html" -path "*/problems/*" 2>/dev/null | head -5
+          echo ""
+          echo "=== Build log (last 100 lines) ==="
+          tail -100 build-output.log 2>/dev/null || echo "(no build log)"
           echo ""
           echo "=== Checking dist size ==="
           if [ -d "dist" ]; then
