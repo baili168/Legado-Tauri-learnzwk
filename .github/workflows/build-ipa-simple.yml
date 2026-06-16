@@ -52,7 +52,7 @@ jobs:
           export CI=false
           echo "=== 开始构建 iOS 模拟器版本 ==="
           # 去掉隐藏报错的管道符，直接输出完整日志
-          pnpm tauri ios build --target aarch64-apple-ios-sim
+          pnpm tauri ios build --target aarch64-sim
 
       - name: Find Simulator artifacts
         id: find_sim
