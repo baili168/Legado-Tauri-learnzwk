@@ -48,34 +48,33 @@ jobs:
           echo "=== 开始初始化 Tauri iOS 项目 ==="
           pnpm tauri ios init -v
 
-      - name: Try building unsigned IPA (for device)
+      - name: Disable Code Signing in Xcode Project
+        run: |
+          set -e
+          echo "=== 强制修改 Xcode 工程关闭签名 ==="
+          PBXPROJ=$(find src-tauri/gen/apple -name "project.pbxproj" | head -1)
+          if [ -n "$PBXPROJ" ]; then
+            # 使用 sed 强行把 YES 改成 NO，从根源上拔除签名要求
+            sed -i '' 's/CODE_SIGNING_REQUIRED = YES/CODE_SIGNING_REQUIRED = NO/g' "$PBXPROJ"
+            sed -i '' 's/CODE_SIGNING_ALLOWED = YES/CODE_SIGNING_ALLOWED = NO/g' "$PBXPROJ"
+            echo "✅ 成功禁用签名: $PBXPROJ"
+          else
+            echo "⚠️ 未找到 project.pbxproj 文件"
+          fi
+
+      - name: Build iOS App (Official Tauri CLI)
         run: |
           set -e
           export CI=false
-          echo "=== 开始构建真机无签名版本 ==="
+          # 注入免签环境变量，双重保险
+          export CODE_SIGN_IDENTITY=""
+          export CODE_SIGNING_REQUIRED=NO
+          export CODE_SIGNING_ALLOWED=NO
+          export APPLE_DEVELOPMENT_TEAM="-"
           
-          if [ ! -d "src-tauri/gen/apple" ]; then
-            echo "❌ 致命错误：找不到 src-tauri/gen/apple 目录！"
-            exit 1
-          fi
-          
-          XCODE_PROJECT=$(find src-tauri/gen/apple -name "*.xcodeproj" -type d | head -1)
-          echo "找到的 Xcode 项目路径: $XCODE_PROJECT"
-          
-          SCHEME=$(xcodebuild -list -project "$XCODE_PROJECT" | grep -A 20 "Schemes:" | grep -v "Schemes:" | head -1 | xargs)
-          echo "准备构建 Scheme: $SCHEME"
-          
-          # 这一次绝对加上了 Release 配置，双重保险！
-          xcodebuild clean build \
-            -project "$XCODE_PROJECT" \
-            -scheme "$SCHEME" \
-            -configuration Release \
-            -sdk iphoneos \
-            -arch arm64 \
-            CONFIGURATION=Release \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO
+          echo "=== 开始使用 Tauri 官方命令构建 iOS ==="
+          # 使用官方命令，这样 Tauri 才会正确处理前端资源，不会再去寻找 server-addr
+          pnpm tauri ios build
 
       - name: Create unsigned IPA
         run: |
