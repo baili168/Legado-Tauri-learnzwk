@@ -46,13 +46,36 @@ jobs:
           echo "=== 开始初始化 Tauri iOS 项目 ==="
           pnpm tauri ios init -v
 
-      - name: Build iOS App (Official Tauri CLI with No-Sign flags)
+      - name: Disable Code Signing in Xcode Project
+        run: |
+          set -e
+          echo "=== 强行修改 Xcode 工程，彻底关闭自动签名 ==="
+          PBXPROJ=$(find src-tauri/gen/apple -name "project.pbxproj" | head -1)
+          if [ -n "$PBXPROJ" ]; then
+            # 1. 把自动签名改成手动签名 (最关键的一步，打破 Xcode 的流氓拦截！)
+            sed -i '' 's/CODE_SIGN_STYLE = Automatic/CODE_SIGN_STYLE = Manual/g' "$PBXPROJ"
+            
+            # 2. 删掉所有关于 DevelopmentTeam 的配置
+            sed -i '' '/DevelopmentTeam/d' "$PBXPROJ"
+            sed -i '' '/DEVELOPMENT_TEAM/d' "$PBXPROJ"
+            
+            # 3. 把签名要求改成 NO
+            sed -i '' 's/CODE_SIGNING_REQUIRED = YES/CODE_SIGNING_REQUIRED = NO/g' "$PBXPROJ"
+            sed -i '' 's/CODE_SIGNING_ALLOWED = YES/CODE_SIGNING_ALLOWED = NO/g' "$PBXPROJ"
+            
+            echo "✅ 成功将工程修改为手动免签模式: $PBXPROJ"
+          else
+            echo "❌ 致命错误：未找到 project.pbxproj 文件"
+            exit 1
+          fi
+
+      - name: Build iOS App (Official Tauri CLI)
         run: |
           set -e
           export CI=false
-          echo "=== 开始使用 Tauri 官方命令构建 iOS（注入免签参数） ==="
+          echo "=== 开始使用 Tauri 官方命令构建 iOS ==="
           
-          # 核心绝杀：强制手动签名 (Manual) 并清空所有签名要求
+          # 工程文件已经被阉割，现在再配合命令行参数，双管齐下！
           pnpm tauri ios build -- CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM="" PROVISIONING_PROFILE_SPECIFIER=""
 
       - name: Create unsigned IPA
