@@ -34,7 +34,9 @@ jobs:
           targets: aarch64-apple-ios
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm add -g @tauri-apps/cli
 
       - name: Build frontend
         run: pnpm build
@@ -46,45 +48,50 @@ jobs:
           echo "=== 开始初始化 Tauri iOS 项目 ==="
           pnpm tauri ios init -v
 
-      - name: Prepare Tauri Assets (Expect Failure)
-        run: |
-          echo "=== 运行 Tauri 官方构建以准备资源 ==="
-          echo "注意：这一步预期会在 Xcode 签名阶段报错，这是完全正常的！"
-          echo "我们只需要它把前端资源和 Rust 代码准备好。"
-          # 加上 || true 允许这一步报错，继续往下执行
-          pnpm tauri ios build || true
-
-      - name: Build Unsigned App (Manual xcodebuild)
+      - name: Build Unsigned App (Native xcodebuild)
         run: |
           set -e
-          echo "=== 使用 xcodebuild 强制免签打包 ==="
+          echo "=== 强制修改 Xcode 工程，彻底关闭自动签名 ==="
+          PBXPROJ=$(find src-tauri/gen/apple -name "project.pbxproj" | head -1)
+          
+          # 物理替换 Automatic 为 Manual
+          sed -i '' 's/CODE_SIGN_STYLE = Automatic/CODE_SIGN_STYLE = Manual/g' "$PBXPROJ"
+          sed -i '' 's/CODE_SIGNING_REQUIRED = YES/CODE_SIGNING_REQUIRED = NO/g' "$PBXPROJ"
+          sed -i '' 's/CODE_SIGNING_ALLOWED = YES/CODE_SIGNING_ALLOWED = NO/g' "$PBXPROJ"
+          
+          # 创建 xcconfig 彻底覆盖签名配置
+          cat <<EOF > nosign.xcconfig
+          CODE_SIGN_IDENTITY =
+          CODE_SIGNING_REQUIRED = NO
+          CODE_SIGNING_ALLOWED = NO
+          CODE_SIGN_STYLE = Manual
+          DEVELOPMENT_TEAM =
+          PROVISIONING_PROFILE_SPECIFIER =
+          EOF
           
           XCODE_PROJECT=$(find src-tauri/gen/apple -name "*.xcodeproj" -type d | head -1)
           XCWORKSPACE=$(find src-tauri/gen/apple -name "*.xcworkspace" -type d | head -1)
           SCHEME=$(xcodebuild -list -project "$XCODE_PROJECT" | grep -A 20 "Schemes:" | grep -v "Schemes:" | head -1 | xargs)
           
-          # 核心修复：必须使用小写的 release，否则 Tauri 脚本会崩溃！
-          # 并且直接传入免签参数，彻底绕过苹果的 Team 检查
+          echo "=== 使用原生 xcodebuild 强制免签打包 ==="
+          # 必须使用小写的 release，防止 tauri xcode-script 崩溃
+          # 引入 nosign.xcconfig 强行覆盖签名
           if [ -n "$XCWORKSPACE" ]; then
-            xcodebuild build \
+            xcodebuild clean build \
               -workspace "$XCWORKSPACE" \
               -scheme "$SCHEME" \
               -configuration release \
               -sdk iphoneos \
               -arch arm64 \
-              CODE_SIGN_IDENTITY="" \
-              CODE_SIGNING_REQUIRED=NO \
-              CODE_SIGNING_ALLOWED=NO
+              -xcconfig nosign.xcconfig
           else
-            xcodebuild build \
+            xcodebuild clean build \
               -project "$XCODE_PROJECT" \
               -scheme "$SCHEME" \
               -configuration release \
               -sdk iphoneos \
               -arch arm64 \
-              CODE_SIGN_IDENTITY="" \
-              CODE_SIGNING_REQUIRED=NO \
-              CODE_SIGNING_ALLOWED=NO
+              -xcconfig nosign.xcconfig
           fi
 
       - name: Create unsigned IPA
