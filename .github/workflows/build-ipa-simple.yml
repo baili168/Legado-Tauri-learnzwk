@@ -52,8 +52,8 @@ jobs:
           export CI=false
           echo "=== 开始使用 Tauri 官方命令构建 iOS（注入免签参数） ==="
           
-          # 核心绝杀：通过 -- 将免签参数直接透传给底层的 xcodebuild
-          pnpm exec tauri ios build -- CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+          # 核心绝杀：强制手动签名 (Manual) 并清空所有签名要求
+          pnpm tauri ios build -- CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM="" PROVISIONING_PROFILE_SPECIFIER=""
 
       - name: Create unsigned IPA
         run: |
