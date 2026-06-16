@@ -34,9 +34,7 @@ jobs:
           targets: aarch64-apple-ios
 
       - name: Install dependencies
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm add -g @tauri-apps/cli
+        run: pnpm install --frozen-lockfile
 
       - name: Build frontend
         run: pnpm build
@@ -48,33 +46,14 @@ jobs:
           echo "=== 开始初始化 Tauri iOS 项目 ==="
           pnpm tauri ios init -v
 
-      - name: Disable Code Signing in Xcode Project
-        run: |
-          set -e
-          echo "=== 强制修改 Xcode 工程关闭签名 ==="
-          PBXPROJ=$(find src-tauri/gen/apple -name "project.pbxproj" | head -1)
-          if [ -n "$PBXPROJ" ]; then
-            # 使用 sed 强行把 YES 改成 NO，从根源上拔除签名要求
-            sed -i '' 's/CODE_SIGNING_REQUIRED = YES/CODE_SIGNING_REQUIRED = NO/g' "$PBXPROJ"
-            sed -i '' 's/CODE_SIGNING_ALLOWED = YES/CODE_SIGNING_ALLOWED = NO/g' "$PBXPROJ"
-            echo "✅ 成功禁用签名: $PBXPROJ"
-          else
-            echo "⚠️ 未找到 project.pbxproj 文件"
-          fi
-
-      - name: Build iOS App (Official Tauri CLI)
+      - name: Build iOS App (Official Tauri CLI with No-Sign flags)
         run: |
           set -e
           export CI=false
-          # 注入免签环境变量，双重保险
-          export CODE_SIGN_IDENTITY=""
-          export CODE_SIGNING_REQUIRED=NO
-          export CODE_SIGNING_ALLOWED=NO
-          export APPLE_DEVELOPMENT_TEAM="-"
+          echo "=== 开始使用 Tauri 官方命令构建 iOS（注入免签参数） ==="
           
-          echo "=== 开始使用 Tauri 官方命令构建 iOS ==="
-          # 使用官方命令，这样 Tauri 才会正确处理前端资源，不会再去寻找 server-addr
-          pnpm tauri ios build
+          # 核心绝杀：通过 -- 将免签参数直接透传给底层的 xcodebuild
+          pnpm exec tauri ios build -- CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
 
       - name: Create unsigned IPA
         run: |
