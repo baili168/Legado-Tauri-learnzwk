@@ -70,6 +70,7 @@ jobs:
           xcodebuild clean build \
             -project "$XCODE_PROJECT" \
             -scheme "$SCHEME" \
+            -configuration Release \
             -sdk iphoneos \
             -arch arm64 \
             CODE_SIGN_IDENTITY="" \
