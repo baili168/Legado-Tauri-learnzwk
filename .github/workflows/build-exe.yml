@@ -1,0 +1,115 @@
+name: Build Windows EXE
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  build-exe:
+    name: Build Windows EXE
+    runs-on: windows-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build frontend
+        run: pnpm build
+
+      - name: Build Tauri Windows
+        run: |
+          echo "Building Windows EXE..."
+          pnpm tauri build --target x86_64-pc-windows-msvc 2>&1 | tee build.log | tail -200
+
+      - name: Find build artifacts
+        id: find_exe
+        run: |
+          Write-Host "=== Looking for EXE files ==="
+          
+          $EXE_PATH = Get-ChildItem -Path "src-tauri/target/x86_64-pc-windows-msvc/release" -Filter "*.exe" -Recurse | Select-Object -First 1
+          
+          if ($EXE_PATH) {
+            Write-Host "Found EXE: $($EXE_PATH.FullName)"
+            $size = [math]::Round($EXE_PATH.Length / 1MB, 2)
+            Write-Host "Size: $size MB"
+            echo "exe_path=$($EXE_PATH.FullName)" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Host "Looking in other locations..."
+            Get-ChildItem -Path "src-tauri/target" -Filter "*.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 5 | ForEach-Object { Write-Host $_.FullName }
+          }
+          
+          Write-Host ""
+          Write-Host "=== Release directory ==="
+          Get-ChildItem -Path "src-tauri/target/x86_64-pc-windows-msvc/release" -ErrorAction SilentlyContinue | Select-Object -First 20
+
+      - name: Find MSI/ZIP installer
+        id: find_installer
+        run: |
+          Write-Host "=== Looking for installer ==="
+          
+          $BUNDLE_PATH = Get-ChildItem -Path "src-tauri/target/x86_64-pc-windows-msvc/release/bundle" -Include "*.msi", "*.zip" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 5
+          
+          if ($BUNDLE_PATH) {
+            foreach ($file in $BUNDLE_PATH) {
+              Write-Host "Found: $($file.FullName)"
+              $size = [math]::Round($file.Length / 1MB, 2)
+              Write-Host "Size: $size MB"
+            }
+            echo "installer_path=$($BUNDLE_PATH[0].FullName)" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Host "No installer not found in bundle, checking all files..."
+            Get-ChildItem -Path "src-tauri/target" -Include "*.msi", "*.zip" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 5 | ForEach-Object { Write-Host $_.FullName }
+          }
+
+      - name: Upload EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: legado-windows-exe
+          path: |
+            **/*.exe
+            !**/build/**
+            !**/target/debug/**
+          retention-days: 90
+
+      - name: Upload Installer (MSI/ZIP)
+        uses: actions/upload-artifact@v4
+        with:
+          name: legado-windows-installer
+          path: |
+            **/*.msi
+            **/*.zip
+            !**/build/**
+            !**/target/debug/**
+            !**/target/windows/**/*.zip
+          retention-days: 90
+
+      - name: Build log
+        run: |
+          if (Test-Path "build.log") {
+            Write-Host "=== Build log (last 300 lines) ==="
+            Get-Content "build.log" -Tail 300
+          }
+        if: failure()
