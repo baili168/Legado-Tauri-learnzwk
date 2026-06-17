@@ -136,47 +136,9 @@ jobs:
           
           # 确保 tauri 命令在 PATH 中
           export PATH="$PATH:$(pnpm bin -g):$(pwd)/node_modules/.bin"
-          echo "PATH: $PATH"
           
-          # 创建 Tauri 需要的 server-addr 占位文件（修复崩溃问题）
-          SERVER_ADDR_FILE="/tmp/com.legado.reader-server-addr"
-          echo "http://localhost:1420" > "$SERVER_ADDR_FILE"
-          echo "创建 server-addr 文件: $SERVER_ADDR_FILE"
-          
-          # 导出环境变量让 Xcode 脚本可以找到
-          export TAURI_IOS_SERVER_ADDR="http://localhost:1420"
-          
-          if [ -n "$XCWORKSPACE" ]; then
-            echo "使用 Workspace 构建"
-            xcodebuild clean build \
-              -workspace "$XCWORKSPACE" \
-              -scheme "$SCHEME" \
-              -configuration Release \
-              -sdk iphoneos \
-              -arch arm64 \
-              -xcconfig nosign.xcconfig \
-              CODE_SIGNING_REQUIRED=NO \
-              CODE_SIGNING_ALLOWED=NO \
-              CODE_SIGN_IDENTITY="" \
-              CODE_SIGN_STYLE=Manual \
-              DEVELOPMENT_TEAM="" \
-              PROVISIONING_PROFILE_SPECIFIER=""
-          else
-            echo "使用 Project 构建"
-            xcodebuild clean build \
-              -project "$XCODE_PROJECT" \
-              -scheme "$SCHEME" \
-              -configuration Release \
-              -sdk iphoneos \
-              -arch arm64 \
-              -xcconfig nosign.xcconfig \
-              CODE_SIGNING_REQUIRED=NO \
-              CODE_SIGNING_ALLOWED=NO \
-              CODE_SIGN_IDENTITY="" \
-              CODE_SIGN_STYLE=Manual \
-              DEVELOPMENT_TEAM="" \
-              PROVISIONING_PROFILE_SPECIFIER=""
-          fi
+          # 使用 Tauri 官方构建命令（自动处理所有依赖）
+          pnpm tauri ios build --release -- --code-signing-required=false
 
       - name: Find .app file
         id: find-app
