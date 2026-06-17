@@ -129,13 +129,62 @@ jobs:
           echo "Workspace: $XCWORKSPACE"
           echo "Scheme: $SCHEME"
 
-      - name: Build iOS app (unsigned)
+      - name: Modify Xcode project to disable signing
         run: |
           set -e
-          echo "=== 开始构建 iOS 应用 ==="
+          PBXPROJ=$(find src-tauri/gen/apple -name "project.pbxproj" | head -1)
+          echo "修改 PBXPROJ: $PBXPROJ"
           
-          # 使用 Tauri 构建，通过 -- 传递 xcodebuild 参数来禁用签名
-          pnpm tauri ios build -- \
+          # 1. 替换所有 Automatic 为 Manual
+          sed -i '' 's/CODE_SIGN_STYLE = Automatic/CODE_SIGN_STYLE = Manual/g' "$PBXPROJ"
+          
+          # 2. 删除所有 DEVELOPMENT_TEAM 行
+          sed -i '' '/DEVELOPMENT_TEAM/d' "$PBXPROJ"
+          
+          # 3. 删除 PROVISIONING_PROFILE_SPECIFIER 行
+          sed -i '' '/PROVISIONING_PROFILE_SPECIFIER/d' "$PBXPROJ"
+          
+          # 4. 删除 CODE_SIGN_IDENTITY 行
+          sed -i '' '/CODE_SIGN_IDENTITY/d' "$PBXPROJ"
+          
+          # 5. 在每个 buildSettings 块添加禁用签名配置
+          # 查找所有包含 buildSettings = { 的行，在后面添加签名配置
+          awk '
+            /buildSettings = \{/ {
+              print $0
+              print "                    CODE_SIGNING_REQUIRED = NO;"
+              print "                    CODE_SIGNING_ALLOWED = NO;"
+              print "                    CODE_SIGN_IDENTITY = \"\";"
+              print "                    CODE_SIGN_STYLE = Manual;"
+              next
+            }
+            { print }
+          ' "$PBXPROJ" > "$PBXPROJ.tmp" && mv "$PBXPROJ.tmp" "$PBXPROJ"
+          
+          echo "✅ 签名配置已修改"
+          grep -A 5 "buildSettings" "$PBXPROJ" | head -30
+
+      - name: Build iOS app with xcodebuild (unsigned)
+        run: |
+          set -e
+          echo "=== 使用 xcodebuild 构建 ==="
+          
+          XCWORKSPACE=$(find src-tauri/gen/apple -name "*.xcworkspace" -type d | head -1)
+          SCHEME=$(xcodebuild -list -workspace "$XCWORKSPACE" 2>/dev/null | grep -A 20 "Schemes:" | grep -v "Schemes:" | head -1 | xargs)
+          
+          if [ -z "$SCHEME" ]; then
+            SCHEME="app_iOS"
+          fi
+          
+          echo "Workspace: $XCWORKSPACE"
+          echo "Scheme: $SCHEME"
+          
+          xcodebuild clean build \
+            -workspace "$XCWORKSPACE" \
+            -scheme "$SCHEME" \
+            -configuration release \
+            -sdk iphoneos \
+            -arch arm64 \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGN_IDENTITY="" \
