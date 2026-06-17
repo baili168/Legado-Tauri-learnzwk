@@ -138,6 +138,14 @@ jobs:
           export PATH="$PATH:$(pnpm bin -g):$(pwd)/node_modules/.bin"
           echo "PATH: $PATH"
           
+          # 创建 Tauri 需要的 server-addr 占位文件（修复崩溃问题）
+          SERVER_ADDR_FILE="/tmp/com.legado.reader-server-addr"
+          echo "http://localhost:1420" > "$SERVER_ADDR_FILE"
+          echo "创建 server-addr 文件: $SERVER_ADDR_FILE"
+          
+          # 导出环境变量让 Xcode 脚本可以找到
+          export TAURI_IOS_SERVER_ADDR="http://localhost:1420"
+          
           if [ -n "$XCWORKSPACE" ]; then
             echo "使用 Workspace 构建"
             xcodebuild clean build \
