@@ -45,6 +45,11 @@ jobs:
         run: |
           pnpm install --frozen-lockfile
 
+      - name: Install Tauri CLI globally
+        run: |
+          pnpm add -g @tauri-apps/cli
+          echo "PATH=$PATH:$(pnpm bin -g)" >> $GITHUB_ENV
+
       - name: Build frontend
         run: pnpm build
 
@@ -90,7 +95,8 @@ jobs:
 
       - name: Create nosign.xcconfig
         run: |
-          cat <<'EOF' > nosign.xcconfig
+          PNPM_BIN=$(pnpm bin -g)
+          cat <<EOF > nosign.xcconfig
           CODE_SIGN_IDENTITY =
           CODE_SIGNING_REQUIRED = NO
           CODE_SIGNING_ALLOWED = NO
@@ -127,6 +133,10 @@ jobs:
         run: |
           set -e
           echo "=== 开始构建 iOS 应用 ==="
+          
+          # 确保 tauri 命令在 PATH 中
+          export PATH="$PATH:$(pnpm bin -g):$(pwd)/node_modules/.bin"
+          echo "PATH: $PATH"
           
           if [ -n "$XCWORKSPACE" ]; then
             echo "使用 Workspace 构建"
