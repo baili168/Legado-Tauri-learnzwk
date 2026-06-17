@@ -3,6 +3,8 @@ name: Build iOS IPA
 on:
   workflow_dispatch:
   push:
+    branches:
+      - main
     tags:
       - 'v*'
 
@@ -28,8 +30,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 10.33.0
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
