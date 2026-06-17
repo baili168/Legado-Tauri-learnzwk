@@ -129,6 +129,22 @@ jobs:
           echo "Workspace: $XCWORKSPACE"
           echo "Scheme: $SCHEME"
 
+      - name: Create Tauri server-addr file
+        run: |
+          set -e
+          # 找到系统临时目录
+          TMPDIR=$(python3 -c 'import tempfile; print(tempfile.gettempdir())')
+          echo "系统临时目录: $TMPDIR"
+          
+          # 创建 Tauri 需要的 server-addr 文件
+          SERVER_ADDR_FILE="$TMPDIR/com.legado.reader-server-addr"
+          echo "http://localhost:1420" > "$SERVER_ADDR_FILE"
+          echo "创建文件: $SERVER_ADDR_FILE"
+          cat "$SERVER_ADDR_FILE"
+          
+          # 同时也在常见的临时位置创建
+          echo "http://localhost:1420" > "/tmp/com.legado.reader-server-addr"
+
       - name: Modify Xcode project to disable signing
         run: |
           set -e
@@ -148,7 +164,6 @@ jobs:
           sed -i '' '/CODE_SIGN_IDENTITY/d' "$PBXPROJ"
           
           # 5. 在每个 buildSettings 块添加禁用签名配置
-          # 查找所有包含 buildSettings = { 的行，在后面添加签名配置
           awk '
             /buildSettings = \{/ {
               print $0
