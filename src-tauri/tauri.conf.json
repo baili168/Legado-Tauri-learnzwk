@@ -35,9 +35,6 @@
     ],
     "android": {
       "debugApplicationIdSuffix": ".debug"
-    },
-    "iOS": {
-      "codeSigningRequired": false
     }
   }
 }
