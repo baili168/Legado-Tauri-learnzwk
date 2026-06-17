@@ -52,7 +52,7 @@ jobs:
         run: |
           set -e
           echo "=== 开始初始化 Tauri iOS 项目 ==="
-          pnpm tauri ios init --force -v
+          pnpm tauri ios init -v
 
       - name: Verify iOS project
         run: |
