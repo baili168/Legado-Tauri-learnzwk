@@ -129,28 +129,19 @@ jobs:
           echo "Workspace: $XCWORKSPACE"
           echo "Scheme: $SCHEME"
 
-      - name: Check Tauri iOS build options
-        run: |
-          echo "=== 查看 Tauri iOS build 帮助 ==="
-          pnpm tauri ios build --help
-
       - name: Build iOS app (unsigned)
         run: |
           set -e
           echo "=== 开始构建 iOS 应用 ==="
           
-          # 先修改 Xcode 项目禁用签名
-          PBXPROJ=$(find src-tauri/gen/apple -name "project.pbxproj" | head -1)
-          echo "修改 PBXPROJ: $PBXPROJ"
-          
-          # 彻底禁用签名
-          plutil -replace CODE_SIGNING_REQUIRED -string NO "$PBXPROJ" 2>/dev/null || true
-          sed -i '' 's/CODE_SIGN_STYLE = Automatic/CODE_SIGN_STYLE = Manual/g' "$PBXPROJ"
-          sed -i '' 's/DEVELOPMENT_TEAM = [^;]*;//g' "$PBXPROJ"
-          sed -i '' 's/PROVISIONING_PROFILE_SPECIFIER = [^;]*;//g' "$PBXPROJ"
-          
-          # 使用 Tauri 构建（不带签名参数，让它构建即可）
-          pnpm tauri ios build
+          # 使用 Tauri 构建，通过 -- 传递 xcodebuild 参数来禁用签名
+          pnpm tauri ios build -- \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGN_STYLE=Manual \
+            DEVELOPMENT_TEAM="" \
+            PROVISIONING_PROFILE_SPECIFIER=""
 
       - name: Find .app file
         id: find-app
