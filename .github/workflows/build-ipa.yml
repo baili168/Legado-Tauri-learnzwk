@@ -17,7 +17,7 @@ jobs:
   build-ipa:
     name: Build iOS IPA
     runs-on: macos-15
-    timeout-minutes: 90
+    timeout-minutes: 120
 
     steps:
       - name: Checkout
@@ -194,18 +194,29 @@ jobs:
           echo "Workspace: $XCWORKSPACE"
           echo "Scheme: $SCHEME"
           
-          xcodebuild clean build \
+          # 先创建所有可能位置的 server-addr 文件
+          echo "http://localhost:1420" > "$TMPDIR/com.legado.reader-server-addr" 2>/dev/null || true
+          echo "http://localhost:1420" > "/tmp/com.legado.reader-server-addr" 2>/dev/null || true
+          echo "http://localhost:1420" > "$HOME/com.legado.reader-server-addr" 2>/dev/null || true
+          
+          # 检查 Rust 环境
+          rustup show
+          cargo --version
+          
+          # 构建 xcodebuild，增加详细日志
+          xcodebuild build \
             -workspace "$XCWORKSPACE" \
             -scheme "$SCHEME" \
             -configuration release \
             -sdk iphoneos \
             -arch arm64 \
+            -quiet \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGN_STYLE=Manual \
             DEVELOPMENT_TEAM="" \
-            PROVISIONING_PROFILE_SPECIFIER=""
+            PROVISIONING_PROFILE_SPECIFIER="" 2>&1 | tail -200
 
       - name: Find .app file
         id: find-app
